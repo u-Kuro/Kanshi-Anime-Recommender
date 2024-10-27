@@ -14,7 +14,7 @@ self.addEventListener("unhandledrejection", (event) => {
 
 self.onmessage = async ({ data }) => {
     try {                
-        if (!db) await IDBinit();
+        if (!db) await IDBInit();
 
         let { initialDataBlob } = data;
 
@@ -24,7 +24,7 @@ self.onmessage = async ({ data }) => {
             initialDataBlob = await getCompressedBlobs(initialDataBlob);
             initialDataBlob.mediaUpdateAt = 1722318748
             // TODO: Add orderedMediaOptions
-            await saveDataRecords(initialDataBlob)
+            await setIDBRecords(initialDataBlob)
             self.postMessage({ status: null });
             self.postMessage({ done: true });
         } else {
@@ -41,58 +41,163 @@ self.onmessage = async ({ data }) => {
         self.postMessage({ error })
     }
 }
-function IDBinit() {
-    return new Promise((resolve) => {
-        let request = indexedDB.open(
-            "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
-            1
-        );
-        request.onsuccess = (event) => {
-            db = event.target.result;
-            resolve()
-        };
-        request.onupgradeneeded = (event) => {
-            db = event.target.result;
-            db.createObjectStore("others");
-            event.target.transaction.oncomplete = () => {
-                resolve();
-            }
-        }
-        request.onerror = (error) => {
-            console.error(error);
-        };
-    })
-}
-function saveDataRecords(records) {
+function IDBInit() {
     return new Promise((resolve, reject) => {
         try {
-            const transaction = db.transaction("others", "readwrite");
-            transaction.oncomplete = () => {
-                resolve();
+            const request = indexedDB.open(
+                "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
+                2
+            );
+            request.onsuccess = ({ target }) => {
+                db = target.result;
+                resolve()
+            };
+            request.onupgradeneeded = ({ target }) => {
+                try {
+                    const { result, transaction } = target
+                    db = result;
+                    const stores = [
+                        // All Media
+                        "mediaEntries", "excludedMediaIds", "mediaUpdateAt",
+                        // Media Options
+                        "mediaOptions", "orderedMediaOptions",
+                        // Tag Category and Descriptions
+                        "tagInfo", "tagInfoUpdateAt",
+                        // User Data From AniList
+                        "username", "userMediaEntries", "userMediaUpdateAt",
+                        // All Recommended Media
+                        "recommendedMediaEntries",
+                        // User Data In App
+                        "algorithmFilters", "mediaCautions", "hiddenMediaEntries",
+                        "categories", "selectedCategory",
+                        // User Configs In App
+                        "autoPlay", "gridFullView", "showRateLimit", "showStatus",
+                        "autoUpdate", "autoExport",
+                        "runnedAutoUpdateAt", "runnedAutoExportAt",
+                        "exportPathIsAvailable",
+                        // User Configs In App
+                        "shouldManageMedia", "shouldProcessRecommendedEntries",
+                        // Other Info / Flags
+                        "nearestMediaReleaseAiringAt",
+                        "recommendationError",
+                        "visited",
+                        "others",
+                    ]
+                    for (const store of stores) {
+                        db.createObjectStore(store);
+                    }
+                    transaction.oncomplete = () => {
+                        resolve();
+                    }
+                } catch (ex) {
+                    console.error(ex);
+                    reject(ex);
+                    transaction.abort();
+                }
             }
-            const store = transaction.objectStore("others");
-            let put;
+            request.onerror = (ex) => {
+                console.error(ex);
+                reject(ex);
+            };
+        } catch (ex) {
+            console.error(ex);
+            reject(ex);
+        }
+    })
+}
+function setIDBRecords(records) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const transaction = db.transaction(Object.keys(records), "readwrite");
             for (const key in records) {
-                let data = records[key];
-                if (data instanceof Blob) {
-                    put = store.put(data, key);
-                } else if (isJsonObject(data) || data instanceof Array) {
-                    data = new Blob([JSON.stringify(data)]);
-                    put = store.put(data, key);
+                const store = transaction.objectStore(key);
+                let value = records[key];
+                let put;
+                if (value instanceof Blob) {
+                    put = store.put(value, key);
+                } else if (isJsonObject(value) || value instanceof Array) {
+                    value = await new Response(
+                        new Blob([JSON.stringify(value)])
+                        .stream()
+                        .pipeThrough(new CompressionStream("gzip"))
+                    ).blob()
+                    put = store.put(value, key);
                 } else {
-                    put = store.put(data, key);
+                    put = store.put(value, key);
                 }
                 put.onerror = (ex) => {
                     console.error(ex);
                     reject(ex);
+                    transaction.abort();
                 };
             }
-            try {
-                transaction?.commit?.();
-            } catch {}
+            transaction.oncomplete = () => resolve()
         } catch (ex) {
             console.error(ex);
             reject(ex);
+        }
+    });
+}
+function getIDBData(key) {
+    return new Promise((resolve) => {
+        try {
+            const get = db.transaction(key, "readonly")
+                .objectStore(key)
+                .get(key)
+            get.onsuccess = async () => {
+                let value = get.result;
+                if (value instanceof Blob) {
+                    value = await new Response(
+                        value
+                        .stream()
+                        .pipeThrough(new CompressionStream("gzip"))
+                    ).json()
+                }
+                resolve(value);
+            };
+            get.onerror = (ex) => {
+                console.error(ex);
+                resolve();
+            };
+        } catch (ex) {
+            console.error(ex);
+            resolve();
+        }
+    });
+}
+function getIDBRecords(recordKeys) {
+    return new Promise(async (resolve) => {
+        try {
+            const transaction = db.transaction(recordKeys, "readonly")
+            resolve(Object.fromEntries(
+                await Promise.all(
+                    recordKeys.map((key) => {
+                        return new Promise((resolve) => {
+                            const get = transaction
+                                .objectStore(key)
+                                .get(key)
+                            get.onsuccess = async () => {
+                                let value = get.result;
+                                if (value instanceof Blob) {
+                                    value = await new Response(
+                                        value
+                                        .stream()
+                                        .pipeThrough(new CompressionStream("gzip"))
+                                    ).json()
+                                }
+                                resolve([key, value]);
+                            };
+                            get.onerror = (ex) => {
+                                console.error(ex);
+                                resolve([key]);
+                            };
+                        })
+                    })
+                )
+            ))
+        } catch (ex) {
+            console.error(ex);
+            resolve();
         }
     });
 }

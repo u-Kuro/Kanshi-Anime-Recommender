@@ -8,7 +8,7 @@ const IDBInit = () => {
         try {
             const request = indexedDB.open(
                 get(uniqueKey),
-                1
+                2
             );
             request.onsuccess = ({ target }) => {
                 db = target.result;
@@ -20,7 +20,7 @@ const IDBInit = () => {
                     db = result;
                     const stores = [
                         // All Media
-                        "mediaEntries", "excludedEntries", "mediaUpdateAt",
+                        "mediaEntries", "excludedMediaIds", "mediaUpdateAt",
                         // Media Options
                         "mediaOptions", "orderedMediaOptions",
                         // Tag Category and Descriptions
@@ -164,9 +164,8 @@ const setIDBData = (key, value, isImportant) => {
     return new Promise(async (resolve, reject) => {
         if (!db) await IDBInit()
         try {
-            const store = db
-                .transaction(key, "readwrite")
-                .objectStore(key)
+            const transaction = db.transaction(key, "readwrite")
+            const store = transaction.objectStore(key)
             let put;
             if (value instanceof Blob) {
                 value = await new Response(
@@ -194,7 +193,6 @@ const setIDBData = (key, value, isImportant) => {
         } catch (ex) {
             console.error(ex);
             reject(ex);
-            transaction.abort();
         }
     });
 }
@@ -235,7 +233,6 @@ const setIDBData = (key, value, isImportant) => {
 //         } catch (ex) {
 //             console.error(ex);
 //             reject(ex);
-//             transaction.abort();
 //         }
 //     });
 // }

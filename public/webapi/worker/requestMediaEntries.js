@@ -42,22 +42,28 @@ self.onmessage = async ({
         server = data.server
     }
     
-    if (!db) await IDBinit();
+    if (!db) await IDBInit();
 
     if (data?.hasOwnProperty("minimizeTransaction")) {
         minimizeTransaction = data?.minimizeTransaction
     } else {
         onlyGetNewEntries = data?.onlyGetNewEntries ?? false;
-        let mediaUpdateAt = await retrieveJSON("mediaUpdateAt") || 1706674120;
-        let mediaEntries = await retrieveJSON("mediaEntries");
-        let excludedEntries = await retrieveJSON("excludedEntries") || {};
+        const {
+            mediaEntries,
+            excludedMediaIds = {},
+            mediaUpdateAt = 1706674120,
+        } = getIDBRecords([
+            "mediaEntries",
+            "excludedMediaIds",
+            "mediaUpdateAt",
+        ])
         if (isJsonObject(mediaEntries)) {
             if (jsonIsEmpty(mediaEntries)) {
                 self.postMessage({
                     getEntries: true
                 })
             } else {
-                getNewEntries(mediaEntries, excludedEntries, mediaUpdateAt)
+                getNewEntries(mediaEntries, excludedMediaIds, mediaUpdateAt)
             }
         } else {
             self.postMessage({
@@ -65,14 +71,14 @@ self.onmessage = async ({
             })
         }
     }
-    async function getNewEntries(mediaEntries, excludedEntries, mediaUpdateAt) {
-        const lastHighestID = Math.max(getMax(Object.keys(mediaEntries).concat(Object.keys(excludedEntries)).map(id => parseInt(id))) || 1, 1)
+    async function getNewEntries(mediaEntries, excludedMediaIds, mediaUpdateAt) {
+        const lastHighestID = Math.max(getMax(Object.keys(mediaEntries).concat(Object.keys(excludedMediaIds)).map(id => parseInt(id))) || 1, 1)
         let foundLastHighestID = false;
         let percentage, newLowestID, newHighestID, largestDif;
         self.postMessage({
             status: "Checking New Entries"
         });
-        let shouldUpdateMediaEntries, shouldUpdateExcludedEntries;
+        let shouldUpdateMediaEntries, shouldUpdateExcludedMediaIds;
         let highestIncludedEntryID = -Infinity,
             highestExcludedEntryID = -Infinity;
 
@@ -183,9 +189,9 @@ self.onmessage = async ({
                                             }
                                         })
                                     }
-                                    if (excludedEntries?.hasOwnProperty?.(currentId)) {
-                                        delete excludedEntries[currentId];
-                                        shouldUpdateExcludedEntries = true
+                                    if (excludedMediaIds?.hasOwnProperty?.(currentId)) {
+                                        delete excludedMediaIds[currentId];
+                                        shouldUpdateExcludedMediaIds = true
                                     }
                                     if (isJsonObject(mediaEntries?.[currentId])) {
                                         continue
@@ -202,8 +208,8 @@ self.onmessage = async ({
                                         shouldUpdateMediaEntries = true
                                     }
                                     highestExcludedEntryID = Math.max(highestExcludedEntryID, currentId);
-                                    excludedEntries[currentId] = 1;
-                                    shouldUpdateExcludedEntries = true
+                                    excludedMediaIds[currentId] = 1;
+                                    shouldUpdateExcludedMediaIds = true
                                 }
                             }
                         }
@@ -264,45 +270,45 @@ self.onmessage = async ({
                         isShowingProgress = false;
                         if (foundLastHighestID) {
                             if (highestIncludedEntryID <= highestExcludedEntryID) {
-                                const collectionToPut = {}
+                                const recordsToSet = {}
                                 if (shouldUpdateMediaEntries) {
-                                    collectionToPut.shouldProcessRecommendedEntries = true
-                                    collectionToPut.mediaEntries = mediaEntries
+                                    recordsToSet.shouldProcessRecommendedEntries = true
+                                    recordsToSet.mediaEntries = mediaEntries
                                 }
-                                if (shouldUpdateExcludedEntries) {
-                                    collectionToPut.excludedEntries = excludedEntries
+                                if (shouldUpdateExcludedMediaIds) {
+                                    recordsToSet.excludedMediaIds = excludedMediaIds
                                 }
-                                if (!jsonIsEmpty(collectionToPut)) {
-                                    await saveJSONCollection(collectionToPut)
+                                if (!jsonIsEmpty(recordsToSet)) {
+                                    await setIDBRecords(recordsToSet)
                                     if (shouldUpdateMediaEntries) {
                                         self.postMessage({
                                             updateRecommendationList: true
                                         });
                                         shouldUpdateMediaEntries = false
                                     }
-                                    if (shouldUpdateExcludedEntries) {
-                                        shouldUpdateExcludedEntries = false
+                                    if (shouldUpdateExcludedMediaIds) {
+                                        shouldUpdateExcludedMediaIds = false
                                     }
                                 }
                             } else {
-                                const collectionToPut = {}
-                                if (shouldUpdateExcludedEntries) {
-                                    collectionToPut.excludedEntries = excludedEntries
+                                const recordsToSet = {}
+                                if (shouldUpdateExcludedMediaIds) {
+                                    recordsToSet.excludedMediaIds = excludedMediaIds
                                 }
                                 if (shouldUpdateMediaEntries) {
-                                    collectionToPut.shouldProcessRecommendedEntries = true
-                                    collectionToPut.mediaEntries = mediaEntries
+                                    recordsToSet.shouldProcessRecommendedEntries = true
+                                    recordsToSet.mediaEntries = mediaEntries
                                 }
-                                if (!jsonIsEmpty(collectionToPut)) {
-                                    await saveJSONCollection(collectionToPut)
+                                if (!jsonIsEmpty(recordsToSet)) {
+                                    await setIDBRecords(recordsToSet)
                                     if (shouldUpdateMediaEntries) {
                                         self.postMessage({
                                             updateRecommendationList: true
                                         });
                                         shouldUpdateMediaEntries = false
                                     }
-                                    if (shouldUpdateExcludedEntries) {
-                                        shouldUpdateExcludedEntries = false
+                                    if (shouldUpdateExcludedMediaIds) {
+                                        shouldUpdateExcludedMediaIds = false
                                     }
                                 }
                             }
@@ -315,8 +321,13 @@ self.onmessage = async ({
                             }
                         } else {
                             // Reset so newly added entries would not be saved for next updates
-                            mediaUpdateAt = await retrieveJSON("mediaUpdateAt") || 1706674120;
-                            mediaEntries = await retrieveJSON("mediaEntries");
+                            ({ 
+                                mediaEntries,
+                                mediaUpdateAt = 1706674120,
+                            } = getIDBRecords([
+                                "mediaEntries",
+                                "mediaUpdateAt"
+                            ]));
                             if (isJsonObject(mediaEntries)) {
                                 if (jsonIsEmpty(mediaEntries)) {
                                     self.postMessage({
@@ -330,7 +341,7 @@ self.onmessage = async ({
                                 })
                                 return
                             }
-                            excludedEntries = await retrieveJSON("excludedEntries") || {};
+                            excludedMediaIds = await getIDBData("excludedMediaIds") || {};
                             newAddedEntriesCount = 0
                         }
                         self.postMessage({
@@ -341,7 +352,7 @@ self.onmessage = async ({
                                 done: true
                             })
                         } else {
-                            updateMediaEntries(mediaEntries, excludedEntries, mediaUpdateAt)
+                            updateMediaEntries(mediaEntries, excludedMediaIds, mediaUpdateAt)
                         }
                     }
                 }
@@ -386,7 +397,7 @@ self.onmessage = async ({
         }
         recallGNE(1)
     }
-    async function updateMediaEntries(mediaEntries, excludedEntries, mediaUpdateAt) {
+    async function updateMediaEntries(mediaEntries, excludedMediaIds, mediaUpdateAt) {
         const mediaEntriesArray = Object.values(mediaEntries);
         let pastAiringEpisodeIDs = mediaEntriesArray.filter(({
             nextAiringEpisode,
@@ -428,7 +439,7 @@ self.onmessage = async ({
         self.postMessage({
             status: "Checking Recent Entries"
         });
-        let shouldUpdateMediaEntries, shouldUpdateExcludedEntries;
+        let shouldUpdateMediaEntries, shouldUpdateExcludedMediaIds;
         let nonUpdatedMediaPercentFinished = 0,
             currentNonUpdatedMediaCollectionMaxPercent = 0;
 
@@ -482,9 +493,9 @@ self.onmessage = async ({
                                     (typeof media?.format !== "string" || !excludedFormats[media?.format?.trim?.()?.toLowerCase?.()]) 
                                     && !media?.genres?.some?.(genre => genre?.trim?.()?.toLowerCase?.() === "hentai")
                                 ) {
-                                    if (excludedEntries?.hasOwnProperty?.(currentId)) {
-                                        delete excludedEntries[currentId];
-                                        shouldUpdateExcludedEntries = true
+                                    if (excludedMediaIds?.hasOwnProperty?.(currentId)) {
+                                        delete excludedMediaIds[currentId];
+                                        shouldUpdateExcludedMediaIds = true
                                     }
                                     let savedMedia = mediaEntries?.[currentId];
                                     if (isJsonObject(savedMedia)) {
@@ -507,8 +518,8 @@ self.onmessage = async ({
                                         delete mediaEntries[currentId];
                                         shouldUpdateMediaEntries = true
                                     }
-                                    excludedEntries[currentId] = 1;
-                                    shouldUpdateExcludedEntries = true
+                                    excludedMediaIds[currentId] = 1;
+                                    shouldUpdateExcludedMediaIds = true
                                 }
                             }
                         }
@@ -531,21 +542,21 @@ self.onmessage = async ({
                                     }, 17)
                                 }
                             }
-                            const collectionToPut = {}
+                            const recordsToSet = {}
                             if (shouldUpdateMediaEntries) {
-                                collectionToPut.shouldProcessRecommendedEntries = true
-                                collectionToPut.mediaEntries = mediaEntries
+                                recordsToSet.shouldProcessRecommendedEntries = true
+                                recordsToSet.mediaEntries = mediaEntries
                             }
-                            if (shouldUpdateExcludedEntries) {
-                                collectionToPut.excludedEntries = excludedEntries
+                            if (shouldUpdateExcludedMediaIds) {
+                                recordsToSet.excludedMediaIds = excludedMediaIds
                             }
-                            if (!jsonIsEmpty(collectionToPut)) {
-                                await saveJSONCollection(collectionToPut)
+                            if (!jsonIsEmpty(recordsToSet)) {
+                                await setIDBRecords(recordsToSet)
                                 if (shouldUpdateMediaEntries) {
                                     shouldUpdateMediaEntries = false
                                 }
-                                if (shouldUpdateExcludedEntries) {
-                                    shouldUpdateExcludedEntries = false
+                                if (shouldUpdateExcludedMediaIds) {
+                                    shouldUpdateExcludedMediaIds = false
                                 }
                             }
                         }
@@ -573,24 +584,24 @@ self.onmessage = async ({
                     } else {
                         clearTimeout(isShowingProgressTimeout);
                         isShowingProgress = false;
-                        const collectionToPut = {}
+                        const recordsToSet = {}
                         if (shouldUpdateMediaEntries) {
-                            collectionToPut.shouldProcessRecommendedEntries = true
-                            collectionToPut.mediaEntries = mediaEntries
+                            recordsToSet.shouldProcessRecommendedEntries = true
+                            recordsToSet.mediaEntries = mediaEntries
                         }
-                        if (shouldUpdateExcludedEntries) {
-                            collectionToPut.excludedEntries = excludedEntries
+                        if (shouldUpdateExcludedMediaIds) {
+                            recordsToSet.excludedMediaIds = excludedMediaIds
                         }
-                        if (!jsonIsEmpty(collectionToPut)) {
-                            await saveJSONCollection(collectionToPut)
+                        if (!jsonIsEmpty(recordsToSet)) {
+                            await setIDBRecords(recordsToSet)
                             if (shouldUpdateMediaEntries) {
                                 self.postMessage({
                                     updateRecommendationList: true
                                 });
                                 shouldUpdateMediaEntries = false
                             }
-                            if (shouldUpdateExcludedEntries) {
-                                shouldUpdateExcludedEntries = false
+                            if (shouldUpdateExcludedMediaIds) {
+                                shouldUpdateExcludedMediaIds = false
                             }
                         }
                         if (nonUpdatedMediaIDsCollection.length > 0) {
@@ -758,9 +769,9 @@ self.onmessage = async ({
                                             }
                                         })
                                     }
-                                    if (excludedEntries?.hasOwnProperty?.(currentId)) {
-                                        delete excludedEntries[currentId];
-                                        shouldUpdateExcludedEntries = true
+                                    if (excludedMediaIds?.hasOwnProperty?.(currentId)) {
+                                        delete excludedMediaIds[currentId];
+                                        shouldUpdateExcludedMediaIds = true
                                     }
                                     let savedMedia = mediaEntries?.[currentId];
                                     if (isJsonObject(savedMedia)) {
@@ -809,8 +820,8 @@ self.onmessage = async ({
                                         delete mediaEntries[currentId];
                                         shouldUpdateMediaEntries = true
                                     }
-                                    excludedEntries[currentId] = 1;
-                                    shouldUpdateExcludedEntries = true
+                                    excludedMediaIds[currentId] = 1;
+                                    shouldUpdateExcludedMediaIds = true
                                 }
                             }
                         }
@@ -834,21 +845,21 @@ self.onmessage = async ({
                                     isShowingProgress = false
                                 }, 17)
                             }
-                            const collectionToPut = {}
+                            const recordsToSet = {}
                             if (shouldUpdateMediaEntries) {
-                                collectionToPut.shouldProcessRecommendedEntries = true
-                                collectionToPut.mediaEntries = mediaEntries
+                                recordsToSet.shouldProcessRecommendedEntries = true
+                                recordsToSet.mediaEntries = mediaEntries
                             }
-                            if (shouldUpdateExcludedEntries) {
-                                collectionToPut.excludedEntries = excludedEntries
+                            if (shouldUpdateExcludedMediaIds) {
+                                recordsToSet.excludedMediaIds = excludedMediaIds
                             }
-                            if (!jsonIsEmpty(collectionToPut)) {
-                                await saveJSONCollection(collectionToPut)
+                            if (!jsonIsEmpty(recordsToSet)) {
+                                await setIDBRecords(recordsToSet)
                                 if (shouldUpdateMediaEntries) {
                                     shouldUpdateMediaEntries = false
                                 }
-                                if (shouldUpdateExcludedEntries) {
-                                    shouldUpdateExcludedEntries = false
+                                if (shouldUpdateExcludedMediaIds) {
+                                    shouldUpdateExcludedMediaIds = false
                                 }
                             }
                         }
@@ -886,16 +897,16 @@ self.onmessage = async ({
                     } else {
                         clearTimeout(isShowingProgressTimeout);
                         isShowingProgress = false;
-                        const collectionToPut = {}
+                        const recordsToSet = {}
                         if (shouldUpdateMediaEntries) {
-                            collectionToPut.shouldProcessRecommendedEntries = true
-                            collectionToPut.mediaEntries = mediaEntries
+                            recordsToSet.shouldProcessRecommendedEntries = true
+                            recordsToSet.mediaEntries = mediaEntries
                         }
-                        if (shouldUpdateExcludedEntries) {
-                            collectionToPut.excludedEntries = excludedEntries
+                        if (shouldUpdateExcludedMediaIds) {
+                            recordsToSet.excludedMediaIds = excludedMediaIds
                         }
                         if (newestUpdateAt && newestUpdateAt > mediaUpdateAt) {
-                            collectionToPut.mediaUpdateAt = newestUpdateAt
+                            recordsToSet.mediaUpdateAt = newestUpdateAt
                         }
                         if (newAddedEntriesCount > lastAddedEntriesCount || newEditedEntriesCount > lastEditedEntriesCount) {
                             self.postMessage({
@@ -905,17 +916,17 @@ self.onmessage = async ({
                             lastAddedEntriesCount = newAddedEntriesCount;
                             lastEditedEntriesCount = newEditedEntriesCount
                         }
-                        collectionToPut.runnedAutoUpdateAt = (new Date).getTime();
-                        if (!jsonIsEmpty(collectionToPut)) {
-                            await saveJSONCollection(collectionToPut)
+                        recordsToSet.runnedAutoUpdateAt = (new Date).getTime();
+                        if (!jsonIsEmpty(recordsToSet)) {
+                            await setIDBRecords(recordsToSet)
                             if (shouldUpdateMediaEntries) {
                                 self.postMessage({
                                     updateRecommendationList: true
                                 });
                                 shouldUpdateMediaEntries = false
                             }
-                            if (shouldUpdateExcludedEntries) {
-                                shouldUpdateExcludedEntries = false
+                            if (shouldUpdateExcludedMediaIds) {
+                                shouldUpdateExcludedMediaIds = false
                             }
                         }
                         self.postMessage({
@@ -978,7 +989,7 @@ self.onmessage = async ({
             }
         }
     }
-    // async function updateAllEntries(mediaEntries, excludedEntries, mediaUpdateAt) {
+    // async function updateAllEntries(mediaEntries, excludedMediaIds, mediaUpdateAt) {
     //     let oldestMediaUpdateAt;
     //     let recursingOldestUpdateAt, newestUpdateAt, largestDif;
     //     self.postMessage({
@@ -1071,7 +1082,7 @@ self.onmessage = async ({
     //         })
     //     }
     //     let hasFoundLessOrEqualToOldestUpdateAt = false;
-    //     let shouldUpdateMediaEntries, shouldUpdateExcludedEntries;
+    //     let shouldUpdateMediaEntries, shouldUpdateExcludedMediaIds;
     //     let percentage = 0;
 
     //     function recallUNRE(page) {
@@ -1178,9 +1189,9 @@ self.onmessage = async ({
     //                                         }
     //                                     })
     //                                 }
-    //                                 if (excludedEntries?.hasOwnProperty?.(currentId)) {
-    //                                     delete excludedEntries[currentId];
-    //                                     shouldUpdateExcludedEntries = true
+    //                                 if (excludedMediaIds?.hasOwnProperty?.(currentId)) {
+    //                                     delete excludedMediaIds[currentId];
+    //                                     shouldUpdateExcludedMediaIds = true
     //                                 }
     //                                 let savedMedia = mediaEntries?.[currentId];
     //                                 if (isJsonObject(savedMedia)) {
@@ -1229,8 +1240,8 @@ self.onmessage = async ({
     //                                     delete mediaEntries[currentId];
     //                                     shouldUpdateMediaEntries = true
     //                                 }
-    //                                 excludedEntries[currentId] = 1;
-    //                                 shouldUpdateExcludedEntries = true
+    //                                 excludedMediaIds[currentId] = 1;
+    //                                 shouldUpdateExcludedMediaIds = true
     //                             }
     //                         }
     //                     }
@@ -1253,21 +1264,21 @@ self.onmessage = async ({
     //                                 isShowingProgress = false
     //                             }, 17)
     //                         }
-    //                         const collectionToPut = {}
+    //                         const recordsToSet = {}
     //                         if (shouldUpdateMediaEntries) {
-    //                             collectionToPut.shouldProcessRecommendedEntries = true
-    //                             collectionToPut.mediaEntries = mediaEntries
+    //                             recordsToSet.shouldProcessRecommendedEntries = true
+    //                             recordsToSet.mediaEntries = mediaEntries
     //                         }
-    //                         if (shouldUpdateExcludedEntries) {
-    //                             collectionToPut.excludedEntries = excludedEntries
+    //                         if (shouldUpdateExcludedMediaIds) {
+    //                             recordsToSet.excludedMediaIds = excludedMediaIds
     //                         }
-    //                         if (!jsonIsEmpty(collectionToPut)) {
-    //                             await saveJSONCollection(collectionToPut)
+    //                         if (!jsonIsEmpty(recordsToSet)) {
+    //                             await setIDBRecords(recordsToSet)
     //                             if (shouldUpdateMediaEntries) {
     //                                 shouldUpdateMediaEntries = false
     //                             }
-    //                             if (shouldUpdateExcludedEntries) {
-    //                                 shouldUpdateExcludedEntries = false
+    //                             if (shouldUpdateExcludedMediaIds) {
+    //                                 shouldUpdateExcludedMediaIds = false
     //                             }
     //                         }
     //                     }
@@ -1301,30 +1312,30 @@ self.onmessage = async ({
     //                 } else {
     //                     clearTimeout(isShowingProgressTimeout);
     //                     isShowingProgress = false;
-    //                     const collectionToPut = {}
+    //                     const recordsToSet = {}
     //                     if (shouldUpdateMediaEntries) {
     //                         self.postMessage({
     //                             status: "100% Updating Entries"
     //                         });
-    //                         collectionToPut.shouldProcessRecommendedEntries = true
-    //                         collectionToPut.mediaEntries = mediaEntries
+    //                         recordsToSet.shouldProcessRecommendedEntries = true
+    //                         recordsToSet.mediaEntries = mediaEntries
     //                     }
-    //                     if (shouldUpdateExcludedEntries) {
-    //                         collectionToPut.excludedEntries = excludedEntries
+    //                     if (shouldUpdateExcludedMediaIds) {
+    //                         recordsToSet.excludedMediaIds = excludedMediaIds
     //                     }
     //                     if (newestUpdateAt && newestUpdateAt > mediaUpdateAt) {
-    //                         collectionToPut.mediaUpdateAt = newestUpdateAt
+    //                         recordsToSet.mediaUpdateAt = newestUpdateAt
     //                     }
-    //                     if (!jsonIsEmpty(collectionToPut)) {
-    //                         await saveJSONCollection(collectionToPut)
+    //                     if (!jsonIsEmpty(recordsToSet)) {
+    //                         await setIDBRecords(recordsToSet)
     //                         if (shouldUpdateMediaEntries) {
     //                             self.postMessage({
     //                                 updateRecommendationList: true
     //                             });
     //                             shouldUpdateMediaEntries = false
     //                         }
-    //                         if (shouldUpdateExcludedEntries) {
-    //                             shouldUpdateExcludedEntries = false
+    //                         if (shouldUpdateExcludedMediaIds) {
+    //                             shouldUpdateExcludedMediaIds = false
     //                         }
     //                     }
     //                     if (newAddedEntriesCount > lastAddedEntriesCount || newEditedEntriesCount > lastEditedEntriesCount) {
@@ -1380,43 +1391,124 @@ self.onmessage = async ({
     //     recallGOUD()
     // }
 };
-function IDBinit() {
-    return new Promise((resolve) => {
-        let request = indexedDB.open(
-            "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
-            1
-        );
-        request.onsuccess = (event) => {
-            db = event.target.result;
-            resolve()
-        };
-        request.onupgradeneeded = (event) => {
-            db = event.target.result;
-            db.createObjectStore("others");
-            event.target.transaction.oncomplete = () => {
-                resolve();
+function IDBInit() {
+    return new Promise((resolve, reject) => {
+        try {
+            const request = indexedDB.open(
+                "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
+                2
+            );
+            request.onsuccess = ({ target }) => {
+                db = target.result;
+                resolve()
+            };
+            request.onupgradeneeded = ({ target }) => {
+                try {
+                    const { result, transaction } = target
+                    db = result;
+                    const stores = [
+                        // All Media
+                        "mediaEntries", "excludedMediaIds", "mediaUpdateAt",
+                        // Media Options
+                        "mediaOptions", "orderedMediaOptions",
+                        // Tag Category and Descriptions
+                        "tagInfo", "tagInfoUpdateAt",
+                        // User Data From AniList
+                        "username", "userMediaEntries", "userMediaUpdateAt",
+                        // All Recommended Media
+                        "recommendedMediaEntries",
+                        // User Data In App
+                        "algorithmFilters", "mediaCautions", "hiddenMediaEntries",
+                        "categories", "selectedCategory",
+                        // User Configs In App
+                        "autoPlay", "gridFullView", "showRateLimit", "showStatus",
+                        "autoUpdate", "autoExport",
+                        "runnedAutoUpdateAt", "runnedAutoExportAt",
+                        "exportPathIsAvailable",
+                        // User Configs In App
+                        "shouldManageMedia", "shouldProcessRecommendedEntries",
+                        // Other Info / Flags
+                        "nearestMediaReleaseAiringAt",
+                        "recommendationError",
+                        "visited",
+                        "others",
+                    ]
+                    for (const store of stores) {
+                        db.createObjectStore(store);
+                    }
+                    transaction.oncomplete = () => {
+                        resolve();
+                    }
+                } catch (ex) {
+                    console.error(ex);
+                    reject(ex);
+                    transaction.abort();
+                }
             }
+            request.onerror = (ex) => {
+                console.error(ex);
+                reject(ex);
+            };
+        } catch (ex) {
+            console.error(ex);
+            reject(ex);
         }
-        request.onerror = (error) => {
-            console.error(error);
-        };
     })
 }
-function retrieveJSON(name) {
+function setIDBRecords(records) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const transaction = db.transaction(Object.keys(records), "readwrite");
+            for (const key in records) {
+                const store = transaction.objectStore(key);
+                let value = records[key];
+                let put;
+                if (value instanceof Blob) {
+                    value = await new Response(
+                        value
+                        .stream()
+                        .pipeThrough(new CompressionStream("gzip"))
+                    ).blob()
+                    put = store.put(value, key);
+                } else if (isJsonObject(value) || value instanceof Array) {
+                    value = await new Response(
+                        new Blob([JSON.stringify(value)])
+                        .stream()
+                        .pipeThrough(new CompressionStream("gzip"))
+                    ).blob()
+                    put = store.put(value, key);
+                } else {
+                    put = store.put(value, key);
+                }
+                put.onerror = (ex) => {
+                    console.error(ex);
+                    reject(ex);
+                    transaction.abort();
+                };
+            }
+            transaction.oncomplete = () => resolve()
+        } catch (ex) {
+            console.error(ex);
+            reject(ex);
+        }
+    });
+}
+function getIDBData(key) {
     return new Promise((resolve) => {
         try {
-            let get = db
-                .transaction("others", "readonly")
-                .objectStore("others")
-                .get(name);
-            get.onsuccess = () => {
-                let result = get.result;
-                if (result instanceof Blob) {
-                    result = JSON.parse((new FileReaderSync()).readAsText(result));
-                } else if (result instanceof ArrayBuffer) {
-                    result = JSON.parse((new TextDecoder()).decode(result));
+            const get = db.transaction(key, "readonly")
+                .objectStore(key)
+                .get(key)
+            get.onsuccess = async () => {
+                let value = get.result;
+                if (value instanceof Blob) {
+                    value = await new Response(
+                        value
+                        .stream()
+                        .pipeThrough(new CompressionStream("gzip"))
+                    ).json()
                 }
-                resolve(result);
+                resolve(value);
             };
             get.onerror = (ex) => {
                 console.error(ex);
@@ -1428,59 +1520,39 @@ function retrieveJSON(name) {
         }
     });
 }
-function saveJSONCollection(collection) {
-    return new Promise((resolve, reject) => {
+function getIDBRecords(recordKeys) {
+    return new Promise(async (resolve) => {
         try {
-            let transaction = db.transaction("others", "readwrite");
-            let store = transaction.objectStore("others");
-            let put;
-            transaction.oncomplete = () => {
-                resolve();
-            }
-            for (let key in collection) {
-                let data = collection[key];
-                let blob
-                if (data instanceof Blob) {
-                    blob = data
-                    put = store.put(blob, key);
-                } else if (isJsonObject(data) || data instanceof Array) {
-                    blob = new Blob([JSON.stringify(data)]);
-                    put = store.put(blob, key);
-                } else {
-                    put = store.put(data, key);
-                }
-                put.onerror = (ex) => {
-                    transaction.oncomplete = undefined;
-                    if (blob instanceof Blob) {
-                        try {
-                            transaction.oncomplete = () => {
-                                resolve();
-                            }
-                            put = store.put((new FileReaderSync()).readAsArrayBuffer(blob), key);
-                            put.onerror = (ex) => {
+            const transaction = db.transaction(recordKeys, "readonly")
+            resolve(Object.fromEntries(
+                await Promise.all(
+                    recordKeys.map((key) => {
+                        return new Promise((resolve) => {
+                            const get = transaction
+                                .objectStore(key)
+                                .get(key)
+                            get.onsuccess = async () => {
+                                let value = get.result;
+                                if (value instanceof Blob) {
+                                    value = await new Response(
+                                        value
+                                        .stream()
+                                        .pipeThrough(new CompressionStream("gzip"))
+                                    ).json()
+                                }
+                                resolve([key, value]);
+                            };
+                            get.onerror = (ex) => {
                                 console.error(ex);
-                                reject(ex);
-                            }
-                            try {
-                                transaction?.commit?.();
-                            } catch {}
-                        } catch (ex2) {
-                            console.error(ex);
-                            console.error(ex2);
-                            reject(ex2);
-                        }
-                    } else {
-                        console.error(ex);
-                        reject(ex);
-                    }
-                };
-            }
-            try {
-                transaction?.commit?.();
-            } catch {}
+                                resolve([key]);
+                            };
+                        })
+                    })
+                )
+            ))
         } catch (ex) {
             console.error(ex);
-            reject(ex);
+            resolve();
         }
     });
 }

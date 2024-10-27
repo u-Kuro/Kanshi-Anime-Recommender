@@ -48,7 +48,7 @@ async function executeMessage() {
     const data = messageQueue.shift();
     const postId = data?.postId
     try {
-        if (!db) await IDBinit()
+        if (!db) await IDBInit()
 
         if (hasOwnProperty.call(data, "loadMore")) {
 
@@ -197,7 +197,7 @@ async function executeMessage() {
             }
         } else if (hasOwnProperty.call(data, "loadAll")) {
 
-            categories = await retrieveJSON("categories")
+            categories = await getIDBData("categories")
             if (!isJsonObject(categories) || jsonIsEmpty(categories)) {
                 self.postMessage({
                     loadAll: true,
@@ -208,8 +208,13 @@ async function executeMessage() {
             } else {
                 let selectedCategory = data.selectedCategory
                 
-                hiddenMediaEntries = await retrieveJSON("hiddenMediaEntries") || {}
-                mediaCautions = await retrieveJSON("mediaCautions") || []
+                const {
+                    mediaCautions = {},
+                    hiddenMediaEntries = {}
+                } = await getIDBRecords([
+                    "mediaCautions",
+                    "hiddenMediaEntries"
+                ])
 
                 const categoriesKeys = Object.keys(categories)
                 removeDeletedCategories(categories, categoriesKeys)
@@ -271,7 +276,7 @@ async function executeMessage() {
                     }
                 }
 
-                recommendedMediaEntries = await retrieveJSON("recommendedMediaEntries")
+                recommendedMediaEntries = await getIDBData("recommendedMediaEntries")
             }
         } else {
 
@@ -284,7 +289,7 @@ async function executeMessage() {
 
                 if (shouldUpdateRecommendedMediaList) {
                     promises.push((async () => {
-                        recommendedMediaEntries = await retrieveJSON("recommendedMediaEntries") || recommendedMediaEntries
+                        recommendedMediaEntries = await getIDBData("recommendedMediaEntries") || recommendedMediaEntries
                         shouldUpdateRecommendedMediaList = false
                     })())
                 }
@@ -298,11 +303,11 @@ async function executeMessage() {
                                 hiddenMediaEntries = userData.hiddenMediaEntries || {}
                                 removeDeletedCategories(categories)
                             }
-                        })({
-                            categories: await retrieveJSON("categories"),
-                            mediaCautions: await retrieveJSON("mediaCautions"),
-                            hiddenMediaEntries: await retrieveJSON("hiddenMediaEntries")
-                        });
+                        })(await getIDBRecords([
+                            "categories",
+                            "mediaCautions",
+                            "hiddenMediaEntries"
+                        ]));
 
                         if (mediaCautions instanceof Array) {
                             semiContentCautions = {
@@ -351,11 +356,12 @@ async function executeMessage() {
                                 hiddenMediaEntries = userData.hiddenMediaEntries || {}
                                 removeDeletedCategories(categories)
                             }
-                        })({
-                            categories: await retrieveJSON("categories"),
-                            mediaCautions: await retrieveJSON("mediaCautions"),
-                            hiddenMediaEntries: await retrieveJSON("hiddenMediaEntries")
-                        });
+                        })(await getIDBRecords([
+                            "categories",
+                            "mediaCautions",
+                            "hiddenMediaEntries"
+                        ]));
+
                         shouldUpdateUserData = false
                     })())
                 }
@@ -942,48 +948,127 @@ function formatNumber(number, dec = 2) {
         return null;
     }
 };
-function IDBinit() {
-    return new Promise((resolve) => {
-        let request = indexedDB.open(
-            "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
-            1
-        );
-        request.onsuccess = (event) => {
-            db = event.target.result;
-            resolve()
-        };
-        request.onupgradeneeded = (event) => {
-            db = event.target.result;
-            db.createObjectStore("others");
-            event.target.transaction.oncomplete = () => {
-                resolve();
+function IDBInit() {
+    return new Promise((resolve, reject) => {
+        try {
+            const request = indexedDB.open(
+                "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
+                2
+            );
+            request.onsuccess = ({ target }) => {
+                db = target.result;
+                resolve()
+            };
+            request.onupgradeneeded = ({ target }) => {
+                try {
+                    const { result, transaction } = target
+                    db = result;
+                    const stores = [
+                        // All Media
+                        "mediaEntries", "excludedMediaIds", "mediaUpdateAt",
+                        // Media Options
+                        "mediaOptions", "orderedMediaOptions",
+                        // Tag Category and Descriptions
+                        "tagInfo", "tagInfoUpdateAt",
+                        // User Data From AniList
+                        "username", "userMediaEntries", "userMediaUpdateAt",
+                        // All Recommended Media
+                        "recommendedMediaEntries",
+                        // User Data In App
+                        "algorithmFilters", "mediaCautions", "hiddenMediaEntries",
+                        "categories", "selectedCategory",
+                        // User Configs In App
+                        "autoPlay", "gridFullView", "showRateLimit", "showStatus",
+                        "autoUpdate", "autoExport",
+                        "runnedAutoUpdateAt", "runnedAutoExportAt",
+                        "exportPathIsAvailable",
+                        // User Configs In App
+                        "shouldManageMedia", "shouldProcessRecommendedEntries",
+                        // Other Info / Flags
+                        "nearestMediaReleaseAiringAt",
+                        "recommendationError",
+                        "visited",
+                        "others",
+                    ]
+                    for (const store of stores) {
+                        db.createObjectStore(store);
+                    }
+                    transaction.oncomplete = () => {
+                        resolve();
+                    }
+                } catch (ex) {
+                    console.error(ex);
+                    reject(ex);
+                    transaction.abort();
+                }
             }
+            request.onerror = (ex) => {
+                console.error(ex);
+                reject(ex);
+            };
+        } catch (ex) {
+            console.error(ex);
+            reject(ex);
         }
-        request.onerror = (error) => {
-            console.error(error);
-        };
     })
 }
-function retrieveJSON(name) {
+function getIDBData(key) {
     return new Promise((resolve) => {
         try {
-            let get = db
-                .transaction("others", "readonly")
-                .objectStore("others")
-                .get(name);
-            get.onsuccess = () => {
-                let result = get.result;
-                if (result instanceof Blob) {
-                    result = JSON.parse((new FileReaderSync()).readAsText(result));
-                } else if (result instanceof ArrayBuffer) {
-                    result = JSON.parse((new TextDecoder()).decode(result));
+            const get = db.transaction(key, "readonly")
+                .objectStore(key)
+                .get(key)
+            get.onsuccess = async () => {
+                let value = get.result;
+                if (value instanceof Blob) {
+                    value = await new Response(
+                        value
+                        .stream()
+                        .pipeThrough(new CompressionStream("gzip"))
+                    ).json()
                 }
-                resolve(result);
+                resolve(value);
             };
             get.onerror = (ex) => {
                 console.error(ex);
                 resolve();
             };
+        } catch (ex) {
+            console.error(ex);
+            resolve();
+        }
+    });
+}
+function getIDBRecords(recordKeys) {
+    return new Promise(async (resolve) => {
+        try {
+            const transaction = db.transaction(recordKeys, "readonly")
+            resolve(Object.fromEntries(
+                await Promise.all(
+                    recordKeys.map((key) => {
+                        return new Promise((resolve) => {
+                            const get = transaction
+                                .objectStore(key)
+                                .get(key)
+                            get.onsuccess = async () => {
+                                let value = get.result;
+                                if (value instanceof Blob) {
+                                    value = await new Response(
+                                        value
+                                        .stream()
+                                        .pipeThrough(new CompressionStream("gzip"))
+                                    ).json()
+                                }
+                                resolve([key, value]);
+                            };
+                            get.onerror = (ex) => {
+                                console.error(ex);
+                                resolve([key]);
+                            };
+                        })
+                    })
+                )
+            ))
         } catch (ex) {
             console.error(ex);
             resolve();

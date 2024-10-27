@@ -25,18 +25,18 @@ self.onmessage = async ({ data }) => {
     const { 
         username,
         categories,
-        excludedEntries,
+        excludedMediaIds,
         mediaEntries
     } = await getIDBDataAsBlob([
         "username",
         "categories",
-        "excludedEntries",
+        "excludedMediaIds",
         "mediaEntries"
     ])
 
     if (
         (!isJsonObject(categories) || jsonIsEmpty(categories))
-        || (!isJsonObject(excludedEntries) || jsonIsEmpty(excludedEntries))
+        || (!isJsonObject(excludedMediaIds) || jsonIsEmpty(excludedMediaIds))
         || (!isJsonObject(mediaEntries) || jsonIsEmpty(mediaEntries))
     ) {
         self.postMessage({ missingData: true })
@@ -55,7 +55,7 @@ self.onmessage = async ({ data }) => {
     ])
     backUpData.username = username
     backUpData.categories = categories
-    backUpData.excludedEntries = excludedEntries
+    backUpData.excludedMediaIds = excludedMediaIds
     backUpData.mediaEntries = mediaEntries
 
     self.postMessage({ progress: 0 })
@@ -104,7 +104,7 @@ function IDBInit() {
         try {
             const request = indexedDB.open(
                 "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
-                1
+                2
             );
             request.onsuccess = ({ target }) => {
                 db = target.result;
@@ -116,7 +116,7 @@ function IDBInit() {
                     db = result;
                     const stores = [
                         // All Media
-                        "mediaEntries", "excludedEntries", "mediaUpdateAt",
+                        "mediaEntries", "excludedMediaIds", "mediaUpdateAt",
                         // Media Options
                         "mediaOptions", "orderedMediaOptions",
                         // Tag Category and Descriptions
@@ -166,8 +166,8 @@ function IDBInit() {
 function setIDBData(key, value) {
     return new Promise((resolve, reject) => {
         try {
-            const put = db
-                .transaction(key, "readwrite")
+            const transaction = db.transaction(key, "readwrite")
+            const put = transaction
                 .objectStore(key)
                 .put(value, key);
             put.onerror = (ex) => {
@@ -179,7 +179,6 @@ function setIDBData(key, value) {
         } catch (ex) {
             console.error(ex);
             reject(ex);
-            transaction.abort();
         }
     });
 }

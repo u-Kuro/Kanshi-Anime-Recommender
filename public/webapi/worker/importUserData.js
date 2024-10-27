@@ -12,7 +12,7 @@ self.addEventListener("unhandledrejection", (event) => {
 
 self.onmessage = async ({ data }) => {
     if (!db) {
-        await IDBinit();
+        await IDBInit();
     }
     self.postMessage({ status: "Importing User Data" })
     const reader = new FileReader()
@@ -39,26 +39,26 @@ self.onmessage = async ({ data }) => {
                 return
             }
             self.postMessage({ status: "Updating Existing Data" })
-            const collectionToPut = {}
+            const recordsToSet = {}
 
             // const username = fileContent.username
             // const userMediaEntries = fileContent.userMediaEntries
             // const shouldImportUserEntries = username && typeof username == "string" && userMediaEntries instanceof Array
             // if (shouldImportUserEntries) {
             //     self.postMessage({ importedUsername: username })
-            //     collectionToPut.username = username
-            //     collectionToPut.userMediaEntries = userMediaEntries
+            //     recordsToSet.username = username
+            //     recordsToSet.userMediaEntries = userMediaEntries
             //     // TODO check if updateAt is number and finite
-            //     collectionToPut.userMediaUpdateAt = fileContent.userMediaUpdateAt
+            //     recordsToSet.userMediaUpdateAt = fileContent.userMediaUpdateAt
             // }
 
             // self.postMessage({ progress: 76.10993657505286 })
 
             // const tagInfo = fileContent.tagInfo
             // if (isJsonObject(tagInfo) && !jsonIsEmpty(tagInfo)) {
-            //     collectionToPut.tagInfo = tagInfo
+            //     recordsToSet.tagInfo = tagInfo
             //     // TODO check if updateAt is number and finite
-            //     collectionToPut.tagInfoUpdateAt = fileContent.tagInfoUpdateAt
+            //     recordsToSet.tagInfoUpdateAt = fileContent.tagInfoUpdateAt
             // }
 
             // self.postMessage({ progress: 81.60676532769556 })
@@ -66,7 +66,7 @@ self.onmessage = async ({ data }) => {
             // const algorithmFilters = fileContent.algorithmFilters
             // if (algorithmFilters instanceof Array && algorithmFilters.length > 0) {
             //     self.postMessage({ algorithmFilters })
-            //     collectionToPut.algorithmFilters = algorithmFilters
+            //     recordsToSet.algorithmFilters = algorithmFilters
             // }
 
             // self.postMessage({ progress: 82.87526427061312 })
@@ -90,16 +90,16 @@ self.onmessage = async ({ data }) => {
             // ) {
             //     self.postMessage({ mediaCautions })
             //     self.postMessage({ importedHiddenMediaEntries: hiddenMediaEntries })
-            //     collectionToPut.hiddenMediaEntries = hiddenEntries
-            //     collectionToPut.mediaCautions = mediaCautions
-            //     collectionToPut.categories = categories
+            //     recordsToSet.hiddenMediaEntries = hiddenEntries
+            //     recordsToSet.mediaCautions = mediaCautions
+            //     recordsToSet.categories = categories
             // }
 
             // self.postMessage({ progress: 94.08033826638479 })
 
             // // Check if saved entries is lower
             // const mediaEntries = fileContent.mediaEntries
-            // const excludedEntries = fileContent.excludedEntries
+            // const excludedMediaIds = fileContent.excludedMediaIds
 
             // let mediaUpdateAt = fileContent.mediaUpdateAt || 1706674120
             // let currentMediaUpdateAt = await retrieveJSON("mediaUpdateAt") || 1706674120
@@ -109,14 +109,14 @@ self.onmessage = async ({ data }) => {
             //     || Object.keys((await retrieveJSON("mediaEntries")) || {}).length < Object.keys(mediaEntries || {}).length
 
             // if (shouldImportAniEntries) {
-            //     collectionToPut.mediaEntries = mediaEntries
-            //     collectionToPut.excludedEntries = excludedEntries
-            //     collectionToPut.mediaUpdateAt = mediaUpdateAt
+            //     recordsToSet.mediaEntries = mediaEntries
+            //     recordsToSet.excludedMediaIds = excludedMediaIds
+            //     recordsToSet.mediaUpdateAt = mediaUpdateAt
             // }
 
-            if (!jsonIsEmpty(collectionToPut)) {
-                collectionToPut.shouldProcessRecommendedEntries = true
-                await saveJSONCollection(collectionToPut);
+            if (!jsonIsEmpty(recordsToSet)) {
+                recordsToSet.shouldProcessRecommendedEntries = true
+                await saveJSONCollection(recordsToSet);
                 self.postMessage({ status: "Data has been Imported" })
                 self.postMessage({ status: null })
                 self.postMessage({ progress: 100 })
@@ -157,139 +157,160 @@ self.onmessage = async ({ data }) => {
         reader.abort();
     }
     if (data.importedFile instanceof File || data.importedFile instanceof Blob) {
-        const blobs = await decompressBlobs(data.importedFile)
+        try {
+            const blobs = await decompressBlobs(data.importedFile)
 
-        const collectionToPut = {}
+            const recordsToSet = {}
 
-        do {
             if (blobs.username && blobs.userMediaEntries) {
                 blobs.username = await decompressBlobToJSON(blobs.username)
-                if (typeof blobs.username !== "string") break
+                if (typeof blobs.username === "string" || blobs.username !== "") {
 
-                blobs.userMediaUpdateAt = await decompressBlobToJSON(blobs.userMediaUpdateAt)
-                if (!isValidDateTime(blobs.userMediaUpdateAt)) blobs.userMediaUpdateAt = 1706674120
+                    blobs.userMediaUpdateAt = await decompressBlobToJSON(blobs.userMediaUpdateAt)
+                    if (!isValidDateTime(blobs.userMediaUpdateAt)) blobs.userMediaUpdateAt = 0
 
-                collectionToPut.username = blobs.username
-                collectionToPut.userMediaEntries = blobs.userMediaUpdateAt
-                collectionToPut.userMediaUpdateAt = blobs.userMediaUpdateAt
+                    recordsToSet.username = blobs.username
+                    recordsToSet.userMediaEntries = blobs.userMediaUpdateAt
+                    recordsToSet.userMediaUpdateAt = blobs.userMediaUpdateAt
 
-                self.postMessage({ username: blobs.username })
+                    self.postMessage({ username: blobs.username })
+                }
             }
-        } while (false)
-        do {
-            if (blobs.tagInfo) {
-                blobs.tagInfoUpdateAt = await decompressBlobToJSON(blobs.tagInfoUpdateAt)
-                if (!isValidDateTime(blobs.tagInfoUpdateAt)) blobs.tagInfoUpdateAt = 0
                 
-                collectionToPut.tagInfo = blobs.tagInfo
-                collectionToPut.tagInfoUpdateAt = blobs.tagInfoUpdateAt
-            }
-        } while (false)
+            if (blobs.tagInfo) {    
+                const tagInfo = await decompressBlobToJSON(blobs.tagInfo)          
+                if (isJsonObject(tagInfo) && !jsonIsEmpty(tagInfo)) {
+                    blobs.tagInfoUpdateAt = await decompressBlobToJSON(blobs.tagInfoUpdateAt)
+                    if (!isValidDateTime(blobs.tagInfoUpdateAt)) blobs.tagInfoUpdateAt = 0
 
-        if (blobs.algorithmFilters) {
-            const algorithmFilters = await decompressBlobToJSON(blobs.algorithmFilters)
-            if (algorithmFilters instanceof Array) {
-                collectionToPut.algorithmFilters = blobs.algorithmFilters
-                self.postMessage({ algorithmFilters })
-            }
-        }
+                    recordsToSet.tagInfo = blobs.tagInfo
+                    recordsToSet.tagInfoUpdateAt = blobs.tagInfoUpdateAt
 
-        do {
+                    self.postMessage({ tagInfo })
+                }
+            }
+
+            if (blobs.algorithmFilters) {
+                const algorithmFilters = await decompressBlobToJSON(blobs.algorithmFilters)
+                if (algorithmFilters instanceof Array && algorithmFilters.length > 0) {
+                    recordsToSet.algorithmFilters = blobs.algorithmFilters
+                    self.postMessage({ algorithmFilters })
+                }
+            }
+
             if (blobs.categories) {
                 const mediaCautions = await decompressBlobToJSON(blobs.mediaCautions)
-                if (mediaCautions instanceof Array) {
-                    
+                if (mediaCautions instanceof Array && mediaCautions.length > 0) {
+                    recordsToSet.mediaCautions = blobs.mediaCautions
+                    self.postMessage({ mediaCautions })
                 }
-                // && blobs.mediaCautions
-                // && blobs.hiddenMediaEntries
+                const hiddenMediaEntries = await decompressBlobToJSON(blobs.hiddenMediaEntries)
+                if (isJsonObject(hiddenMediaEntries) && !jsonIsEmpty(hiddenMediaEntries)) {
+                    recordsToSet.hiddenMediaEntries = blobs.hiddenMediaEntries
+                    self.postMessage({ hiddenMediaEntries })
+                }
+                recordsToSet.categories = blobs.categories
             }
-            // const hiddenMediaEntries = fileContent.hiddenMediaEntries
-            // const mediaCautions = fileContent.mediaCautions
-            // const categories = fileContent.categories
-            // let category
-            // for (const k in categories) {
-            //     category = categories[k]
-            //     break
-            // }
-            
-            // if (isJsonObject(hiddenMediaEntries)
-            //     && mediaCautions instanceof Array
-            //     && category?.mediaFilters instanceof Array
-            //     && category?.mediaList instanceof Array
-            //     && typeof category?.isHiddenList === "boolean"
-            //     && typeof category?.sortBy?.sortName === "string"
-            //     && typeof category.sortBy.sortType === "string"
-            // ) {
-            //     self.postMessage({ mediaCautions })
-            //     self.postMessage({ importedHiddenMediaEntries: hiddenMediaEntries })
-            //     collectionToPut.hiddenMediaEntries = hiddenEntries
-            //     collectionToPut.mediaCautions = mediaCautions
-            //     collectionToPut.categories = categories
-            // }
-        } while (false)
-        
 
-        for (const key in blobs) {
-            if (
-                key === "username"
-                || key === "mediaUpdateAt"
-                || key === "userMediaUpdateAt"
-                || key === "tagInfoUpdateAt"
-            ) {
-                blobs[key] = await decompressBlobToJSON(blobs[key])
+            if (blobs.mediaEntries && blobs.excludedMediaIds) {
+                blobs.mediaUpdateAt = await decompressBlobToJSON(blobs.mediaUpdateAt)
+                if (!isValidDateTime(blobs.mediaUpdateAt)) blobs.mediaUpdateAt = 1706674120
+
+                recordsToSet.excludedMediaIds = blobs.excludedMediaIds
+                recordsToSet.mediaEntries = blobs.mediaEntries
+                recordsToSet.mediaUpdateAt = blobs.mediaUpdateAt
             }
-            if (
-                key === "username"
-                || key === "mediaCautions"
-                || key === "algorithmFilters"
-                || key === "hiddenMediaEntries"
-            ) {
-                if (blobs[key] instanceof Blob) {
-                    self.postMessage({ [key]: await decompressBlobToJSON(blobs[key]) })
-                } else {
-                    self.postMessage({ [key]: blobs[key] })
+
+            if (!jsonIsEmpty(recordsToSet)) {
+                recordsToSet.shouldProcessRecommendedEntries = true
+                await setIDBRecords(recordsToSet);
+                self.postMessage({ status: "Data has been Imported" })
+                self.postMessage({ status: null })
+                self.postMessage({ progress: 100 })
+                self.postMessage({ message: "success" })
+            } else {
+                self.postMessage({ status: "Something went wrong" })
+                self.postMessage({ status: null })
+                self.postMessage({ progress: 100 })
+                self.postMessage({ error: "Something went wrong" })
+            }
+        } catch (reason) {
+            console.error(reason)
+            let error = reason?.stack || reason?.message
+            if (typeof error !== "string" || !error) {
+                error = "Failed to retrieve the data"
+            }
+            self.postMessage({ error })
+        }
+    } else {
+        self.postMessage({ error: "Invalid Backup File" })
+    }
+};
+function IDBInit() {
+    return new Promise((resolve, reject) => {
+        try {
+            const request = indexedDB.open(
+                "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
+                2
+            );
+            request.onsuccess = ({ target }) => {
+                db = target.result;
+                resolve()
+            };
+            request.onupgradeneeded = ({ target }) => {
+                try {
+                    const { result, transaction } = target
+                    db = result;
+                    const stores = [
+                        // All Media
+                        "mediaEntries", "excludedMediaIds", "mediaUpdateAt",
+                        // Media Options
+                        "mediaOptions", "orderedMediaOptions",
+                        // Tag Category and Descriptions
+                        "tagInfo", "tagInfoUpdateAt",
+                        // User Data From AniList
+                        "username", "userMediaEntries", "userMediaUpdateAt",
+                        // All Recommended Media
+                        "recommendedMediaEntries",
+                        // User Data In App
+                        "algorithmFilters", "mediaCautions", "hiddenMediaEntries",
+                        "categories", "selectedCategory",
+                        // User Configs In App
+                        "autoPlay", "gridFullView", "showRateLimit", "showStatus",
+                        "autoUpdate", "autoExport",
+                        "runnedAutoUpdateAt", "runnedAutoExportAt",
+                        "exportPathIsAvailable",
+                        // User Configs In App
+                        "shouldManageMedia", "shouldProcessRecommendedEntries",
+                        // Other Info / Flags
+                        "nearestMediaReleaseAiringAt",
+                        "recommendationError",
+                        "visited",
+                        "others",
+                    ]
+                    for (const store of stores) {
+                        db.createObjectStore(store);
+                    }
+                    transaction.oncomplete = () => {
+                        resolve();
+                    }
+                } catch (ex) {
+                    console.error(ex);
+                    reject(ex);
+                    transaction.abort();
                 }
             }
+            request.onerror = (ex) => {
+                console.error(ex);
+                reject(ex);
+            };
+        } catch (ex) {
+            console.error(ex);
+            reject(ex);
         }
-        blobs.username
-        blobs.categories
-        blobs.excludedEntries
-        blobs.mediaEntries
-        blobs.mediaUpdateAt
-        blobs.hiddenMediaEntries
-        blobs.algorithmFilters
-        blobs.mediaCautions
-        blobs.userMediaEntries
-        blobs.userMediaUpdateAt
-        blobs.tagInfo
-        blobs.tagInfoUpdateAt
-        return
-    }
-    self.postMessage({ error: "Invalid Backup File" })
-};
-function IDBinit() {
-    return new Promise((resolve) => {
-        let request = indexedDB.open(
-            "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
-            1
-        );
-        request.onsuccess = (event) => {
-            db = event.target.result;
-            resolve()
-        };
-        request.onupgradeneeded = (event) => {
-            db = event.target.result;
-            db.createObjectStore("others");
-            event.target.transaction.oncomplete = () => {
-                resolve();
-            }
-        }
-        request.onerror = (error) => {
-            console.error(error);
-        };
     })
 }
-const setIDBRecords = (records) => {
+function setIDBRecords(records) {
     return new Promise(async (resolve, reject) => {
         try {
             const transaction = db.transaction(Object.keys(records), "readwrite");
@@ -306,7 +327,6 @@ const setIDBRecords = (records) => {
         } catch (ex) {
             console.error(ex);
             reject(ex);
-            transaction.abort();
         }
     });
 }

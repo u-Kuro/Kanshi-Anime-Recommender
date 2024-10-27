@@ -19,7 +19,7 @@ self.onmessage = async ({ data }) => {
     try {
         self.postMessage({ status: "Updating Categories and List" })
 
-        if (!db) await IDBinit()
+        if (!db) await IDBInit()
 
         const {
             updateRecommendedMediaList,
@@ -40,28 +40,31 @@ self.onmessage = async ({ data }) => {
             updateRecommendedMediaList
         }
 
-        const collectionToPut = {
-            categories: await retrieveJSON("categories") || getDefaultCategories(),
-            mediaCautions: await retrieveJSON("categories") || getDefaulMediaCautions(),
-            hiddenMediaEntries: await retrieveJSON("hiddenEntries") || {}
-        }
+        const recordsToSet = getIDBRecords([
+            "categories",
+            "mediaCautions",
+            "hiddenEntries"
+        ])
+        recordsToSet.categories = recordsToSet.categories || getDefaultCategories()
+        recordsToSet.mediaCautions = recordsToSet.mediaCautions || getDefaulMediaCautions()
+        recordsToSet.hiddenMediaEntries = recordsToSet.hiddenMediaEntries || {}
 
         if (mediaCautions instanceof Array) {
             messageToPost.updateUserData = messageToPost.updateMediaCautions = shouldReloadAllCategories = true
-            collectionToPut.mediaCautions = mediaCautions
+            recordsToSet.mediaCautions = mediaCautions
         }
 
         if (!jsonIsEmpty(entriesToShow) || !jsonIsEmpty(entriesToHide)) {
             messageToPost.updateUserData = shouldReloadAllCategories = true
             if (entriesToShow["all"]) {
-                collectionToPut.hiddenMediaEntries = {}
+                recordsToSet.hiddenMediaEntries = {}
             } else {
                 for (let id in entriesToShow) {
-                    delete collectionToPut.hiddenMediaEntries[id]
+                    delete recordsToSet.hiddenMediaEntries[id]
                 }
     
                 for (let id in entriesToHide) {
-                    collectionToPut.hiddenMediaEntries[id] = true
+                    recordsToSet.hiddenMediaEntries[id] = true
                 }
             }
         }
@@ -75,10 +78,10 @@ self.onmessage = async ({ data }) => {
                     for (const categoryToAddKey in action.add) {
                         const categoryToAddFromKey = action.add[categoryToAddKey]
 
-                        const categoryToAddFrom = collectionToPut.categories[categoryToAddFromKey]
+                        const categoryToAddFrom = recordsToSet.categories[categoryToAddFromKey]
 
                         if (categoryToAddFrom != null) {
-                            collectionToPut.categories[categoryToAddKey] = JSON.parse(JSON.stringify(categoryToAddFrom))
+                            recordsToSet.categories[categoryToAddKey] = JSON.parse(JSON.stringify(categoryToAddFrom))
                             messageToPost.updatedCategories[categoryToAddKey] = true
                         }
                     }
@@ -86,11 +89,11 @@ self.onmessage = async ({ data }) => {
                     for (const newNameForCategory in action.rename) {                        
                         const categoryToBeRenamedKey = action.rename[newNameForCategory]
 
-                        const categoryToBeRenamed = collectionToPut.categories[categoryToBeRenamedKey]
+                        const categoryToBeRenamed = recordsToSet.categories[categoryToBeRenamedKey]
 
                         if (categoryToBeRenamed != null) {
-                            collectionToPut.categories[newNameForCategory] = JSON.parse(JSON.stringify(categoryToBeRenamed))
-                            delete collectionToPut.categories[categoryToBeRenamedKey]
+                            recordsToSet.categories[newNameForCategory] = JSON.parse(JSON.stringify(categoryToBeRenamed))
+                            delete recordsToSet.categories[categoryToBeRenamedKey]
 
                             messageToPost.updatedCategories[newNameForCategory] = true
                         }
@@ -102,7 +105,7 @@ self.onmessage = async ({ data }) => {
                     }
                 } else if (action?.delete) {
                     const categoryToDeleteKey = action.delete
-                    delete collectionToPut.categories[categoryToDeleteKey]
+                    delete recordsToSet.categories[categoryToDeleteKey]
                     delete mediaFilters[categoryToDeleteKey]
                 }
             }
@@ -110,13 +113,13 @@ self.onmessage = async ({ data }) => {
 
         if (shouldReloadAllCategories || !jsonIsEmpty(mediaFilters)) {
             messageToPost.updateUserData = true
-            recommendedMediaEntries = await retrieveJSON("recommendedMediaEntries")            
+            recommendedMediaEntries = await getIDBData("recommendedMediaEntries")
 
             if (recommendedMediaEntries != null) {
-                const categories = collectionToPut.categories
-                cautions = getContentCaution(collectionToPut.mediaCautions)
+                const categories = recordsToSet.categories
+                cautions = getContentCaution(recordsToSet.mediaCautions)
                 recommendedMediaEntriesArray = Object.values(recommendedMediaEntries)
-                hiddenMediaEntries = collectionToPut.hiddenMediaEntries
+                hiddenMediaEntries = recordsToSet.hiddenMediaEntries
 
                 if (shouldReloadAllCategories) {
                     const categoriesCount = Object.keys(categories||{}).length
@@ -126,7 +129,7 @@ self.onmessage = async ({ data }) => {
 
                         if (category != null) {
 
-                            collectionToPut.categories[categoryKey] = updateMediaList(
+                            recordsToSet.categories[categoryKey] = updateMediaList(
                                 mediaFilters?.[categoryKey]?.mediaFilters || category.mediaFilters,
                                 mediaFilters?.[categoryKey]?.sortBy || category.sortBy,
                                 Math.min(1, loadedCount / categoriesCount)
@@ -143,7 +146,7 @@ self.onmessage = async ({ data }) => {
 
                         if (category != null) {
 
-                            collectionToPut.categories[categoryKey] = updateMediaList(
+                            recordsToSet.categories[categoryKey] = updateMediaList(
                                 mediaFilter.mediaFilters || category.mediaFilters,
                                 mediaFilter.sortBy || category.sortBy,
                                 Math.min(1, loadedCount / categoriesCount)
@@ -156,13 +159,13 @@ self.onmessage = async ({ data }) => {
 
             self.postMessage({ progress: 85 })
 
-            collectionToPut.shouldManageMedia = false
-            await saveJSONCollection(collectionToPut)
+            recordsToSet.shouldManageMedia = false
+            await setIDBRecords(recordsToSet)
             
         } else if (messageToPost.updateUserData) {
             self.postMessage({ progress: 85 })
 
-            await saveJSONCollection(collectionToPut)
+            await setIDBRecords(recordsToSet)
         }
 
         self.postMessage({ progress: 95 })
@@ -1963,166 +1966,165 @@ function msToTime(duration, limit) {
         return ""
     }
 }
-function IDBinit() {
-    return new Promise((resolve) => {
-        let request = indexedDB.open(
-            "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
-            1
-        );
-        request.onsuccess = (event) => {
-            db = event.target.result;
-            resolve()
-        };
-        request.onupgradeneeded = (event) => {
-            db = event.target.result;
-            db.createObjectStore("others");
-            event.target.transaction.oncomplete = () => {
-                resolve();
-            }
-        }
-        request.onerror = (error) => {
-            console.error(error);
-        };
-    })
-}
-function saveJSON(data, name) {
+function IDBInit() {
     return new Promise((resolve, reject) => {
-        let blob, transaction
         try {
-            transaction = db.transaction("others", "readwrite");
-            let store = transaction.objectStore("others");
-            let put;
-            transaction.oncomplete = () => {
-                resolve();
-            }
-            if (data instanceof Blob) {
-                blob = data
-                put = store.put(blob, name);
-            } else if (isJsonObject(data) || data instanceof Array) {
-                blob = new Blob([JSON.stringify(data)]);
-                put = store.put(blob, name);
-            } else {
-                put = store.put(data, name);
-            }
-            put.onerror = (ex) => {
-                transaction.oncomplete = undefined
-                if (blob instanceof Blob) {
-                    (async()=>{
-                        try {
-                            await saveJSON((new FileReaderSync()).readAsArrayBuffer(blob), name)
-                            resolve()
-                        } catch (ex2) {
-                            console.error(ex);
-                            console.error(ex2);
-                            reject(ex);
-                        }
-                    })();
-                } else {
+            const request = indexedDB.open(
+                "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
+                2
+            );
+            request.onsuccess = ({ target }) => {
+                db = target.result;
+                resolve()
+            };
+            request.onupgradeneeded = ({ target }) => {
+                try {
+                    const { result, transaction } = target
+                    db = result;
+                    const stores = [
+                        // All Media
+                        "mediaEntries", "excludedMediaIds", "mediaUpdateAt",
+                        // Media Options
+                        "mediaOptions", "orderedMediaOptions",
+                        // Tag Category and Descriptions
+                        "tagInfo", "tagInfoUpdateAt",
+                        // User Data From AniList
+                        "username", "userMediaEntries", "userMediaUpdateAt",
+                        // All Recommended Media
+                        "recommendedMediaEntries",
+                        // User Data In App
+                        "algorithmFilters", "mediaCautions", "hiddenMediaEntries",
+                        "categories", "selectedCategory",
+                        // User Configs In App
+                        "autoPlay", "gridFullView", "showRateLimit", "showStatus",
+                        "autoUpdate", "autoExport",
+                        "runnedAutoUpdateAt", "runnedAutoExportAt",
+                        "exportPathIsAvailable",
+                        // User Configs In App
+                        "shouldManageMedia", "shouldProcessRecommendedEntries",
+                        // Other Info / Flags
+                        "nearestMediaReleaseAiringAt",
+                        "recommendationError",
+                        "visited",
+                        "others",
+                    ]
+                    for (const store of stores) {
+                        db.createObjectStore(store);
+                    }
+                    transaction.oncomplete = () => {
+                        resolve();
+                    }
+                } catch (ex) {
                     console.error(ex);
                     reject(ex);
+                    transaction.abort();
                 }
-            };
-            try {
-                transaction?.commit?.();
-            } catch {}
-        } catch (ex) {
-            if (transaction?.oncomplete) {
-                transaction.oncomplete = undefined
             }
-            if (blob instanceof Blob) {
-                (async()=>{
-                    try {
-                        await saveJSON((new FileReaderSync()).readAsArrayBuffer(blob), name)
-                        resolve()
-                    } catch (ex2) {
-                        console.error(ex);
-                        console.error(ex2);
-                        reject(ex);
-                    }
-                })();
-            } else {
+            request.onerror = (ex) => {
                 console.error(ex);
                 reject(ex);
-            }
+            };
+        } catch (ex) {
+            console.error(ex);
+            reject(ex);
         }
-    });
+    })
 }
-function saveJSONCollection(collection) {
-    return new Promise((resolve, reject) => {
+function setIDBRecords(records) {
+    return new Promise(async (resolve, reject) => {
         try {
-            let transaction = db.transaction("others", "readwrite");
-            let store = transaction.objectStore("others");
-            let put;
-            transaction.oncomplete = () => {
-                resolve();
-            }
-            for (let key in collection) {
-                let data = collection[key];
-                let blob
-                if (data instanceof Blob) {
-                    blob = data
-                    put = store.put(blob, key);
-                } else if (isJsonObject(data) || data instanceof Array) {
-                    blob = new Blob([JSON.stringify(data)]);
-                    put = store.put(blob, key);
+            const transaction = db.transaction(Object.keys(records), "readwrite");
+            for (const key in records) {
+                const store = transaction.objectStore(key);
+                let value = records[key];
+                let put;
+                if (value instanceof Blob) {
+                    value = await new Response(
+                        value
+                        .stream()
+                        .pipeThrough(new CompressionStream("gzip"))
+                    ).blob()
+                    put = store.put(value, key);
+                } else if (isJsonObject(value) || value instanceof Array) {
+                    value = await new Response(
+                        new Blob([JSON.stringify(value)])
+                        .stream()
+                        .pipeThrough(new CompressionStream("gzip"))
+                    ).blob()
+                    put = store.put(value, key);
                 } else {
-                    put = store.put(data, key);
+                    put = store.put(value, key);
                 }
                 put.onerror = (ex) => {
-                    transaction.oncomplete = undefined;
-                    if (blob instanceof Blob) {
-                        try {
-                            transaction.oncomplete = () => {
-                                resolve();
-                            }
-                            put = store.put((new FileReaderSync()).readAsArrayBuffer(blob), key);
-                            put.onerror = (ex) => {
-                                console.error(ex);
-                                reject(ex);
-                            }
-                            try {
-                                transaction?.commit?.();
-                            } catch {}
-                        } catch (ex2) {
-                            console.error(ex);
-                            console.error(ex2);
-                            reject(ex2);
-                        }
-                    } else {
-                        console.error(ex);
-                        reject(ex);
-                    }
+                    console.error(ex);
+                    reject(ex);
+                    transaction.abort();
                 };
             }
-            try {
-                transaction?.commit?.();
-            } catch {}
+            transaction.oncomplete = () => resolve()
         } catch (ex) {
             console.error(ex);
             reject(ex);
         }
     });
 }
-function retrieveJSON(name) {
+function getIDBData(key) {
     return new Promise((resolve) => {
         try {
-            let get = db
-                .transaction("others", "readonly")
-                .objectStore("others")
-                .get(name);
-            get.onsuccess = () => {
-                let result = get.result;
-                if (result instanceof Blob) {
-                    result = JSON.parse((new FileReaderSync()).readAsText(result));
-                } else if (result instanceof ArrayBuffer) {
-                    result = JSON.parse((new TextDecoder()).decode(result));
+            const get = db.transaction(key, "readonly")
+                .objectStore(key)
+                .get(key)
+            get.onsuccess = async () => {
+                let value = get.result;
+                if (value instanceof Blob) {
+                    value = await new Response(
+                        value
+                        .stream()
+                        .pipeThrough(new CompressionStream("gzip"))
+                    ).json()
                 }
-                resolve(result);
+                resolve(value);
             };
             get.onerror = (ex) => {
                 console.error(ex);
                 resolve();
             };
+        } catch (ex) {
+            console.error(ex);
+            resolve();
+        }
+    });
+}
+function getIDBRecords(recordKeys) {
+    return new Promise(async (resolve) => {
+        try {
+            const transaction = db.transaction(recordKeys, "readonly")
+            resolve(Object.fromEntries(
+                await Promise.all(
+                    recordKeys.map((key) => {
+                        return new Promise((resolve) => {
+                            const get = transaction
+                                .objectStore(key)
+                                .get(key)
+                            get.onsuccess = async () => {
+                                let value = get.result;
+                                if (value instanceof Blob) {
+                                    value = await new Response(
+                                        value
+                                        .stream()
+                                        .pipeThrough(new CompressionStream("gzip"))
+                                    ).json()
+                                }
+                                resolve([key, value]);
+                            };
+                            get.onerror = (ex) => {
+                                console.error(ex);
+                                resolve([key]);
+                            };
+                        })
+                    })
+                )
+            ))
         } catch (ex) {
             console.error(ex);
             resolve();

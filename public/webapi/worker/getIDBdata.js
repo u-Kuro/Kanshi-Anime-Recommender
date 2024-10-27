@@ -57,7 +57,7 @@ function IDBInit() {
         try {
             const request = indexedDB.open(
                 "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
-                1
+                2
             );
             request.onsuccess = ({ target }) => {
                 db = target.result;
@@ -69,7 +69,7 @@ function IDBInit() {
                     db = result;
                     const stores = [
                         // All Media
-                        "mediaEntries", "excludedEntries", "mediaUpdateAt",
+                        "mediaEntries", "excludedMediaIds", "mediaUpdateAt",
                         // Media Options
                         "mediaOptions", "orderedMediaOptions",
                         // Tag Category and Descriptions
@@ -116,7 +116,7 @@ function IDBInit() {
         }
     })
 }
-const getIDBData = (key) => {
+function getIDBData(key) {
     return new Promise((resolve) => {
         try {
             const get = db.transaction(key, "readonly")

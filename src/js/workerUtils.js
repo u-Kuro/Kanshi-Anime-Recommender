@@ -692,7 +692,7 @@ const processRecommendedMediaList = (_data = {}) => {
                     } else {
                         setLSData("nearestMediaReleaseAiringAt", nearestMediaReleaseAiringAt)
                         .catch(() => removeLSData("nearestMediaReleaseAiringAt"))
-                        .finally(() => saveIDBdata(nearestMediaReleaseAiringAt, "nearestMediaReleaseAiringAt"));
+                        .finally(() => setIDBData(nearestMediaReleaseAiringAt, "nearestMediaReleaseAiringAt"));
                         if (window.shouldUpdateNotifications === true && get(android)) {
                             window.shouldUpdateNotifications = false
                             try {
@@ -1605,44 +1605,6 @@ window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
     })
 }
 
-const saveIDBdata = (_data, name, isImportant = false) => {
-    return new Promise((resolve, reject) => {
-        if (!get(android) || isImportant || window[get(isBackgroundUpdateKey)] !== true) {
-            progressedFetch("./webapi/worker/saveIDBdata.js")
-                .then(url => {
-                    let worker = new Worker(url)
-                    worker.onmessage = ({ data }) => {
-                        if (hasOwnProp?.call?.(data, "status")) {
-                            dataStatus.set(data.status)
-                            return
-                        }
-                        setTimeout(() => {
-                            worker?.terminate?.();
-                        }, terminateDelay)
-                        if (hasOwnProp?.call?.(data, "error")) {
-                            console.error(data.error)
-                            reject(data.error)
-                        } else {
-                            resolve()
-                        }
-                    }
-                    worker.onerror = (error) => {
-                        setTimeout(() => {
-                            worker?.terminate?.();
-                        }, terminateDelay)
-                        console.error(error)
-                        reject(error)
-                    }
-                    worker.postMessage({ data: _data, name: name })
-                }).catch((error) => {
-                    alertError()
-                    console.error(error)
-                    reject(error)
-                })
-        }
-    })
-}
-
 // One Time Use
 const retrieveInitialData = (_data) => {
     return new Promise((resolve, reject) => {
@@ -1817,7 +1779,6 @@ function alertError() {
 }
 
 export {
-    saveIDBdata,
     getIDBdata,
     retrieveInitialData,
     updateTagInfo,

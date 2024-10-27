@@ -16,7 +16,6 @@
 	} from "./js/database.js";
 	import {
 		retrieveInitialData,
-		getFilterOptions,
 		requestMediaEntries,
 		requestUserEntries,
 		processRecommendedMediaList,
@@ -137,7 +136,7 @@
 			await (async () => {
 				const hasInitialData = await hasIDBData([
 					"mediaEntries",
-					"excludedEntries",
+					"excludedMediaIds",
 					// "orderedMediaOptions",
 					"tagInfo",
 				])
@@ -159,7 +158,28 @@
 						// $orderedMediaOptions = records.orderedMediaOptions;
 						// $nonOrderedMediaOptions = records.nonOrderedMediaOptions;
 						// $mediaOptionsConfig = records.mediaOptionsConfig;
-						$algorithmFilters = records.algorithmFilters || [];
+						$algorithmFilters = records.algorithmFilters || [
+							{
+								filterType: "bool",
+								optionName: "Content Focused",
+								status: "none"
+							},
+							{
+								filterType: "bool",
+								optionName: "Inc. All Factors",
+								status: "none"
+							},
+							{
+								filterType: "bool",
+								optionName: "Inc. Average Score",
+								status: "none"
+							},
+							{
+								filterType: "bool",
+								optionName: "Exclude Year",
+								status: "none"
+							},
+						];
 						$tagInfo = records.tagInfo || {};
 						updateTagInfo();
 					} else {
