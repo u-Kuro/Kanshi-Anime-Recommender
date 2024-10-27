@@ -3058,7 +3058,6 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
         font-size: 12px;
-        text-transform: capitalize;
         overflow-y: hidden;
         overflow-x: auto;
         display: flex;
@@ -3367,13 +3366,11 @@
         width: 100% !important;
     }
     :global(.full-popup-description .custom-h1) {
-        text-transform: capitalize !important;
         font-size: 15px !important;
         font-weight: 500 !important;
         min-height: 23px !important;
     }
     :global(.full-popup-description .custom-extra) {
-        text-transform: capitalize !important;
         min-height: 20px !important;
         width: fit-content !important;
         min-width: 62.4px !important;
@@ -3390,7 +3387,6 @@
         min-width: 100% !important;
     }
     :global(.full-popup-description .custom-table-list > li) {
-        text-transform: capitalize !important;
         width: fit-content !important;
         min-width: 50% !important;
         cursor: pointer !important;

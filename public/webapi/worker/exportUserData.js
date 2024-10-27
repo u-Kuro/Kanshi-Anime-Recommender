@@ -35,9 +35,9 @@ self.onmessage = async ({ data }) => {
     ])
 
     if (
-        (!isJsonObject(categories) || jsonIsEmpty(categories))
-        || (!isJsonObject(excludedMediaIds) || jsonIsEmpty(excludedMediaIds))
-        || (!isJsonObject(mediaEntries) || jsonIsEmpty(mediaEntries))
+        !(categories instanceof Blob)
+        || !(excludedMediaIds instanceof Blob)
+        || !(mediaEntries instanceof Blob)
     ) {
         self.postMessage({ missingData: true })
         return
@@ -199,7 +199,7 @@ function getIDBDataAsBlob(recordKeys) {
                                     resolve([key, value]);
                                 } else if (value != null) {
                                     // Do Not Insert Undefined or it Will Cause an Exception on Parse
-                                    value = await compressBlob(new Blob(JSON.stringify(value)))
+                                    value = await compressBlob(new Blob([JSON.stringify(value)]))
                                     resolve([key, value]);
                                 } else {
                                     resolve([key]);

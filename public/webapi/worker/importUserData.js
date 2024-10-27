@@ -15,210 +15,100 @@ self.onmessage = async ({ data }) => {
         await IDBInit();
     }
     self.postMessage({ status: "Importing User Data" })
-    const reader = new FileReader()
-    reader.onload = async () => {
-        let fileContent;
-        try {
-            self.postMessage({ progress: 0 })
-            fileContent = JSON.parse(reader.result)
-            self.postMessage({ progress: 75 })
-        } catch (e) {
-            console.error(e)
-            fileContent = undefined;
-        }
-        try {
-            if (!fileContent) {
-                self.postMessage({ progress: 0 })
-                self.postMessage({ progress: 30 })
-                fileContent = parseJSON(reader.result, reader.result.length)
-                self.postMessage({ progress: 75 })
-            }
-            if (!fileContent) {
-                self.postMessage({ status: "File parsing has failed" })
-                self.postMessage({ error: "File parsing has failed" })
-                return
-            }
-            self.postMessage({ status: "Updating Existing Data" })
-            const recordsToSet = {}
-
-            // const username = fileContent.username
-            // const userMediaEntries = fileContent.userMediaEntries
-            // const shouldImportUserEntries = username && typeof username == "string" && userMediaEntries instanceof Array
-            // if (shouldImportUserEntries) {
-            //     self.postMessage({ importedUsername: username })
-            //     recordsToSet.username = username
-            //     recordsToSet.userMediaEntries = userMediaEntries
-            //     // TODO check if updateAt is number and finite
-            //     recordsToSet.userMediaUpdateAt = fileContent.userMediaUpdateAt
-            // }
-
-            // self.postMessage({ progress: 76.10993657505286 })
-
-            // const tagInfo = fileContent.tagInfo
-            // if (isJsonObject(tagInfo) && !jsonIsEmpty(tagInfo)) {
-            //     recordsToSet.tagInfo = tagInfo
-            //     // TODO check if updateAt is number and finite
-            //     recordsToSet.tagInfoUpdateAt = fileContent.tagInfoUpdateAt
-            // }
-
-            // self.postMessage({ progress: 81.60676532769556 })
-
-            // const algorithmFilters = fileContent.algorithmFilters
-            // if (algorithmFilters instanceof Array && algorithmFilters.length > 0) {
-            //     self.postMessage({ algorithmFilters })
-            //     recordsToSet.algorithmFilters = algorithmFilters
-            // }
-
-            // self.postMessage({ progress: 82.87526427061312 })
-
-            // const hiddenMediaEntries = fileContent.hiddenMediaEntries
-            // const mediaCautions = fileContent.mediaCautions
-            // const categories = fileContent.categories
-            // let category
-            // for (const k in categories) {
-            //     category = categories[k]
-            //     break
-            // }
-            
-            // if (isJsonObject(hiddenMediaEntries)
-            //     && mediaCautions instanceof Array
-            //     && category?.mediaFilters instanceof Array
-            //     && category?.mediaList instanceof Array
-            //     && typeof category?.isHiddenList === "boolean"
-            //     && typeof category?.sortBy?.sortName === "string"
-            //     && typeof category.sortBy.sortType === "string"
-            // ) {
-            //     self.postMessage({ mediaCautions })
-            //     self.postMessage({ importedHiddenMediaEntries: hiddenMediaEntries })
-            //     recordsToSet.hiddenMediaEntries = hiddenEntries
-            //     recordsToSet.mediaCautions = mediaCautions
-            //     recordsToSet.categories = categories
-            // }
-
-            // self.postMessage({ progress: 94.08033826638479 })
-
-            // // Check if saved entries is lower
-            // const mediaEntries = fileContent.mediaEntries
-            // const excludedMediaIds = fileContent.excludedMediaIds
-
-            // let mediaUpdateAt = fileContent.mediaUpdateAt || 1706674120
-            // let currentMediaUpdateAt = await retrieveJSON("mediaUpdateAt") || 1706674120
-
-            // let shouldImportAniEntries =
-            //     (mediaUpdateAt > currentMediaUpdateAt && mediaUpdateAt && isJsonObject(mediaEntries) && !jsonIsEmpty(mediaEntries))
-            //     || Object.keys((await retrieveJSON("mediaEntries")) || {}).length < Object.keys(mediaEntries || {}).length
-
-            // if (shouldImportAniEntries) {
-            //     recordsToSet.mediaEntries = mediaEntries
-            //     recordsToSet.excludedMediaIds = excludedMediaIds
-            //     recordsToSet.mediaUpdateAt = mediaUpdateAt
-            // }
-
-            if (!jsonIsEmpty(recordsToSet)) {
-                recordsToSet.shouldProcessRecommendedEntries = true
-                await saveJSONCollection(recordsToSet);
-                self.postMessage({ status: "Data has been Imported" })
-                self.postMessage({ status: null })
-                self.postMessage({ progress: 100 })
-                self.postMessage({ message: "success" })
-            } else {
-                self.postMessage({ status: "Something went wrong" })
-                self.postMessage({ status: null })
-                self.postMessage({ progress: 100 })
-                self.postMessage({ error: "Something went wrong" })
-            }
-        } catch (reason) {
-            console.error(reason)
-            let error = reason?.stack || reason?.message
-            if (typeof error !== "string" || !error) {
-                error = "Something went wrong"
-            }
-            self.postMessage({ status: error })
-            self.postMessage({ progress: 100 })
-            self.postMessage({ error })
-        }
-    }
-    reader.onerror = (reason) => {
-        console.error(reason)
-        let error = reason?.stack || reason?.message
-        if (typeof error !== "string" || !error) {
-            error = "Something went wrong"
-        }
-        self.postMessage({ status: error })
-        self.postMessage({ progress: 100 })
-        self.postMessage({ error })
-    }
-    if (reader.readyState !== 1) {// Not Loaded
-        reader.readAsText(data.importedFile);
-    } else {
-        reader.onabort = () => {
-            reader.readAsText(data.importedFile);
-        }
-        reader.abort();
-    }
     if (data.importedFile instanceof File || data.importedFile instanceof Blob) {
         try {
             const blobs = await decompressBlobs(data.importedFile)
+            console.log(blobs, 3)
 
             const recordsToSet = {}
 
-            if (blobs.username && blobs.userMediaEntries) {
+            if (blobs.username instanceof Blob
+                && blobs.userMediaEntries instanceof Blob
+            ) {
                 blobs.username = await decompressBlobToJSON(blobs.username)
+                console.log(blobs.username, 2)
                 if (typeof blobs.username === "string" || blobs.username !== "") {
-
-                    blobs.userMediaUpdateAt = await decompressBlobToJSON(blobs.userMediaUpdateAt)
-                    if (!isValidDateTime(blobs.userMediaUpdateAt)) blobs.userMediaUpdateAt = 0
+                    
+                    if (blobs.userMediaUpdateAt instanceof Blob) {
+                        blobs.userMediaUpdateAt = await decompressBlobToJSON(blobs.userMediaUpdateAt)
+                        if (!isValidDateTime(blobs.userMediaUpdateAt)) blobs.userMediaUpdateAt = 0
+                    } else {
+                        blobs.userMediaUpdateAt = 0
+                    }
 
                     recordsToSet.username = blobs.username
-                    recordsToSet.userMediaEntries = blobs.userMediaUpdateAt
+                    recordsToSet.userMediaEntries = blobs.userMediaEntries
                     recordsToSet.userMediaUpdateAt = blobs.userMediaUpdateAt
 
                     self.postMessage({ username: blobs.username })
                 }
             }
                 
-            if (blobs.tagInfo) {    
+            if (blobs.tagInfo instanceof Blob) {    
                 const tagInfo = await decompressBlobToJSON(blobs.tagInfo)          
                 if (isJsonObject(tagInfo) && !jsonIsEmpty(tagInfo)) {
-                    blobs.tagInfoUpdateAt = await decompressBlobToJSON(blobs.tagInfoUpdateAt)
-                    if (!isValidDateTime(blobs.tagInfoUpdateAt)) blobs.tagInfoUpdateAt = 0
+                    if (blobs.tagInfoUpdateA instanceof Blob) {
+                        blobs.tagInfoUpdateAt = await decompressBlobToJSON(blobs.tagInfoUpdateAt)
+                        if (!isValidDateTime(blobs.tagInfoUpdateAt)) blobs.tagInfoUpdateAt = 0
+                    } else {
+                        blobs.tagInfoUpdateAt = 0
+                    }
 
                     recordsToSet.tagInfo = blobs.tagInfo
                     recordsToSet.tagInfoUpdateAt = blobs.tagInfoUpdateAt
 
                     self.postMessage({ tagInfo })
                 }
+            } else {
+                console.log("taginfo")
             }
 
-            if (blobs.algorithmFilters) {
+            if (blobs.algorithmFilters instanceof Blob) {
                 const algorithmFilters = await decompressBlobToJSON(blobs.algorithmFilters)
                 if (algorithmFilters instanceof Array && algorithmFilters.length > 0) {
                     recordsToSet.algorithmFilters = blobs.algorithmFilters
                     self.postMessage({ algorithmFilters })
                 }
+            } else {
+                console.log("algorithmFilters")
             }
 
-            if (blobs.categories) {
-                const mediaCautions = await decompressBlobToJSON(blobs.mediaCautions)
-                if (mediaCautions instanceof Array && mediaCautions.length > 0) {
-                    recordsToSet.mediaCautions = blobs.mediaCautions
-                    self.postMessage({ mediaCautions })
+            if (blobs.categories instanceof Blob) {
+                if (blobs.mediaCautions instanceof Blob) {
+                    const mediaCautions = await decompressBlobToJSON(blobs.mediaCautions)
+                    if (mediaCautions instanceof Array && mediaCautions.length > 0) {
+                        recordsToSet.mediaCautions = blobs.mediaCautions
+                        self.postMessage({ mediaCautions })
+                    }
                 }
-                const hiddenMediaEntries = await decompressBlobToJSON(blobs.hiddenMediaEntries)
-                if (isJsonObject(hiddenMediaEntries) && !jsonIsEmpty(hiddenMediaEntries)) {
-                    recordsToSet.hiddenMediaEntries = blobs.hiddenMediaEntries
-                    self.postMessage({ hiddenMediaEntries })
+                if (blobs.hiddenMediaEntries instanceof Blob) {
+                    const hiddenMediaEntries = await decompressBlobToJSON(blobs.hiddenMediaEntries)
+                    if (isJsonObject(hiddenMediaEntries) && !jsonIsEmpty(hiddenMediaEntries)) {
+                        recordsToSet.hiddenMediaEntries = blobs.hiddenMediaEntries
+                        self.postMessage({ hiddenMediaEntries })
+                    }
                 }
                 recordsToSet.categories = blobs.categories
+            } else {
+                console.log("categories")
             }
 
-            if (blobs.mediaEntries && blobs.excludedMediaIds) {
-                blobs.mediaUpdateAt = await decompressBlobToJSON(blobs.mediaUpdateAt)
-                if (!isValidDateTime(blobs.mediaUpdateAt)) blobs.mediaUpdateAt = 1706674120
+            if (
+                blobs.mediaEntries instanceof Blob
+                && blobs.excludedMediaIds instanceof Blob
+            ) {
+                if (blobs.mediaUpdateAt instanceof Blob) {
+                    blobs.mediaUpdateAt = await decompressBlobToJSON(blobs.mediaUpdateAt)
+                    if (!isValidDateTime(blobs.mediaUpdateAt)) blobs.mediaUpdateAt = 1706674120
+                } else {
+                    blobs.mediaUpdateAt = 1706674120
+                }
 
                 recordsToSet.excludedMediaIds = blobs.excludedMediaIds
                 recordsToSet.mediaEntries = blobs.mediaEntries
                 recordsToSet.mediaUpdateAt = blobs.mediaUpdateAt
+            } else {
+                console.log("mediaEntries")
             }
 
             if (!jsonIsEmpty(recordsToSet)) {
@@ -324,7 +214,10 @@ function setIDBRecords(records) {
                     transaction.abort();
                 };
             }
-            transaction.oncomplete = () => resolve()
+            transaction.oncomplete = () => {
+                console.log("111")
+                resolve()
+            }
         } catch (ex) {
             console.error(ex);
             reject(ex);

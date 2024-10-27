@@ -947,7 +947,7 @@
     aria-hidden="true"
     type="file"
     style:display="none"
-    accept=".json"
+    accept=".gzip"
     bind:this="{importFileInput}"
     on:change="{importJSONFile}"
 />

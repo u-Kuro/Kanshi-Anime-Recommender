@@ -168,12 +168,6 @@ const mediaOptionsConfig = readable({
         "Flexible Inclusion": 1,
         "Shown Metric": 1
     },
-    staticSelection: {
-        Season: 1,
-        "Flexible Inclusion": 1,
-        "Shown Metric": 1,
-        "Shown List": 1
-    },
     selection: {
         "Media Filter": [
             "Genre",

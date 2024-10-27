@@ -108,7 +108,7 @@ const getIDBData = (key) => {
                         value
                         .stream()
                         .pipeThrough(new DecompressionStream("gzip"))
-                    ).blob()
+                    ).json()
                 }
                 resolve(value);
             };
@@ -141,7 +141,7 @@ const getIDBRecords = (recordKeys) => {
                                         value
                                         .stream()
                                         .pipeThrough(new DecompressionStream("gzip"))
-                                    ).blob()
+                                    ).json()
                                 }
                                 resolve([key, value]);
                             };

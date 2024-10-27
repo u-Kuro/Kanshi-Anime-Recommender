@@ -2192,7 +2192,6 @@
                     {#each filterSelections || [] as filterSelectionName (filterCategoryName + filterSelectionName || {})}
                         {@const filterSelectionKey = filterCategoryName + "_" + filterSelectionName}
                         {@const filterSelectionIsSelected = filterCategoryIsSelected && filterSelectionName === openedFilterSelectionName}
-                        {@const isStaticSelection = filterCategoryName === "Media Filter" && $mediaOptionsConfig.staticSelection[filterSelectionName]}
                         <div
                             class="{"filter-select" +
                                 (filterCategoryIsSelected
@@ -2341,7 +2340,7 @@
                                             window.addHistory?.()}"
                                     />
                                     <div
-                                        class={"options" + (isStaticSelection ? " static-selection" : "")}
+                                        class="options"
                                         on:wheel|stopPropagation="{() => {}}"
                                     >
                                         {#if filterSelectionIsSelected}
@@ -3220,7 +3219,6 @@
     }
     .filter-category .option h3 {
         cursor: pointer;
-        text-transform: capitalize;
     }
 
     .category-icon-wrap {
@@ -3391,7 +3389,6 @@
     .filter-input-number .filter-input-number-name {
         font-size: 15px;
         font-weight: 600;
-        text-transform: capitalize;
         user-select: none;
     }
     .filter-select .select {
@@ -3514,10 +3511,6 @@
         cursor: pointer !important;
     }
 
-    .filter-select .options.static-selection h3 {
-        text-transform: capitalize;
-    }
-
     .filter-select .option svg {
         fill: var(--option-color);
         height: 14px;
@@ -3554,7 +3547,6 @@
     }
     .filter-bool-container .filter-bool-label {
         font-weight: 600;
-        text-transform: capitalize;
         user-select: none;
         font-size: 14px;
         cursor: pointer;
@@ -3660,7 +3652,6 @@
     .active-filter > h3 {
         line-height: 1px;
         min-width: max-content;
-        text-transform: capitalize;
         cursor: pointer;
     }
     .active-tag-filter svg {
@@ -3715,7 +3706,6 @@
     .sort-filter svg {
         user-select: none;
         cursor: pointer;
-        text-transform: capitalize;
     }
 
     .sort-filter .sort-order-icon {
@@ -3983,7 +3973,6 @@
             display: initial;
             font-size: 18px;
             font-weight: bold;
-            text-transform: capitalize;
             white-space: nowrap;
             overflow-x: auto;
             overflow-y: hidden;

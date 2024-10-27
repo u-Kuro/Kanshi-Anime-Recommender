@@ -118,28 +118,28 @@ const formatYear = (date) => {
 }
 const formatMonth = (date) => {
     try {
-        date.toLocaleDateString(undefined, { month: "short" });
+        return date.toLocaleDateString(undefined, { month: "short" });
     } catch {
         return ""
     }
 }
 const formatDay = (date) => {
     try {
-        date.toLocaleDateString(undefined, { day: "numeric" });
+        return date.toLocaleDateString(undefined, { day: "numeric" });
     } catch {
         return ""
     }
 }
 const formatTime = (date) => {
     try {
-        date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true });
+        return date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true });
     } catch {
         return ""
     }
 }
 const formatWeekday = (date) => {
     try {
-        date.toLocaleDateString(undefined, { weekday: "short" });
+        return date.toLocaleDateString(undefined, { weekday: "short" });
     } catch {
         return ""
     }
