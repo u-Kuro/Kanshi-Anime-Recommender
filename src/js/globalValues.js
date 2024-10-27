@@ -66,8 +66,8 @@ const searchedWord = writable("")
 const categories = writable(null)
 const categoriesKeys = writable(null)
 const selectedCategory = writable(null)
-const orderedFilters = writable(null)
-const nonOrderedFilters = readable({
+const orderedMediaOptions = writable(null)
+const nonOrderedMediaOptions = readable({
     "Media Filter": {
         bool: [
             "Hide My List",
@@ -163,7 +163,7 @@ const nonOrderedFilters = readable({
         ]
     }
 })
-const filterConfig = readable({
+const mediaOptionsConfig = readable({
     readOnly: {
         "Flexible Inclusion": 1,
         "Shown Metric": 1
@@ -203,7 +203,7 @@ const filterConfig = readable({
 const mediaCautions = writable(null)
 const algorithmFilters = writable(null)
 const selectedMediaGridEl = writable(null)
-const hiddenEntries = writable(null)
+const hiddenMediaEntries = writable(null)
 
 const currentMediaFilters = writable({})
 const currentMediaSortBy = writable({})
@@ -294,9 +294,9 @@ export {
     categories,
     categoriesKeys,
     selectedCategory,
-    orderedFilters,
-    nonOrderedFilters,
-    filterConfig,
+    orderedMediaOptions,
+    nonOrderedMediaOptions,
+    mediaOptionsConfig,
     mediaCautions,
     algorithmFilters,
     selectedMediaGridEl,
@@ -304,7 +304,7 @@ export {
     currentMediaSortBy,
     currentMediaCautions,
     currentAlgorithmFilters,
-    hiddenEntries,
+    hiddenMediaEntries,
     tagInfo,
     dataStatus,
     loadingDataStatus,

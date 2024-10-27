@@ -1930,7 +1930,7 @@ self.onmessage = async ({ data }) => {
             },
             version
         }
-        collectionToPut.shouldProcessRecommendation = true
+        collectionToPut.shouldProcessRecommendedEntries = true
         collectionToPut.mediaOptions = mediaOptions
     }
 
@@ -2158,7 +2158,7 @@ self.onmessage = async ({ data }) => {
             ]
         }
     }
-    const filterConfig = {
+    const mediaOptionsConfig = {
         readOnly: {
             "Flexible Inclusion": 1,
             "Shown Metric": 1
@@ -2232,7 +2232,7 @@ self.onmessage = async ({ data }) => {
         tagInfo,
         orderedFilters,
         nonOrderedFilters,
-        filterConfig,
+        mediaOptionsConfig,
         algorithmFilters
     })
     

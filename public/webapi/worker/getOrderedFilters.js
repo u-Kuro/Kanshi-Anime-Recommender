@@ -15,7 +15,7 @@ self.onmessage = async ({ data }) => {
 
     const mediaOptions = await retrieveJSON("mediaOptions")
     if (isJsonObject(mediaOptions) && !jsonIsEmpty(mediaOptions)) {
-        const orderedFilters = {
+        const orderedMediaOptions = {
             sortFilter: [
                 "Weighted Score",
                 "Score",
@@ -140,9 +140,9 @@ self.onmessage = async ({ data }) => {
             if (isAlgorithmFilterSelection) {
                 options.unshift("All")
             }
-            orderedFilters[filterKey] = options
+            orderedMediaOptions[filterKey] = options
         }
-        self.postMessage({ orderedFilters })
+        self.postMessage({ orderedMediaOptions })
     } else {
         self.postMessage({ error: "Filters not found." })
     }

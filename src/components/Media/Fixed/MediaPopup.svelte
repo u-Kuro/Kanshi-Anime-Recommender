@@ -23,7 +23,7 @@
         formatWeekday,
     } from "../../../js/utils/formatUtils.js";
     import {
-        hiddenEntries,
+        hiddenMediaEntries,
         ytPlayers,
         autoPlay,
         popupVisible,
@@ -112,21 +112,21 @@
     }
 
     async function handleHideShow(mediaID, title) {
-        if ($initList !== false || !$hiddenEntries) {
+        if ($initList !== false || !$hiddenMediaEntries) {
             return pleaseWaitAlert()
         }
-        let isHidden = $hiddenEntries[mediaID];
+        let isHidden = $hiddenMediaEntries[mediaID];
         title = title ? `<span style="color:hsl(var(--ac-color));">${title}</span>` : "this entry";
         if (isHidden) {
             if (await $confirmPromise(`Do you want to unhide ${title} in your recommendation list?`)) {
                 mediaManager({ showId: mediaID });
-                delete $hiddenEntries[mediaID];
-                $hiddenEntries = $hiddenEntries
+                delete $hiddenMediaEntries[mediaID];
+                $hiddenMediaEntries = $hiddenMediaEntries
             }
         } else {
             if (await $confirmPromise(`Do you want to hide ${title} in your recommendation list?`)) {
                 mediaManager({ removeId: mediaID });
-                $hiddenEntries[mediaID] = 1;
+                $hiddenMediaEntries[mediaID] = 1;
             }
         }
     }
@@ -2300,9 +2300,9 @@
                                             d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-72-280h144a24 24 0 1 1 0 48H184a24 24 0 1 1 0-48z"
                                         ></path></svg
                                     >
-                                    {#if $hiddenEntries}
+                                    {#if $hiddenMediaEntries}
                                         {" " +
-                                            ($hiddenEntries[media?.id]
+                                            ($hiddenMediaEntries[media?.id]
                                                 ? "Show"
                                                 : "Hide")}
                                     {:else}

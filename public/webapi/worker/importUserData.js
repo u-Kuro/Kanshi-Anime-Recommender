@@ -41,61 +41,59 @@ self.onmessage = async ({ data }) => {
             self.postMessage({ status: "Updating Existing Data" })
             const collectionToPut = {}
 
-            const userData = fileContent?.userData
-            const username = userData?.username ?? fileContent?.username
-            const shouldImportUserEntries = username && typeof username == "string"
+            
+            const username = fileContent.username
+            const userMediaEntries = fileContent.userMediaEntries
+            const shouldImportUserEntries = username && typeof username == "string" && userMediaEntries instanceof Array
             if (shouldImportUserEntries) {
                 self.postMessage({ importedUsername: username })
+                collectionToPut.username = username
+                collectionToPut.userMediaEntries = userMediaEntries
+                // TODO check if updateAt is number and finite
+                collectionToPut.userMediaUpdateAt = fileContent.userMediaUpdateAt
             }
 
             self.postMessage({ progress: 76.10993657505286 })
 
-            const tagInfo = fileContent?.tagInfo
+            const tagInfo = fileContent.tagInfo
             if (isJsonObject(tagInfo) && !jsonIsEmpty(tagInfo)) {
                 collectionToPut.tagInfo = tagInfo
+                // TODO check if updateAt is number and finite
+                collectionToPut.tagInfoUpdateAt = fileContent.tagInfoUpdateAt
             }
 
             self.postMessage({ progress: 81.60676532769556 })
-            if (shouldImportUserEntries) {
-                const userEntries = userData?.userEntries
-                if (userEntries instanceof Array) {
-                    collectionToPut.userData = {
-                        username,
-                        userEntries,
-                    }
-                    collectionToPut.userMediaUpdateAt = fileContent.userMediaUpdateAt
-                }
-            }
 
             const algorithmFilters = fileContent.algorithmFilters
-            if (algorithmFilters instanceof Array && algorithmFilters?.length > 0) {
+            if (algorithmFilters instanceof Array && algorithmFilters.length > 0) {
                 self.postMessage({ algorithmFilters })
                 collectionToPut.algorithmFilters = algorithmFilters
             }
 
             self.postMessage({ progress: 82.87526427061312 })
 
-            const userList = fileContent.userList
-            const hiddenEntries = userList?.hiddenEntries
-            const mediaCautions = userList?.mediaCautions
-            const categories = userList?.categories
+            const hiddenMediaEntries = fileContent.hiddenMediaEntries
+            const mediaCautions = fileContent.mediaCautions
+            const categories = fileContent.categories
             let category
             for (const k in categories) {
                 category = categories[k]
                 break
             }
             
-            if (isJsonObject(hiddenEntries)
+            if (isJsonObject(hiddenMediaEntries)
                 && mediaCautions instanceof Array
                 && category?.mediaFilters instanceof Array
                 && category?.mediaList instanceof Array
                 && typeof category?.isHiddenList === "boolean"
                 && typeof category?.sortBy?.sortName === "string"
-                && typeof category?.sortBy?.sortType === "string"
+                && typeof category.sortBy.sortType === "string"
             ) {
                 self.postMessage({ mediaCautions })
-                self.postMessage({ importedHiddenEntries: hiddenEntries })
-                collectionToPut.userList = userList
+                self.postMessage({ importedHiddenMediaEntries: hiddenMediaEntries })
+                collectionToPut.hiddenMediaEntries = hiddenEntries
+                collectionToPut.mediaCautions = mediaCautions
+                collectionToPut.categories = categories
             }
 
             self.postMessage({ progress: 94.08033826638479 })
@@ -118,7 +116,7 @@ self.onmessage = async ({ data }) => {
             }
 
             if (!jsonIsEmpty(collectionToPut)) {
-                collectionToPut.shouldProcessRecommendation = true
+                collectionToPut.shouldProcessRecommendedEntries = true
                 await saveJSONCollection(collectionToPut);
                 self.postMessage({ status: "Data has been Imported" })
                 self.postMessage({ status: null })

@@ -1,7 +1,7 @@
 let db,
-    recommendedMediaList,
-    recommendedMediaListArray,
-    hiddenEntries, cautions;
+    recommendedMediaEntries,
+    recommendedMediaEntriesArray,
+    hiddenMediaEntries, cautions;
 
 self.addEventListener("unhandledrejection", (event) => {
     const reason = event?.reason
@@ -40,30 +40,34 @@ self.onmessage = async ({ data }) => {
             updateRecommendedMediaList
         }
 
-        const userList = await retrieveJSON("userList") || getDefaultUserList()
+        const collectionToPut = {
+            categories: await retrieveJSON("categories") || getDefaultCategories(),
+            mediaCautions: await retrieveJSON("categories") || getDefaulMediaCautions(),
+            hiddenMediaEntries: await retrieveJSON("hiddenEntries") || {}
+        }
 
         if (mediaCautions instanceof Array) {
-            messageToPost.updateUserList = messageToPost.updateMediaCautions = shouldReloadAllCategories = true
-            userList.mediaCautions = mediaCautions
+            messageToPost.updateUserData = messageToPost.updateMediaCautions = shouldReloadAllCategories = true
+            collectionToPut.mediaCautions = mediaCautions
         }
 
         if (!jsonIsEmpty(entriesToShow) || !jsonIsEmpty(entriesToHide)) {
-            messageToPost.updateUserList = shouldReloadAllCategories = true
+            messageToPost.updateUserData = shouldReloadAllCategories = true
             if (entriesToShow["all"]) {
-                userList.hiddenEntries = {}
+                collectionToPut.hiddenMediaEntries = {}
             } else {
                 for (let id in entriesToShow) {
-                    delete userList.hiddenEntries[id]
+                    delete collectionToPut.hiddenMediaEntries[id]
                 }
     
                 for (let id in entriesToHide) {
-                    userList.hiddenEntries[id] = true
+                    collectionToPut.hiddenMediaEntries[id] = true
                 }
             }
         }
 
         if (categoriesToEdit instanceof Array && categoriesToEdit.length > 0) {
-            messageToPost.updateUserList = true
+            messageToPost.updateUserData = true
             messageToPost.updatedCategories = {}
             for (let i = 0; i < categoriesToEdit.length; i++) {
                 const action = categoriesToEdit[i]
@@ -71,10 +75,10 @@ self.onmessage = async ({ data }) => {
                     for (const categoryToAddKey in action.add) {
                         const categoryToAddFromKey = action.add[categoryToAddKey]
 
-                        const categoryToAddFrom = userList.categories[categoryToAddFromKey]
+                        const categoryToAddFrom = collectionToPut.categories[categoryToAddFromKey]
 
                         if (categoryToAddFrom != null) {
-                            userList.categories[categoryToAddKey] = JSON.parse(JSON.stringify(categoryToAddFrom))
+                            collectionToPut.categories[categoryToAddKey] = JSON.parse(JSON.stringify(categoryToAddFrom))
                             messageToPost.updatedCategories[categoryToAddKey] = true
                         }
                     }
@@ -82,11 +86,11 @@ self.onmessage = async ({ data }) => {
                     for (const newNameForCategory in action.rename) {                        
                         const categoryToBeRenamedKey = action.rename[newNameForCategory]
 
-                        const categoryToBeRenamed = userList.categories[categoryToBeRenamedKey]
+                        const categoryToBeRenamed = collectionToPut.categories[categoryToBeRenamedKey]
 
                         if (categoryToBeRenamed != null) {
-                            userList.categories[newNameForCategory] = JSON.parse(JSON.stringify(categoryToBeRenamed))
-                            delete userList.categories[categoryToBeRenamedKey]
+                            collectionToPut.categories[newNameForCategory] = JSON.parse(JSON.stringify(categoryToBeRenamed))
+                            delete collectionToPut.categories[categoryToBeRenamedKey]
 
                             messageToPost.updatedCategories[newNameForCategory] = true
                         }
@@ -98,21 +102,21 @@ self.onmessage = async ({ data }) => {
                     }
                 } else if (action?.delete) {
                     const categoryToDeleteKey = action.delete
-                    delete userList.categories[categoryToDeleteKey]
+                    delete collectionToPut.categories[categoryToDeleteKey]
                     delete mediaFilters[categoryToDeleteKey]
                 }
             }
         }
 
         if (shouldReloadAllCategories || !jsonIsEmpty(mediaFilters)) {
-            messageToPost.updateUserList = true
-            recommendedMediaList = await retrieveJSON("recommendedMediaList")            
+            messageToPost.updateUserData = true
+            recommendedMediaEntries = await retrieveJSON("recommendedMediaEntries")            
 
-            if (recommendedMediaList != null) {
-                const categories = userList.categories
-                cautions = getContentCaution(userList.mediaCautions)
-                recommendedMediaListArray = Object.values(recommendedMediaList)
-                hiddenEntries = userList.hiddenEntries
+            if (recommendedMediaEntries != null) {
+                const categories = collectionToPut.categories
+                cautions = getContentCaution(collectionToPut.mediaCautions)
+                recommendedMediaEntriesArray = Object.values(recommendedMediaEntries)
+                hiddenMediaEntries = collectionToPut.hiddenMediaEntries
 
                 if (shouldReloadAllCategories) {
                     const categoriesCount = Object.keys(categories||{}).length
@@ -122,7 +126,7 @@ self.onmessage = async ({ data }) => {
 
                         if (category != null) {
 
-                            userList.categories[categoryKey] = updateMediaList(
+                            collectionToPut.categories[categoryKey] = updateMediaList(
                                 mediaFilters?.[categoryKey]?.mediaFilters || category.mediaFilters,
                                 mediaFilters?.[categoryKey]?.sortBy || category.sortBy,
                                 Math.min(1, loadedCount / categoriesCount)
@@ -139,7 +143,7 @@ self.onmessage = async ({ data }) => {
 
                         if (category != null) {
 
-                            userList.categories[categoryKey] = updateMediaList(
+                            collectionToPut.categories[categoryKey] = updateMediaList(
                                 mediaFilter.mediaFilters || category.mediaFilters,
                                 mediaFilter.sortBy || category.sortBy,
                                 Math.min(1, loadedCount / categoriesCount)
@@ -152,12 +156,13 @@ self.onmessage = async ({ data }) => {
 
             self.postMessage({ progress: 85 })
 
-            await saveJSONCollection({ userList, shouldLoadMedia: false })
+            collectionToPut.shouldManageMedia = false
+            await saveJSONCollection(collectionToPut)
             
-        } else if (messageToPost.updateUserList) {
+        } else if (messageToPost.updateUserData) {
             self.postMessage({ progress: 85 })
 
-            await saveJSON(userList, "userList")
+            await saveJSONCollection(collectionToPut)
         }
 
         self.postMessage({ progress: 95 })
@@ -495,10 +500,10 @@ function updateMediaList(mediaFilters, sortBy, loadedPercent = 1) {
         }
     }
 
-    let recommendedMediaListArrayLen = recommendedMediaListArray.length
-    let mediaList = recommendedMediaListArray.filter((media, idx) => {
+    let recommendedMediaEntriesArrayLen = recommendedMediaEntriesArray.length
+    let mediaList = recommendedMediaEntriesArray.filter((media, idx) => {
 
-        loadProgress(Math.min(((idx + 1) / recommendedMediaListArrayLen) * loadedPercent * 100, 80))
+        loadProgress(Math.min(((idx + 1) / recommendedMediaEntriesArrayLen) * loadedPercent * 100, 80))
 
         if (hideMyList) {
             if (media?.userStatus !== "Unseen") {
@@ -513,11 +518,11 @@ function updateMediaList(mediaFilters, sortBy, loadedPercent = 1) {
 
         if (showHiddenList) {
             // do hidden
-            if (hiddenEntries?.[media?.id] === undefined) {
+            if (hiddenMediaEntries?.[media?.id] === undefined) {
                 return false
             }
         } else {
-            if (hiddenEntries[media?.id]) {
+            if (hiddenMediaEntries[media?.id]) {
                 return false
             }
         }
@@ -1358,7 +1363,7 @@ function updateMediaList(mediaFilters, sortBy, loadedPercent = 1) {
                             let mediaRelationID = e?.node?.id;
                             if (mediaRelationID != null) {
                                 mediaRelationID = Math.floor(mediaRelationID)
-                                let relationMedia = recommendedMediaList[mediaRelationID]
+                                let relationMedia = recommendedMediaEntries[mediaRelationID]
                                 let relationStatus = relationMedia?.userStatus
                                 return relationStatus === "Completed" || relationStatus === "Repeating"
                             }
@@ -1380,7 +1385,7 @@ function updateMediaList(mediaFilters, sortBy, loadedPercent = 1) {
                             let mediaRelationID = e?.node?.id;
                             if (mediaRelationID != null) {
                                 mediaRelationID = Math.floor(mediaRelationID)
-                                let relationMedia = recommendedMediaList[mediaRelationID]
+                                let relationMedia = recommendedMediaEntries[mediaRelationID]
                                 let relationStatus = relationMedia?.userStatus
                                 // ...Prequel is in the User List and not Dropped
                                 if (
@@ -1410,7 +1415,7 @@ function updateMediaList(mediaFilters, sortBy, loadedPercent = 1) {
                             let mediaRelationID = e?.node?.id;
                             if (mediaRelationID != null) {
                                 mediaRelationID = Math.floor(mediaRelationID)
-                                let relationMedia = recommendedMediaList[mediaRelationID]
+                                let relationMedia = recommendedMediaEntries[mediaRelationID]
                                 let relationFormat = relationMedia?.format
                                 // Check if it has a possible Anime Adaptation that is Released
                                 let possibleAnime = relationFormat !== "Manga" && relationFormat !== "One Shot" && relationFormat !== "Novel"
@@ -2133,22 +2138,9 @@ function jsonIsEmpty(obj) {
 function isJsonObject(obj) {
     return Object.prototype.toString.call(obj) === "[object Object]"
 }
-function getDefaultUserList() {
-    let defaultCategories = [
-        "   Completed Anime",
-        "   Completed Manga",
-        "   Completed Novel",
-        "  Airing & Upcoming",
-        "  Ongoing Manga",
-        "  Ongoing Novel",
-        " Next Sequel in My List",
-        "Anticipated",
-        "My List",
-        "Recently Updated"
-    ]
-    return {
-        hiddenEntries: {},
-        mediaCautions: [{
+function getDefaulMediaCautions() {
+    return [
+        {
             optionName: "Netorare",
             optionCategory: "Tag",
             status: "excluded",
@@ -2201,362 +2193,375 @@ function getDefaultUserList() {
             optionCategory: "Tag",
             status: "included",
             filterType: "selection"
-        }],
-        categories: defaultCategories.reduce((acc, addedCategory) => {
-            // Sort
-            let isUserRelated = addedCategory === " Next Sequel in My List" || addedCategory === "My List"
-            let sortName, shownSortName
-            if (isUserRelated) {
-                sortName = "Score"
-            } else if (addedCategory === "Anticipated") {
-                sortName = "Popularity"
-            } else if (addedCategory === "Recently Updated") {
-                sortName = "Date Updated"
-            } else {
-                sortName = "Weighted Score"
+        }
+    ]
+}
+function getDefaultCategories() {
+    return [
+        "   Completed Anime",
+        "   Completed Manga",
+        "   Completed Novel",
+        "  Airing & Upcoming",
+        "  Ongoing Manga",
+        "  Ongoing Novel",
+        " Next Sequel in My List",
+        "Anticipated",
+        "My List",
+        "Recently Updated"
+    ].reduce((acc, addedCategory) => {
+        // Sort
+        let isUserRelated = addedCategory === " Next Sequel in My List" || addedCategory === "My List"
+        let sortName, shownSortName
+        if (isUserRelated) {
+            sortName = "Score"
+        } else if (addedCategory === "Anticipated") {
+            sortName = "Popularity"
+        } else if (addedCategory === "Recently Updated") {
+            sortName = "Date Updated"
+        } else {
+            sortName = "Weighted Score"
+        }
+        // Media Filter
+        switch (addedCategory) {
+            case "   Completed Anime": {
+                mediaFilters = [
+                    {
+                        optionName: "Finished",
+                        optionCategory: "Release Status",
+                        status: "included",
+                        filterType: "selection"
+                    },
+                    {
+                        optionName: "Hide My List",
+                        filterType: "bool",
+                        status: "included",
+                    },
+                    {
+                        optionName: "Hide My Finished List",
+                        filterType: "bool",
+                        status: "included",
+                    },
+                    {
+                        optionName: "Average Score",
+                        optionCategory: "Shown Metric",
+                        status: "included",
+                        filterType: "selection"
+                    },
+                    {
+                        optionName: "Anime",
+                        optionCategory: "Format",
+                        status: "included",
+                        filterType: "selection"
+                    }
+                ]
+                shownSortName = "Average Score"
+                break
             }
-            // Media Filter
-            switch (addedCategory) {
-                case "   Completed Anime": {
-                    mediaFilters = [
-                        {
-                            optionName: "Finished",
-                            optionCategory: "Release Status",
-                            status: "included",
-                            filterType: "selection"
-                        },
-                        {
-                            optionName: "Hide My List",
-                            filterType: "bool",
-                            status: "included",
-                        },
-                        {
-                            optionName: "Hide My Finished List",
-                            filterType: "bool",
-                            status: "included",
-                        },
-                        {
-                            optionName: "Average Score",
-                            optionCategory: "Shown Metric",
-                            status: "included",
-                            filterType: "selection"
-                        },
-                        {
-                            optionName: "Anime",
-                            optionCategory: "Format",
-                            status: "included",
-                            filterType: "selection"
-                        }
-                    ]
-                    shownSortName = "Average Score"
-                    break
-                }
-                case "   Completed Manga": {
-                    mediaFilters = [
-                        {
-                            optionName: "Finished",
-                            optionCategory: "Release Status",
-                            status: "included",
-                            filterType: "selection"
-                        },
-                        {
-                            optionName: "Hide My List",
-                            filterType: "bool",
-                            status: "included",
-                        },
-                        {
-                            optionName: "Hide My Finished List",
-                            filterType: "bool",
-                            status: "included",
-                        },
-                        {
-                            optionName: "Average Score",
-                            optionCategory: "Shown Metric",
-                            status: "included",
-                            filterType: "selection"
-                        },
-                        {
-                            optionName: "Anime",
-                            optionCategory: "Format",
-                            status: "excluded",
-                            filterType: "selection"
-                        },
-                        {
-                            optionName: "Novel",
-                            optionCategory: "Format",
-                            status: "excluded",
-                            filterType: "selection"
-                        }
-                    ]
-                    shownSortName = "Average Score"
-                    break
-                }
-                case "   Completed Novel": {
-                    mediaFilters = [
-                        {
-                            optionName: "Finished",
-                            optionCategory: "Release Status",
-                            status: "included",
-                            filterType: "selection"
-                        },
-                        {
-                            optionName: "Hide My List",
-                            filterType: "bool",
-                            status: "included",
-                        },
-                        {
-                            optionName: "Hide My Finished List",
-                            filterType: "bool",
-                            status: "included",
-                        },
-                        {
-                            optionName: "Average Score",
-                            optionCategory: "Shown Metric",
-                            status: "included",
-                            filterType: "selection"
-                        },
-                        {
-                            optionName: "Novel",
-                            optionCategory: "Format",
-                            status: "included",
-                            filterType: "selection"
-                        },
-                    ]
-                    shownSortName = "Average Score"
-                    break
-                }
-                case "  Airing & Upcoming": {
-                    mediaFilters = [
-                        {
-                            optionName: "Hide My List",
-                            filterType: "bool",
-                            status: "included",
-                        },
-                        {
-                            optionName: "Hide My Finished List",
-                            filterType: "bool",
-                            status: "included",
-                        },
-                        {
-                            optionName: "Releasing",
-                            optionCategory: "Release Status",
-                            status: "included",
-                            filterType: "selection"
-                        },
-                        {
-                            optionName: "Not Yet Released",
-                            optionCategory: "Release Status",
-                            status: "included",
-                            filterType: "selection"
-                        },
-                        {
-                            optionName: "Average Score",
-                            optionCategory: "Shown Metric",
-                            status: "included",
-                            filterType: "selection"
-                        },
-                        {
-                            optionName: "Anime",
-                            optionCategory: "Format",
-                            status: "included",
-                            filterType: "selection"
-                        }
-                    ]
-                    shownSortName = "Average Score"
-                    break
-                }
-                case "  Ongoing Manga": {
-                    mediaFilters = [
-                        {
-                            optionName: "Hide My List",
-                            filterType: "bool",
-                            status: "included",
-                        },
-                        {
-                            optionName: "Hide My Finished List",
-                            filterType: "bool",
-                            status: "included",
-                        },
-                        {
-                            optionName: "Releasing",
-                            optionCategory: "Release Status",
-                            status: "included",
-                            filterType: "selection"
-                        },
-                        {
-                            optionName: "Average Score",
-                            optionCategory: "Shown Metric",
-                            status: "included",
-                            filterType: "selection"
-                        },
-                        {
-                            optionName: "Anime",
-                            optionCategory: "Format",
-                            status: "excluded",
-                            filterType: "selection"
-                        },
-                        {
-                            optionName: "Novel",
-                            optionCategory: "Format",
-                            status: "excluded",
-                            filterType: "selection"
-                        }
-                    ]
-                    shownSortName = "Average Score"
-                    break
-                }
-                case "  Ongoing Novel": {
-                    mediaFilters = [
-                        {
-                            optionName: "Hide My List",
-                            filterType: "bool",
-                            status: "included",
-                        },
-                        {
-                            optionName: "Hide My Finished List",
-                            filterType: "bool",
-                            status: "included",
-                        },
-                        {
-                            optionName: "Releasing",
-                            optionCategory: "Release Status",
-                            status: "included",
-                            filterType: "selection"
-                        },
-                        {
-                            optionName: "Average Score",
-                            optionCategory: "Shown Metric",
-                            status: "included",
-                            filterType: "selection"
-                        },
-                        {
-                            optionName: "Novel",
-                            optionCategory: "Format",
-                            status: "included",
-                            filterType: "selection"
-                        }
-                    ]
-                    shownSortName = "Average Score"
-                    break
-                }
-                case " Next Sequel in My List": {
-                    mediaFilters = [
-                        {
-                            optionName: "Finished",
-                            optionCategory: "Release Status",
-                            status: "none",
-                            filterType: "selection"
-                        },
-                        {
-                            optionName: "Hide My List",
-                            filterType: "bool",
-                            status: "included",
-                        },
-                        {
-                            optionName: "Hide My Finished List",
-                            filterType: "bool",
-                            status: "included",
-                        },
-                        {
-                            optionName: "Show Next Sequel",
-                            filterType: "bool",
-                            status: "included",
-                        },
-                        {
-                            optionName: "Average Score",
-                            optionCategory: "Shown Metric",
-                            status: "included",
-                            filterType: "selection"
-                        }
-                    ]
-                    shownSortName = "Average Score"
-                    break
-                }
-                case "Anticipated": {
-                    mediaFilters = [
-                        {
-                            optionName: "Hide My List",
-                            status: "included",
-                            filterType: "bool",
-                        },
-                        {
-                            optionName: "Hide My Finished List",
-                            status: "included",
-                            filterType: "bool",
-                        },
-                        {
-                            optionName: "Not Yet Released",
-                            optionCategory: "Release Status",
-                            status: "included",
-                            filterType: "selection"
-                        }
-                    ]
-                    break
-                }
-                case "My List": {
-                    mediaFilters = [
-                        {
-                            optionName: "Finished",
-                            optionCategory: "Release Status",
-                            status: "none",
-                            filterType: "selection"
-                        },
-                        {
-                            optionName: "Repeating",
-                            optionCategory: "User Status",
-                            status: "none",
-                            filterType: "selection"
-                        },
-                        {
-                            optionName: "Hide My Finished List",
-                            filterType: "bool",
-                            status: "included",
-                        },
-                        {
-                            optionName: "Show My List",
-                            filterType: "bool",
-                            status: "included",
-                        },
-                        {
-                            optionName: "Average Score",
-                            optionCategory: "Shown Metric",
-                            status: "included",
-                            filterType: "selection"
-                        }
-                    ]
-                    shownSortName = "Average Score"
-                    break
-                }
-                case "Recently Updated": {
-                    mediaFilters = [
-                        {
-                            optionName: "Show All Sequels",
-                            filterType: "bool",
-                            status: "included",
-                        },
-                        {
-                            optionName: "Score",
-                            optionCategory: "Shown Metric",
-                            status: "included",
-                            filterType: "selection"
-                        }
-                    ]
-                    shownSortName = "Score"
-                    break
-                }
+            case "   Completed Manga": {
+                mediaFilters = [
+                    {
+                        optionName: "Finished",
+                        optionCategory: "Release Status",
+                        status: "included",
+                        filterType: "selection"
+                    },
+                    {
+                        optionName: "Hide My List",
+                        filterType: "bool",
+                        status: "included",
+                    },
+                    {
+                        optionName: "Hide My Finished List",
+                        filterType: "bool",
+                        status: "included",
+                    },
+                    {
+                        optionName: "Average Score",
+                        optionCategory: "Shown Metric",
+                        status: "included",
+                        filterType: "selection"
+                    },
+                    {
+                        optionName: "Anime",
+                        optionCategory: "Format",
+                        status: "excluded",
+                        filterType: "selection"
+                    },
+                    {
+                        optionName: "Novel",
+                        optionCategory: "Format",
+                        status: "excluded",
+                        filterType: "selection"
+                    }
+                ]
+                shownSortName = "Average Score"
+                break
             }
-            acc[addedCategory] = {
-                isHiddenList: false,
-                shownSortName: shownSortName || sortName,
-                sortBy: {
-                    sortName,
-                    sortType: "desc"
-                },
-                mediaFilters,
+            case "   Completed Novel": {
+                mediaFilters = [
+                    {
+                        optionName: "Finished",
+                        optionCategory: "Release Status",
+                        status: "included",
+                        filterType: "selection"
+                    },
+                    {
+                        optionName: "Hide My List",
+                        filterType: "bool",
+                        status: "included",
+                    },
+                    {
+                        optionName: "Hide My Finished List",
+                        filterType: "bool",
+                        status: "included",
+                    },
+                    {
+                        optionName: "Average Score",
+                        optionCategory: "Shown Metric",
+                        status: "included",
+                        filterType: "selection"
+                    },
+                    {
+                        optionName: "Novel",
+                        optionCategory: "Format",
+                        status: "included",
+                        filterType: "selection"
+                    },
+                ]
+                shownSortName = "Average Score"
+                break
             }
-            return acc
-        }, {})
-    }
+            case "  Airing & Upcoming": {
+                mediaFilters = [
+                    {
+                        optionName: "Hide My List",
+                        filterType: "bool",
+                        status: "included",
+                    },
+                    {
+                        optionName: "Hide My Finished List",
+                        filterType: "bool",
+                        status: "included",
+                    },
+                    {
+                        optionName: "Releasing",
+                        optionCategory: "Release Status",
+                        status: "included",
+                        filterType: "selection"
+                    },
+                    {
+                        optionName: "Not Yet Released",
+                        optionCategory: "Release Status",
+                        status: "included",
+                        filterType: "selection"
+                    },
+                    {
+                        optionName: "Average Score",
+                        optionCategory: "Shown Metric",
+                        status: "included",
+                        filterType: "selection"
+                    },
+                    {
+                        optionName: "Anime",
+                        optionCategory: "Format",
+                        status: "included",
+                        filterType: "selection"
+                    }
+                ]
+                shownSortName = "Average Score"
+                break
+            }
+            case "  Ongoing Manga": {
+                mediaFilters = [
+                    {
+                        optionName: "Hide My List",
+                        filterType: "bool",
+                        status: "included",
+                    },
+                    {
+                        optionName: "Hide My Finished List",
+                        filterType: "bool",
+                        status: "included",
+                    },
+                    {
+                        optionName: "Releasing",
+                        optionCategory: "Release Status",
+                        status: "included",
+                        filterType: "selection"
+                    },
+                    {
+                        optionName: "Average Score",
+                        optionCategory: "Shown Metric",
+                        status: "included",
+                        filterType: "selection"
+                    },
+                    {
+                        optionName: "Anime",
+                        optionCategory: "Format",
+                        status: "excluded",
+                        filterType: "selection"
+                    },
+                    {
+                        optionName: "Novel",
+                        optionCategory: "Format",
+                        status: "excluded",
+                        filterType: "selection"
+                    }
+                ]
+                shownSortName = "Average Score"
+                break
+            }
+            case "  Ongoing Novel": {
+                mediaFilters = [
+                    {
+                        optionName: "Hide My List",
+                        filterType: "bool",
+                        status: "included",
+                    },
+                    {
+                        optionName: "Hide My Finished List",
+                        filterType: "bool",
+                        status: "included",
+                    },
+                    {
+                        optionName: "Releasing",
+                        optionCategory: "Release Status",
+                        status: "included",
+                        filterType: "selection"
+                    },
+                    {
+                        optionName: "Average Score",
+                        optionCategory: "Shown Metric",
+                        status: "included",
+                        filterType: "selection"
+                    },
+                    {
+                        optionName: "Novel",
+                        optionCategory: "Format",
+                        status: "included",
+                        filterType: "selection"
+                    }
+                ]
+                shownSortName = "Average Score"
+                break
+            }
+            case " Next Sequel in My List": {
+                mediaFilters = [
+                    {
+                        optionName: "Finished",
+                        optionCategory: "Release Status",
+                        status: "none",
+                        filterType: "selection"
+                    },
+                    {
+                        optionName: "Hide My List",
+                        filterType: "bool",
+                        status: "included",
+                    },
+                    {
+                        optionName: "Hide My Finished List",
+                        filterType: "bool",
+                        status: "included",
+                    },
+                    {
+                        optionName: "Show Next Sequel",
+                        filterType: "bool",
+                        status: "included",
+                    },
+                    {
+                        optionName: "Average Score",
+                        optionCategory: "Shown Metric",
+                        status: "included",
+                        filterType: "selection"
+                    }
+                ]
+                shownSortName = "Average Score"
+                break
+            }
+            case "Anticipated": {
+                mediaFilters = [
+                    {
+                        optionName: "Hide My List",
+                        status: "included",
+                        filterType: "bool",
+                    },
+                    {
+                        optionName: "Hide My Finished List",
+                        status: "included",
+                        filterType: "bool",
+                    },
+                    {
+                        optionName: "Not Yet Released",
+                        optionCategory: "Release Status",
+                        status: "included",
+                        filterType: "selection"
+                    }
+                ]
+                break
+            }
+            case "My List": {
+                mediaFilters = [
+                    {
+                        optionName: "Finished",
+                        optionCategory: "Release Status",
+                        status: "none",
+                        filterType: "selection"
+                    },
+                    {
+                        optionName: "Repeating",
+                        optionCategory: "User Status",
+                        status: "none",
+                        filterType: "selection"
+                    },
+                    {
+                        optionName: "Hide My Finished List",
+                        filterType: "bool",
+                        status: "included",
+                    },
+                    {
+                        optionName: "Show My List",
+                        filterType: "bool",
+                        status: "included",
+                    },
+                    {
+                        optionName: "Average Score",
+                        optionCategory: "Shown Metric",
+                        status: "included",
+                        filterType: "selection"
+                    }
+                ]
+                shownSortName = "Average Score"
+                break
+            }
+            case "Recently Updated": {
+                mediaFilters = [
+                    {
+                        optionName: "Show All Sequels",
+                        filterType: "bool",
+                        status: "included",
+                    },
+                    {
+                        optionName: "Score",
+                        optionCategory: "Shown Metric",
+                        status: "included",
+                        filterType: "selection"
+                    }
+                ]
+                shownSortName = "Score"
+                break
+            }
+        }
+        acc[addedCategory] = {
+            isHiddenList: false,
+            shownSortName: shownSortName || sortName,
+            sortBy: {
+                sortName,
+                sortType: "desc"
+            },
+            mediaFilters,
+        }
+        return acc
+    }, {})
 }
 let startPost = performance.now();
 function loadProgress(progress) {

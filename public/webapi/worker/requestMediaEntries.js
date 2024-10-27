@@ -266,7 +266,7 @@ self.onmessage = async ({
                             if (highestIncludedEntryID <= highestExcludedEntryID) {
                                 const collectionToPut = {}
                                 if (shouldUpdateMediaEntries) {
-                                    collectionToPut.shouldProcessRecommendation = true
+                                    collectionToPut.shouldProcessRecommendedEntries = true
                                     collectionToPut.mediaEntries = mediaEntries
                                 }
                                 if (shouldUpdateExcludedEntries) {
@@ -290,7 +290,7 @@ self.onmessage = async ({
                                     collectionToPut.excludedEntries = excludedEntries
                                 }
                                 if (shouldUpdateMediaEntries) {
-                                    collectionToPut.shouldProcessRecommendation = true
+                                    collectionToPut.shouldProcessRecommendedEntries = true
                                     collectionToPut.mediaEntries = mediaEntries
                                 }
                                 if (!jsonIsEmpty(collectionToPut)) {
@@ -543,7 +543,7 @@ self.onmessage = async ({
                             }
                             const collectionToPut = {}
                             if (shouldUpdateMediaEntries) {
-                                collectionToPut.shouldProcessRecommendation = true
+                                collectionToPut.shouldProcessRecommendedEntries = true
                                 collectionToPut.mediaEntries = mediaEntries
                             }
                             if (shouldUpdateExcludedEntries) {
@@ -585,7 +585,7 @@ self.onmessage = async ({
                         isShowingProgress = false;
                         const collectionToPut = {}
                         if (shouldUpdateMediaEntries) {
-                            collectionToPut.shouldProcessRecommendation = true
+                            collectionToPut.shouldProcessRecommendedEntries = true
                             collectionToPut.mediaEntries = mediaEntries
                         }
                         if (shouldUpdateExcludedEntries) {
@@ -857,7 +857,7 @@ self.onmessage = async ({
                             }
                             const collectionToPut = {}
                             if (shouldUpdateMediaEntries) {
-                                collectionToPut.shouldProcessRecommendation = true
+                                collectionToPut.shouldProcessRecommendedEntries = true
                                 collectionToPut.mediaEntries = mediaEntries
                             }
                             if (shouldUpdateExcludedEntries) {
@@ -909,7 +909,7 @@ self.onmessage = async ({
                         isShowingProgress = false;
                         const collectionToPut = {}
                         if (shouldUpdateMediaEntries) {
-                            collectionToPut.shouldProcessRecommendation = true
+                            collectionToPut.shouldProcessRecommendedEntries = true
                             collectionToPut.mediaEntries = mediaEntries
                         }
                         if (shouldUpdateExcludedEntries) {
@@ -1287,7 +1287,7 @@ self.onmessage = async ({
     //                         }
     //                         const collectionToPut = {}
     //                         if (shouldUpdateMediaEntries) {
-    //                             collectionToPut.shouldProcessRecommendation = true
+    //                             collectionToPut.shouldProcessRecommendedEntries = true
     //                             collectionToPut.mediaEntries = mediaEntries
     //                         }
     //                         if (shouldUpdateExcludedEntries) {
@@ -1338,7 +1338,7 @@ self.onmessage = async ({
     //                         self.postMessage({
     //                             status: "100% Updating Entries"
     //                         });
-    //                         collectionToPut.shouldProcessRecommendation = true
+    //                         collectionToPut.shouldProcessRecommendedEntries = true
     //                         collectionToPut.mediaEntries = mediaEntries
     //                     }
     //                     if (shouldUpdateExcludedEntries) {

@@ -10,7 +10,7 @@
         openedMediaOptionIdx,
         popupVisible,
         openedMediaPopupIdx,
-        hiddenEntries,
+        hiddenMediaEntries,
         confirmPromise,
         loadedMediaLists,
         selectedCategory,
@@ -141,7 +141,7 @@
 
     async function handleHideShow(e) {
         if (isRecentlyOpened && e.type !== "keydown") return;
-        if ($initList !== false || !$hiddenEntries) {
+        if ($initList !== false || !$hiddenMediaEntries) {
             if ($android) {
                 showToast("Please wait a moment")
             } else {
@@ -152,7 +152,7 @@
         let title = shownTitle
             ? `<span style="color:hsl(var(--ac-color));">${shownTitle}</span>`
             : "this entry";
-        let isHidden = $hiddenEntries[mediaID];
+        let isHidden = $hiddenMediaEntries[mediaID];
         if (isHidden) {
             if (
                 await $confirmPromise(
@@ -162,8 +162,8 @@
                 mediaManager({
                     showId: mediaID,
                 });
-                delete $hiddenEntries?.[mediaID];
-                $hiddenEntries = $hiddenEntries
+                delete $hiddenMediaEntries?.[mediaID];
+                $hiddenMediaEntries = $hiddenMediaEntries
                 $mediaOptionVisible = false;
             }
         } else {
@@ -175,7 +175,7 @@
                 mediaManager({
                     removeId: mediaID,
                 });
-                $hiddenEntries[mediaID] = 1;
+                $hiddenMediaEntries[mediaID] = 1;
                 $mediaOptionVisible = false;
             }
         }
@@ -222,7 +222,7 @@
         }
     });
 
-    hiddenEntries.subscribe(() => {
+    hiddenMediaEntries.subscribe(() => {
         if ($mediaOptionVisible) {
             loadMediaOption();
         }
@@ -308,9 +308,9 @@
                 role="button"
                 aria-label="Hide or Show Media"
                 ><h2 class="option-title">
-                    {!$hiddenEntries
+                    {!$hiddenMediaEntries
                         ? "Please Wait..."
-                        : ($hiddenEntries[mediaID] ? "Show" : "Hide") +
+                        : ($hiddenMediaEntries[mediaID] ? "Show" : "Hide") +
                           " Entry"}
                 </h2></span
             >

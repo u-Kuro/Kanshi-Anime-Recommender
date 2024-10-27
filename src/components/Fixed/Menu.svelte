@@ -17,7 +17,7 @@
     import {
         android,
         menuVisible,
-        hiddenEntries,
+        hiddenMediaEntries,
         autoUpdate,
         autoExport,
         exportPathIsAvailable,
@@ -209,7 +209,7 @@
         if ($initList !== false) {
             return pleaseWaitAlert()
         }
-        if (jsonIsEmpty($hiddenEntries)) {
+        if (jsonIsEmpty($hiddenMediaEntries)) {
             // Alert No Hidden Entries
             if ($android) {
                 showToast("No hidden entries were found")
@@ -226,7 +226,7 @@
             mediaManager({
                 showId: "all",
             });
-            $hiddenEntries = {};
+            $hiddenMediaEntries = {};
             resetProgress.update((e) => !e);
         }
     }

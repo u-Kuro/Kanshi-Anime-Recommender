@@ -35,13 +35,13 @@
         isBackgroundUpdateKey,
         menuVisible,
         tagInfo,
-        filterConfig,
-        orderedFilters,
+        mediaOptionsConfig,
+        orderedMediaOptions,
         categories,
         selectedCategory,
         loadedMediaLists,
         algorithmFilters,
-        nonOrderedFilters,
+        nonOrderedMediaOptions,
         mediaCautions,
         searchedWord,
         categoriesKeys,
@@ -120,7 +120,7 @@
     }
 
     $: {
-        filterCategoriesSelections = $filterConfig?.selection;
+        filterCategoriesSelections = $mediaOptionsConfig.selection;
         filterCategories = Object.keys(filterCategoriesSelections || {});
     }
 
@@ -128,44 +128,42 @@
     let numberFiltersValues = {};
     let boolFilterIsChecked = {};
     $: {
-        if (isJsonObject($nonOrderedFilters)) {
-            let allCategoriesBoolFilter = {
-                "Media Filter": $nonOrderedFilters?.["Media Filter"]?.bool,
-                "Algorithm Filter": $nonOrderedFilters?.["Algorithm Filter"]?.bool,
-            };
-            let activeMediaBoolFilters =
-                selectedCategoryMediaFilters?.filter?.(
-                    (filter) => filter?.filterType === "bool",
-                ) || [];
-            let activeAlgorithmBoolFilters =
-                $algorithmFilters?.filter?.(
-                    (filter) => filter?.filterType === "bool",
-                ) || [];
-            boolFilterIsChecked = Object.entries(
-                allCategoriesBoolFilter,
-            ).reduce((acc, [filterCategoryName, boolFilterCategoryArray]) => {
-                let activeBoolFilters =
-                    filterCategoryName === "Media Filter"
-                        ? activeMediaBoolFilters
-                        : activeAlgorithmBoolFilters;
-                for (
-                    let i = 0, l = boolFilterCategoryArray?.length;
-                    i < l;
-                    i++
-                ) {
-                    let boolFilterName = boolFilterCategoryArray[i];
-                    let activeBoolFilter = activeBoolFilters?.find?.(
-                        (boolFilter) => {
-                            return boolFilter?.optionName === boolFilterName;
-                        },
-                    );
-                    let status = activeBoolFilter?.status;
-                    let isBoolChecked = status === "included";
-                    acc[filterCategoryName + boolFilterName] = isBoolChecked;
-                }
-                return acc;
-            }, {});
-        }
+        let allCategoriesBoolFilter = {
+            "Media Filter": $nonOrderedMediaOptions["Media Filter"].bool,
+            "Algorithm Filter": $nonOrderedMediaOptions["Algorithm Filter"].bool,
+        };
+        let activeMediaBoolFilters =
+            selectedCategoryMediaFilters?.filter?.(
+                (filter) => filter?.filterType === "bool",
+            ) || [];
+        let activeAlgorithmBoolFilters =
+            $algorithmFilters?.filter?.(
+                (filter) => filter?.filterType === "bool",
+            ) || [];
+        boolFilterIsChecked = Object.entries(
+            allCategoriesBoolFilter,
+        ).reduce((acc, [filterCategoryName, boolFilterCategoryArray]) => {
+            let activeBoolFilters =
+                filterCategoryName === "Media Filter"
+                    ? activeMediaBoolFilters
+                    : activeAlgorithmBoolFilters;
+            for (
+                let i = 0, l = boolFilterCategoryArray?.length;
+                i < l;
+                i++
+            ) {
+                let boolFilterName = boolFilterCategoryArray[i];
+                let activeBoolFilter = activeBoolFilters?.find?.(
+                    (boolFilter) => {
+                        return boolFilter?.optionName === boolFilterName;
+                    },
+                );
+                let status = activeBoolFilter?.status;
+                let isBoolChecked = status === "included";
+                acc[filterCategoryName + boolFilterName] = isBoolChecked;
+            }
+            return acc;
+        }, {});
     }
 
     let maxFilterSelectionHeight = $windowHeight * 0.3;
@@ -1657,24 +1655,24 @@
             .catch(() => removeLSData("meanNovelPopularity"));
         }
     };
-    let recListMAPE, recListMAPEIncreased;
+    let recommendationError, recommendationErrorIncreased;
     (async () => {
-        recListMAPE = await getIDBData("recListMAPE");
+        recommendationError = await getIDBData("recommendationError");
     })();
-    window.updateRecListMAPE = (newRecListMAPE) => {
-        if (recListMAPE > 0 && recListMAPE !== newRecListMAPE) {
-            if (newRecListMAPE < recListMAPE) {
-                recListMAPEIncreased = true;
-            } else if (newRecListMAPE > recListMAPE) {
-                recListMAPEIncreased = false;
+    window.updateRecommendationError = (newRecommendationError) => {
+        if (recommendationError > 0 && recommendationError !== newRecommendationError) {
+            if (newRecommendationError < recommendationError) {
+                recommendationErrorIncreased = true;
+            } else if (newRecommendationError > recommendationError) {
+                recommendationErrorIncreased = false;
             } else {
-                recListMAPEIncreased = null;
+                recommendationErrorIncreased = null;
             }
-            recListMAPE = newRecListMAPE;
-        } else if (newRecListMAPE > 0) {
-            recListMAPE = newRecListMAPE;
+            recommendationError = newRecommendationError;
+        } else if (newRecommendationError > 0) {
+            recommendationError = newRecommendationError;
         } else {
-            recListMAPEIncreased = recListMAPE = null;
+            recommendationErrorIncreased = recommendationError = null;
         }
     };
 
@@ -2024,11 +2022,11 @@
         class="{"category-settings-wrap" + ($showFilterOptions ? "" : " display-none")}"
         style:--add-icon-size="{$showFilterOptions && customCategoryName && $categories && !$categories?.[customCategoryName] ? "25px" : ""}"
         style:--remove-icon-size="{$categoriesKeys?.length > 1
-            ? recListMAPE > 0
+            ? recommendationError > 0
                 ? "25px"
                 : "1fr"
             : ""}"
-        style:--mape-size="{recListMAPE > 0 ? "1fr" : ""}"
+        style:--mape-size="{recommendationError > 0 ? "1fr" : ""}"
         aria-label="Select a Type of Filter"
     >
         {#if filterCategories?.length}
@@ -2118,12 +2116,12 @@
                 <div class="shimmer-background"></div>
             </div>
         {/if}
-        {#if recListMAPE > 0}
+        {#if recommendationError > 0}
             <div
                 class="{"mean-error" + ($isProcessingList ? " loading" : "")}"
-                style:--mean-error-color="{recListMAPEIncreased === true
+                style:--mean-error-color="{recommendationErrorIncreased === true
                     ? "hsl(185deg,65%,50%)"
-                    : recListMAPEIncreased === false
+                    : recommendationErrorIncreased === false
                       ? "hsl(345deg,75%,60%)"
                       : ""}"
             >
@@ -2131,7 +2129,7 @@
                     ? "Error: "
                     : $windowWidth >= 275
                       ? "E: "
-                      : "") + formatNumber(recListMAPE) + "%"}
+                      : "") + formatNumber(recommendationError) + "%"}
             </div>
         {/if}
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
@@ -2192,16 +2190,16 @@
             ? maxFilterSelectionHeight + 65 + "px"
             : "0"}"
     >
-        {#if filterCategories && ($orderedFilters || $nonOrderedFilters)}
+        {#if filterCategories && $orderedMediaOptions}
             {#each filterCategories || [] as filterCategoryName (filterCategoryName || {})}
                 {@const filterCategoryIsSelected = filterCategoryName === selectedFilterCategoryName}
-                {#if $orderedFilters && filterCategoriesSelections}
+                {#if $orderedMediaOptions && filterCategoriesSelections}
                     {@const categoryIsAlgorithmFilter = filterCategoryName === "Algorithm Filter"}
                     {@const filterSelections = filterCategoriesSelections?.[filterCategoryName] || []}
                     {#each filterSelections || [] as filterSelectionName (filterCategoryName + filterSelectionName || {})}
                         {@const filterSelectionKey = filterCategoryName + "_" + filterSelectionName}
                         {@const filterSelectionIsSelected = filterCategoryIsSelected && filterSelectionName === openedFilterSelectionName}
-                        {@const isStaticSelection = filterCategoryName === "Media Filter" && $filterConfig?.staticSelection?.[filterSelectionName]}
+                        {@const isStaticSelection = filterCategoryName === "Media Filter" && $mediaOptionsConfig.staticSelection[filterSelectionName]}
                         <div
                             class="{"filter-select" +
                                 (filterCategoryIsSelected
@@ -2360,11 +2358,11 @@
                                                 return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
                                             }).normalize("NFD").replace(/[^a-zA-Z0-9\p{Lo}]/gu, "").toLowerCase()}
                                             {@const selectionOptions = filterSelectionSearchWord ? 
-                                                $orderedFilters?.[filterSelectionName]?.filter?.((option) => hasPartialMatch(option, filterSelectionSearchWord))
-                                                : $orderedFilters?.[filterSelectionName]
+                                                $orderedMediaOptions?.[filterSelectionName]?.filter?.((option) => hasPartialMatch(option, filterSelectionSearchWord))
+                                                : $orderedMediaOptions?.[filterSelectionName]
                                             }
                                             {#if selectionOptions?.length}
-                                                {@const isReadOnly = filterCategoryName === "Media Filter" && $filterConfig?.readOnly?.[filterSelectionName]}
+                                                {@const isReadOnly = filterCategoryName === "Media Filter" && $mediaOptionsConfig.readOnly[filterSelectionName]}
                                                 {@const filterCategoryArray =
                                                     filterCategoryName ===
                                                     "Media Filter"
@@ -2545,7 +2543,7 @@
                         </div>
                     {/each}
                 {/if}
-                {@const boolFilters = $nonOrderedFilters?.[filterCategoryName]?.bool}
+                {@const boolFilters = $nonOrderedMediaOptions[filterCategoryName].bool}
                 {#each boolFilters || [] as boolFilterName (filterCategoryName + boolFilterName || {})}
                     {#if filterCategoryIsSelected && boolFilterIsChecked[filterCategoryName + boolFilterName] != null}
                         {@const boolFilterKey =
@@ -2597,7 +2595,7 @@
                         </div>
                     {/if}
                 {/each}
-                {@const numberFilters = $nonOrderedFilters?.[filterCategoryName]?.number}
+                {@const numberFilters = $nonOrderedMediaOptions[filterCategoryName].number}
                 {#each numberFilters || [] as { name, defaultValue, maxValue, minValue } (filterCategoryName + name || {})}
                     {#if filterCategoryIsSelected}
                         {@const numberFilterKey = filterCategoryName + name}
@@ -2692,7 +2690,7 @@
                 {/each}
             {/each}
         {/if}
-        {#if !filterCategories || !($orderedFilters && $nonOrderedFilters)}
+        {#if !filterCategories || !$orderedMediaOptions}
             {#each Array(10) as _}
                 <div class="filter-select">
                     <div class="filter-name skeleton shimmer">
@@ -2756,7 +2754,7 @@
                             optionName,
                             activeFilterIdx,
                             status,
-                            $filterConfig?.readOnly?.[optionCategory],
+                            $mediaOptionsConfig.readOnly[optionCategory],
                         )}"
                     on:keyup="{(e) =>
                         e.key === "Enter" &&
@@ -2766,7 +2764,7 @@
                             optionName,
                             activeFilterIdx,
                             status,
-                            $filterConfig?.readOnly?.[optionCategory],
+                            $mediaOptionsConfig.readOnly[optionCategory],
                         )}"
                 >
                     <div class="active-filter">
@@ -2925,7 +2923,7 @@
                 </svg>
             </div>
         {/if}
-        {#if $orderedFilters?.sortFilter && $loadedMediaLists?.[$selectedCategory]?.sortBy}
+        {#if $orderedMediaOptions?.sortFilter && $loadedMediaLists?.[$selectedCategory]?.sortBy}
             <div class="sort-filter">
                 <svg
                     class="sort-order-icon"
@@ -2995,7 +2993,7 @@
                             >
                         </div>
                         <div class="options">
-                            {#each $orderedFilters?.sortFilter || [] as sortFilterName (sortFilterName || {})}
+                            {#each $orderedMediaOptions?.sortFilter || [] as sortFilterName (sortFilterName || {})}
                                 <div
                                     class="option"
                                     on:click="{() =>

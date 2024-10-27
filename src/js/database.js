@@ -1,5 +1,5 @@
 import { get } from "svelte/store";
-import { uniqueKey } from "./globalValues";
+import { android, isBackgroundUpdateKey, uniqueKey } from "./globalValues";
 import { isJsonObject } from "./utils/dataUtils.js";
 
 let db
@@ -18,8 +18,35 @@ const IDBInit = () => {
                 try {
                     const { result, transaction } = target
                     db = result;
-                    // TODO: Add Names of Records as Stores
-                    // db.createObjectStore("others");
+                    const stores = [
+                        // All Media
+                        "mediaEntries", "excludedEntries", "mediaUpdateAt",
+                        // Media Options
+                        "mediaOptions", "orderedMediaOptions",
+                        // Tag Category and Descriptions
+                        "tagInfo", "tagInfoUpdateAt",
+                        // User Data From AniList
+                        "username", "userMediaEntries", "userMediaUpdateAt",
+                        // All Recommended Media
+                        "recommendedMediaEntries",
+                        // User Data In App
+                        "algorithmFilters", "mediaCautions", "hiddenMediaEntries",
+                        "categories", "selectedCategory",
+                        // User Configs In App
+                        "autoPlay", "gridFullView", "showRateLimit", "showStatus",
+                        "autoUpdate", "autoExport",
+                        "runnedAutoUpdateAt", "runnedAutoExportAt",
+                        "exportPathIsAvailable",
+                        // User Configs In App
+                        "shouldManageMedia", "shouldProcessRecommendedEntries",
+                        // Other Info / Flags
+                        "nearestMediaReleaseAiringAt",
+                        "recommendationError",
+                        "visited",
+                    ]
+                    for (const store of stores) {
+                        db.createObjectStore(store);
+                    }
                     transaction.oncomplete = () => {
                         resolve();
                     }

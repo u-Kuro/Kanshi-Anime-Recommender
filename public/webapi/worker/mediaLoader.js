@@ -1,6 +1,8 @@
 let db,
-    userList,
-    recommendedMediaList,
+    categories,
+    mediaCautions,
+    hiddenMediaEntries,
+    recommendedMediaEntries,
     lastCategoriesKeys,
     semiContentCautions = {
         genres: {},
@@ -15,7 +17,7 @@ let db,
     loadedMediaList = {},
     loadMediaTimeout = {},
     lastSearchedWord = {},
-    shouldUpdateUserList, shouldUpdateRecommendedMediaList, shouldUpdateMediaCautions,
+    shouldUpdateUserData, shouldUpdateRecommendedMediaList, shouldUpdateMediaCautions,
     updateListTimeout,
     selectCategoryTimeout,
     messageQueue = [], isProcessing,
@@ -52,8 +54,8 @@ async function executeMessage() {
 
             let selectedCategory = data?.selectedCategory
 
-            if (recommendedMediaList != null
-                && userList != null
+            if (recommendedMediaEntries != null
+                && categories != null
                 && selectedCategory != null
             ) {
                 const searchDate = data?.searchDate
@@ -62,7 +64,6 @@ async function executeMessage() {
                 }
                 clearTimeout(loadMediaTimeout[selectedCategory])
                 loadMediaTimeout[selectedCategory] = setTimeout(() => {
-                    let categories = userList?.categories
                     let category = categories?.[selectedCategory]
 
                     if (category != null) {
@@ -81,7 +82,7 @@ async function executeMessage() {
                                     return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
                                 }).normalize("NFD").replace(/[^a-zA-Z0-9\p{Lo}]/gu, "").toLowerCase()
                                 loadedMediaList[selectedCategory] = mediaList.filter((id) => {
-                                    let title = recommendedMediaList[id]?.title
+                                    let title = recommendedMediaEntries[id]?.title
                                     if (isJsonObject(title)) {
                                         return Object.values(title).some(($title) => 
                                             typeof $title === "string" && $title.trim().replace(/[\uFF01-\uFF60\uFFE0-\uFFE6\u3000]/g, (ch) => {
@@ -100,7 +101,7 @@ async function executeMessage() {
                         
                         const mediaListLen = loadedMediaList[selectedCategory].length                        
                         if (idx < mediaListLen && (id = loadedMediaList[selectedCategory][idx])) {
-                            const media = editMedia(recommendedMediaList[id], category.shownSortName)
+                            const media = editMedia(recommendedMediaEntries[id], category.shownSortName)
                             const airingAt = media?.nextAiringEpisode?.airingAt
 
                             self.postMessage({
@@ -143,8 +144,7 @@ async function executeMessage() {
 
             let categorySelected = data?.categorySelected
 
-            if (userList != null && categorySelected != null) {
-                let categories = userList?.categories
+            if (categories != null && categorySelected != null) {
                 let category = categories?.[categorySelected]
 
                 if (category != null) {
@@ -163,7 +163,7 @@ async function executeMessage() {
                 }
             }
         } else if (hasOwnProperty.call(data, "getEarlisetReleaseDate")) {
-            if (recommendedMediaList != null) {
+            if (recommendedMediaEntries != null) {
 
                 let loadedListsArrays = Object.values(loadedIds)
                 let flattenedLoadedList = loadedListsArrays.reduce((acc, curr) => {
@@ -172,7 +172,7 @@ async function executeMessage() {
                     }
                     return acc
                 }, [])
-                let loadedList = flattenedLoadedList.map((id) => recommendedMediaList[id])
+                let loadedList = flattenedLoadedList.map((id) => recommendedMediaEntries[id])
                 if (loadedList.length) {
                     const currentDateTime = new Date().getTime()
                     loadedList = loadedList.filter((e) => e?.nextAiringEpisode?.estimated === true ? false : (e?.nextAiringEpisode?.airingAt * 1000) > currentDateTime)
@@ -197,8 +197,8 @@ async function executeMessage() {
             }
         } else if (hasOwnProperty.call(data, "loadAll")) {
 
-            userList = await retrieveJSON("userList")
-            if (!isJsonObject(userList) || jsonIsEmpty(userList)) {
+            categories = await retrieveJSON("categories")
+            if (!isJsonObject(categories) || jsonIsEmpty(categories)) {
                 self.postMessage({
                     loadAll: true,
                     shouldReloadList: true,
@@ -207,7 +207,10 @@ async function executeMessage() {
                 })
             } else {
                 let selectedCategory = data.selectedCategory
-                const { categories, hiddenEntries, mediaCautions } = userList
+                
+                hiddenMediaEntries = await retrieveJSON("hiddenMediaEntries") || {}
+                mediaCautions = await retrieveJSON("mediaCautions") || []
+
                 const categoriesKeys = Object.keys(categories)
                 removeDeletedCategories(categories, categoriesKeys)
 
@@ -229,7 +232,7 @@ async function executeMessage() {
                         acc[rec] = 1
                         return acc
                     }, {}),
-                    hiddenEntries,
+                    hiddenMediaEntries,
                     mediaCautions,
                     selectedCategory,
                     category: {
@@ -241,7 +244,7 @@ async function executeMessage() {
                     postId,
                 })
 
-                for (let i = 0, l = mediaCautions?.length; i < l; i++) {
+                for (let i = 0; i < mediaCautions.length; i++) {
                     let {
                         status,
                         filterType,
@@ -268,11 +271,11 @@ async function executeMessage() {
                     }
                 }
 
-                recommendedMediaList = await retrieveJSON("recommendedMediaList")
+                recommendedMediaEntries = await retrieveJSON("recommendedMediaEntries")
             }
         } else {
 
-            shouldUpdateUserList = shouldUpdateUserList || hasOwnProperty.call(data, "updateUserList")
+            shouldUpdateUserData = shouldUpdateUserData || hasOwnProperty.call(data, "updateUserData")
             shouldUpdateRecommendedMediaList = shouldUpdateRecommendedMediaList || hasOwnProperty.call(data, "updateRecommendedMediaList")
             shouldUpdateMediaCautions = shouldUpdateMediaCautions || hasOwnProperty.call(data, "updateMediaCautions")
             
@@ -281,21 +284,26 @@ async function executeMessage() {
 
                 if (shouldUpdateRecommendedMediaList) {
                     promises.push((async () => {
-                        recommendedMediaList = await retrieveJSON("recommendedMediaList") || recommendedMediaList
+                        recommendedMediaEntries = await retrieveJSON("recommendedMediaEntries") || recommendedMediaEntries
                         shouldUpdateRecommendedMediaList = false
                     })())
                 }
 
                 if (shouldUpdateMediaCautions) {
                     promises.push((async () => {
-                        (function (newUserList) {
-                            if (isJsonObject(newUserList) && !jsonIsEmpty(newUserList)) {
-                                userList = newUserList
-                                removeDeletedCategories(userList.categories)
+                        (function (userData) {
+                            if (isJsonObject(categories) && !jsonIsEmpty(categories)) {
+                                categories = userData.categories
+                                mediaCautions = userData.mediaCautions || []
+                                hiddenMediaEntries = userData.hiddenMediaEntries || {}
+                                removeDeletedCategories(categories)
                             }
-                        })(await retrieveJSON("userList"));
+                        })({
+                            categories: await retrieveJSON("categories"),
+                            mediaCautions: await retrieveJSON("mediaCautions"),
+                            hiddenMediaEntries: await retrieveJSON("hiddenMediaEntries")
+                        });
 
-                        const mediaCautions = userList?.mediaCautions
                         if (mediaCautions instanceof Array) {
                             semiContentCautions = {
                                 genres: {},
@@ -305,7 +313,7 @@ async function executeMessage() {
                                 genres: {},
                                 tags: {},
                             }
-                            for (let i = 0, l = mediaCautions?.length; i < l; i++) {
+                            for (let i = 0, l = mediaCautions.length; i < l; i++) {
                                 let {
                                     status,
                                     filterType,
@@ -332,27 +340,33 @@ async function executeMessage() {
                                 }
                             }
                         }
-                        shouldUpdateUserList = shouldUpdateMediaCautions = false
+                        shouldUpdateUserData = shouldUpdateMediaCautions = false
                     })())
-                } else if (shouldUpdateUserList || updatedCategories) {
+                } else if (shouldUpdateUserData || updatedCategories) {
                     promises.push((async () => {
-                        (function (newUserList) {
-                            if (isJsonObject(newUserList) && !jsonIsEmpty(newUserList)) {
-                                userList = newUserList
-                                removeDeletedCategories(userList.categories)
+                        (function (userData) {
+                            if (isJsonObject(categories) && !jsonIsEmpty(categories)) {
+                                categories = userData.categories
+                                mediaCautions = userData.mediaCautions || []
+                                hiddenMediaEntries = userData.hiddenMediaEntries || {}
+                                removeDeletedCategories(categories)
                             }
-                        })(await retrieveJSON("userList"));
-                        shouldUpdateUserList = false
+                        })({
+                            categories: await retrieveJSON("categories"),
+                            mediaCautions: await retrieveJSON("mediaCautions"),
+                            hiddenMediaEntries: await retrieveJSON("hiddenMediaEntries")
+                        });
+                        shouldUpdateUserData = false
                     })())
                 }
 
                 Promise.all(promises).then(() => {
                     if (updatedCategories) {
-                        const categories = userList?.categories || {}
-                        const categoriesKeys = Object.keys(categories)
+                        const $categories = categories || {}
+                        const categoriesKeys = Object.keys($categories)
 
                         for (const categoryKey in updatedCategories) {
-                            const category = categories[categoryKey]
+                            const category = $categories[categoryKey]
 
                             if (category == null) continue
 

@@ -8,7 +8,7 @@ import {
     dataStatus,
     updateRecommendationList,
     username,
-    hiddenEntries,
+    hiddenMediaEntries,
     runUpdate,
     updateList,
     initData,
@@ -43,7 +43,7 @@ import {
     toast,
     initList,
     showRateLimit,
-    orderedFilters,
+    orderedMediaOptions,
     tagInfo,
     listReloadAvailable,
     evictedKey,
@@ -241,7 +241,7 @@ const mediaLoader = (_data = {}) => {
                     initMediaLoaderWorker = false
                 }
                 categories.set(data?.categories || get(categories));
-                hiddenEntries.set(data?.hiddenEntries || get(hiddenEntries))
+                hiddenMediaEntries.set(data?.hiddenMediaEntries || get(hiddenMediaEntries))
                 mediaCautions.set(data?.mediaCautions || get(mediaCautions))
                 currentMediaCautions.set(data?.mediaCautions)
 
@@ -580,10 +580,10 @@ const mediaManager = (_data = {}) => {
 let processRecommendedMediaListTerminateTimeout;
 let processRecommendedMediaListWorker;
 let mediaReleaseUpdateTimeout
-window.setMediaReleaseUpdateTimeout = (neareastMediaReleaseAiringAt) => {
-    if (typeof neareastMediaReleaseAiringAt === "number" && !isNaN(neareastMediaReleaseAiringAt)) {
+window.setMediaReleaseUpdateTimeout = (nearestMediaReleaseAiringAt) => {
+    if (typeof nearestMediaReleaseAiringAt === "number" && !isNaN(nearestMediaReleaseAiringAt)) {
         clearTimeout(mediaReleaseUpdateTimeout)
-        let timeLeftBeforeMediaReleaseUpdate = (neareastMediaReleaseAiringAt * 1000) - new Date().getTime()
+        let timeLeftBeforeMediaReleaseUpdate = (nearestMediaReleaseAiringAt * 1000) - new Date().getTime()
         mediaReleaseUpdateTimeout = setTimeout(() => {
             updateRecommendationList.update(e => !e)
         }, Math.min(timeLeftBeforeMediaReleaseUpdate, 2000000000))
@@ -616,7 +616,7 @@ const processRecommendedMediaList = (_data = {}) => {
         progressedFetch("./webapi/worker/processRecommendedMediaList.js", 44130, "Updating Recommendation List")
             .then(url => {
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
-                let neareastMediaReleaseAiringAt
+                let nearestMediaReleaseAiringAt
                 clearTimeout(processRecommendedMediaListTerminateTimeout);
                 processRecommendedMediaListWorker?.terminate?.();
                 isProcessingList.set(true)
@@ -675,9 +675,9 @@ const processRecommendedMediaList = (_data = {}) => {
                         const mediaReleaseAiringAt = data?.mediaReleaseAiringAt
                         if (mediaReleaseAiringAt > lastProcessRecommendationAiringAt && typeof mediaReleaseAiringAt === "number" && !isNaN(mediaReleaseAiringAt)) {
                             if (
-                                neareastMediaReleaseAiringAt > mediaReleaseAiringAt || neareastMediaReleaseAiringAt == null
+                                nearestMediaReleaseAiringAt > mediaReleaseAiringAt || nearestMediaReleaseAiringAt == null
                             ) {
-                                neareastMediaReleaseAiringAt = mediaReleaseAiringAt
+                                nearestMediaReleaseAiringAt = mediaReleaseAiringAt
                             }
                         }
                     } else if (
@@ -687,12 +687,12 @@ const processRecommendedMediaList = (_data = {}) => {
                         || hasOwnProp?.call?.(data, "novelPopularityMode")
                     ) {
                         window.updateMeanNumberInfos?.(data?.averageScoreMode, data?.animePopularityMode, data?.mangaPopularityMode, data?.novelPopularityMode)
-                    } else if (hasOwnProp?.call?.(data, "recListMAPE")) {
-                        window.updateRecListMAPE?.(data?.recListMAPE)
+                    } else if (hasOwnProp?.call?.(data, "recommendationError")) {
+                        window.updateRecommendationError?.(data?.recommendationError)
                     } else {
-                        setLSData("neareastMediaReleaseAiringAt", neareastMediaReleaseAiringAt)
-                        .catch(() => removeLSData("neareastMediaReleaseAiringAt"))
-                        .finally(() => saveIDBdata(neareastMediaReleaseAiringAt, "neareastMediaReleaseAiringAt"));
+                        setLSData("nearestMediaReleaseAiringAt", nearestMediaReleaseAiringAt)
+                        .catch(() => removeLSData("nearestMediaReleaseAiringAt"))
+                        .finally(() => saveIDBdata(nearestMediaReleaseAiringAt, "nearestMediaReleaseAiringAt"));
                         if (window.shouldUpdateNotifications === true && get(android)) {
                             window.shouldUpdateNotifications = false
                             try {
@@ -712,8 +712,8 @@ const processRecommendedMediaList = (_data = {}) => {
                         isProcessingList.set(false)
                         dataStatus.set(null)
                         progress.set(100)
-                        if (neareastMediaReleaseAiringAt) {
-                            window.setMediaReleaseUpdateTimeout?.(neareastMediaReleaseAiringAt)
+                        if (nearestMediaReleaseAiringAt) {
+                            window.setMediaReleaseUpdateTimeout?.(nearestMediaReleaseAiringAt)
                         }
                         resolve()
                         if (get(isImporting)) {
@@ -852,7 +852,7 @@ const requestMediaEntries = (_data = {}) => {
                         reject(data.error)
                     } else if (hasOwnProp?.call?.(data, "updateRecommendationList")) {
                         if (get(android)) {
-                            window.KanshiBackgroundShouldProcessRecommendation = true
+                            window.KanshiBackgroundshouldProcessRecommendedEntries = true
                         }
                         updateRecommendationList.update(e => !e)
                     } else if (hasOwnProp?.call?.(data, "errorDuringInit")) {
@@ -1037,7 +1037,7 @@ const requestUserEntries = (_data = {}) => {
                         reject(data.error)
                     } else if (hasOwnProp?.call?.(data, "updateRecommendationList")) {
                         if (get(android)) {
-                            window.KanshiBackgroundShouldProcessRecommendation = window.shouldUpdateNotifications = true
+                            window.KanshiBackgroundshouldProcessRecommendedEntries = window.shouldUpdateNotifications = true
                         }
                         updateRecommendationList.update(e => !e)
                     } else {
@@ -1354,9 +1354,9 @@ const importUserData = (_data) => {
                             .catch(() => removeLSData("username"));
                             username.set(data.importedUsername)
                         }
-                    } else if (hasOwnProp?.call?.(data, "importedHiddenEntries")) {
-                        if (isJsonObject(data?.importedHiddenEntries)) {
-                            hiddenEntries.set(data?.importedHiddenEntries)
+                    } else if (hasOwnProp?.call?.(data, "importedHiddenMediaEntries")) {
+                        if (isJsonObject(data?.importedHiddenMediaEntries)) {
+                            hiddenMediaEntries.set(data?.importedHiddenMediaEntries)
                         }
                     } else if (hasOwnProp?.call?.(data, "mediaCautions")) {
                         if (data?.mediaCautions instanceof Array) {
@@ -1756,8 +1756,8 @@ const getOrderedFilters = async () => {
         getOrderedFiltersWorker.onmessage = ({ data }) => {
             if (hasOwnProp?.call?.(data, "error")) {
                 console.error(data.error)
-            } else if (hasOwnProp?.call?.(data, "orderedFilters") && isJsonObject(data.orderedFilters) && !jsonIsEmpty(data.orderedFilters)) {
-                orderedFilters.set(data.orderedFilters)
+            } else if (hasOwnProp?.call?.(data, "orderedMediaOptions") && isJsonObject(data.orderedMediaOptions) && !jsonIsEmpty(data.orderedMediaOptions)) {
+                orderedMediaOptions.set(data.orderedMediaOptions)
             }
             getOrderedFiltersWorker?.terminate?.()
         }

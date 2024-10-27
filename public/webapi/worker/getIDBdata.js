@@ -21,18 +21,17 @@ self.onmessage = async ({ data }) => {
                 || await checkData("tagInfo")
             )
         } else if (data.name === "username") {
-            const userData = await retrieveJSON("userData")
-            self.postMessage((userData?.username ?? await retrieveJSON("username")) || "")
-        } else if (data.name === "recommendedMediaListIsEmpty") {
-            self.postMessage(await checkData("recommendedMediaList"))
+            self.postMessage(await retrieveJSON("username") || "")
+        } else if (data.name === "recommendedMediaEntriesIsEmpty") {
+            self.postMessage(await checkData("recommendedMediaEntries"))
         } else if (data.name === "aniIdsNotificationToBeUpdated") {
             let updatedAniIdsNotification = {}
             let aniIdsNotificationToBeUpdated = data?.aniIdsNotificationToBeUpdated
             if (aniIdsNotificationToBeUpdated instanceof Array && aniIdsNotificationToBeUpdated.length > 0) {
-                let recommendedMediaList = await retrieveJSON("recommendedMediaList")
-                if (recommendedMediaList) {
+                let recommendedMediaEntries = await retrieveJSON("recommendedMediaEntries")
+                if (recommendedMediaEntries) {
                     updatedAniIdsNotification = aniIdsNotificationToBeUpdated.reduce((result, mediaId) => {
-                        let media = recommendedMediaList?.[mediaId]
+                        let media = recommendedMediaEntries?.[mediaId]
                         if (media) {
                             let title = media?.title?.english || media?.title?.romaji || media?.title?.native;
                             let episodes = media?.episodes

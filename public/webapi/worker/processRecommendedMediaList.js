@@ -30,8 +30,7 @@ self.onmessage = async ({ data }) => {
         // Retrieve Data
         self.postMessage({ status: "Processing Recommendation List" })
         const mediaEntries = await retrieveJSON("mediaEntries") || {}
-        const userData = await retrieveJSON("userData")
-        const userEntries = (userData?.userEntries ?? await retrieveJSON("userEntries")) || []
+        const userMediaEntries = await retrieveJSON("userMediaEntries") || []
         let includedUserEntryCount = 0;
         // Filter Algorithm
         let contentFocused = false,
@@ -139,10 +138,10 @@ self.onmessage = async ({ data }) => {
         // Init User Entries and Information
         self.postMessage({ status: "Processing Recommendation List" })
         // Sort User Entries for Anomaly Removal
-        if (userEntries.length >= 2) {
-            if (isJsonObject(userEntries[0]) && isJsonObject(userEntries[1])) {
+        if (userMediaEntries.length >= 2) {
+            if (isJsonObject(userMediaEntries[0]) && isJsonObject(userMediaEntries[1])) {
                 // sort by user-score and popularity for unique media in franchise
-                userEntries.sort((a, b) => {
+                userMediaEntries.sort((a, b) => {
                     let x = a?.score != null ? a.score : -Infinity,
                         y = b?.score != null ? b.score : -Infinity;
                     if (x !== y) return y - x;
@@ -165,7 +164,7 @@ self.onmessage = async ({ data }) => {
             originalGenres: {},
             originalTags: {}
         }
-        let userEntriesStatus = {}
+        let userMediaEntriesStatus = {}
         let averageScore = []
         let year = []
         let genresMeanCount = {}
@@ -185,32 +184,32 @@ self.onmessage = async ({ data }) => {
         // let staffMeanCount = {}
         let includedMediaRelations = {}
         self.postMessage({ status: "Processing Recommendation List" })
-        for (let i = 0; i < userEntries.length; i++) {
+        for (let i = 0; i < userMediaEntries.length; i++) {
 
-            loadProgress(((i + 1) / userEntries.length) * 100 * 0.3)
+            loadProgress(((i + 1) / userMediaEntries.length) * 100 * 0.3)
 
-            let media = userEntries[i].media
+            let media = userMediaEntries[i].media
             let mediaID = media?.id
-            let status = userEntries[i].status
-            let userScore = userEntries[i].score
-            let episodeProgress = userEntries[i].progress
-            let volumeProgress = userEntries[i].progressVolumes
+            let status = userMediaEntries[i].status
+            let userScore = userMediaEntries[i].score
+            let episodeProgress = userMediaEntries[i].progress
+            let volumeProgress = userMediaEntries[i].progressVolumes
             // Get Important Info in User Entries
             if (mediaID) {
-                if (!isJsonObject(userEntriesStatus[mediaID])) {
-                    userEntriesStatus[mediaID] = {}
+                if (!isJsonObject(userMediaEntriesStatus[mediaID])) {
+                    userMediaEntriesStatus[mediaID] = {}
                 }
                 if (status && typeof status === "string") {
-                    userEntriesStatus[mediaID].userStatus = status
+                    userMediaEntriesStatus[mediaID].userStatus = status
                 }
                 if (userScore > 0) {
-                    userEntriesStatus[mediaID].userScore = userScore
+                    userMediaEntriesStatus[mediaID].userScore = userScore
                 }
                 if (episodeProgress > 0) {
-                    userEntriesStatus[mediaID].episodeProgress = episodeProgress
+                    userMediaEntriesStatus[mediaID].episodeProgress = episodeProgress
                 }
                 if (volumeProgress > 0) {
-                    userEntriesStatus[mediaID].volumeProgress = volumeProgress
+                    userMediaEntriesStatus[mediaID].volumeProgress = volumeProgress
                 }
             }
             // Init Variables
@@ -330,7 +329,7 @@ self.onmessage = async ({ data }) => {
             varScheme = {}
         } else {
             let maxUserScore = -Infinity
-            userScores = Object.values(userEntriesStatus)
+            userScores = Object.values(userMediaEntriesStatus)
                 .map((entry) => entry.userScore)
                 .filter((uscore) => {
                     let include = uscore > 0
@@ -557,7 +556,7 @@ self.onmessage = async ({ data }) => {
         }
         // Calculate Media Recommendation List
         self.postMessage({ status: "Processing Recommendation List" })
-        let recommendedMediaListArray = [];
+        let recommendedMediaEntriesArray = [];
         let usedScoreBasis, maxScore = -Infinity, minScore = Infinity,
             maxWeightedScore = -Infinity, minWeightedScore = Infinity;
         let meanUserScore, meanScoreAll, meanScoreAbove;
@@ -683,8 +682,8 @@ self.onmessage = async ({ data }) => {
                 let popularity = media?.popularity;
                 // Update Non Iterative Filters
                 let userStatus = "Unseen";
-                if (typeof userEntriesStatus?.[mediaID]?.userStatus === "string") {
-                    userStatus = capitalizeWords(userEntriesStatus[mediaID].userStatus);
+                if (typeof userMediaEntriesStatus?.[mediaID]?.userStatus === "string") {
+                    userStatus = capitalizeWords(userMediaEntriesStatus[mediaID].userStatus);
                     if (userStatus && mediaOptions["User Status"][userStatus] === undefined) {
                         hasNewFilterOption = mediaOptions["User Status"][userStatus] = true
                     }
@@ -992,7 +991,7 @@ self.onmessage = async ({ data }) => {
                             let _title = media.title?.english || media.title?.romaji || media.title?.native;
                             let _releaseEpisode = media.nextAiringEpisode.episode;
                             let _imageURL = media.coverImage?.large || ""
-                            let _episodeProgress = userEntriesStatus?.[mediaID]?.episodeProgress || 0
+                            let _episodeProgress = userMediaEntriesStatus?.[mediaID]?.episodeProgress || 0
                             self.postMessage({
                                 mediaReleaseNotification: {
                                     id: mediaID,
@@ -1031,11 +1030,11 @@ self.onmessage = async ({ data }) => {
                     studios: studiosIncluded
                 }
                 // Add To Processed Recommendation List
-                recommendedMediaListArray.push({
+                recommendedMediaEntriesArray.push({
                     id: mediaID,
                     title: media?.title,
                     mediaUrl,
-                    userScore: userEntriesStatus?.[mediaID]?.userScore,
+                    userScore: userMediaEntriesStatus?.[mediaID]?.userScore,
                     mediaRelations: media?.relations?.edges,
                     averageScore,
                     popularity,
@@ -1059,8 +1058,8 @@ self.onmessage = async ({ data }) => {
                     format,
                     studios,
                     episodes,
-                    episodeProgress: userEntriesStatus?.[mediaID]?.episodeProgress,
-                    volumeProgress: userEntriesStatus?.[mediaID]?.volumeProgress,
+                    episodeProgress: userMediaEntriesStatus?.[mediaID]?.episodeProgress,
+                    volumeProgress: userMediaEntriesStatus?.[mediaID]?.volumeProgress,
                     duration,
                     chapters: media?.chapters,
                     volumes: media?.volumes,
@@ -1333,7 +1332,7 @@ self.onmessage = async ({ data }) => {
                         }
                     }
                 }
-                recommendedMediaListArray.push({
+                recommendedMediaEntriesArray.push({
                     id: mediaID,
                     title: media?.title,
                     mediaUrl,
@@ -1374,7 +1373,7 @@ self.onmessage = async ({ data }) => {
         let userMediaWeightedScores = [], userMediaUserScores = []
         let userScoresMedia = [], scoresArray = [], scoreAboveMeanArray = []
         // Map Value to Score Basis
-        recommendedMediaListArray = recommendedMediaListArray.map((media) => {
+        recommendedMediaEntriesArray = recommendedMediaEntriesArray.map((media) => {
             // if lowest range is less than 0
             media.score = mapValue(media.score, minScore, maxScore, newLowestRange, newHighestRange)
             media.weightedScore = mapValue(media.weightedScore, minWeightedScore, maxWeightedScore, newLowestRange, newHighestRange)
@@ -1430,9 +1429,9 @@ self.onmessage = async ({ data }) => {
             meanScoreAbove = arrayMean(scoreAboveMeanArray)
         }
         // Update List
-        const recommendedMediaList = {}
-        for (let i = 0; i < recommendedMediaListArray.length; i++) {
-            const media = recommendedMediaListArray[i]
+        const recommendedMediaEntries = {}
+        for (let i = 0; i < recommendedMediaEntriesArray.length; i++) {
+            const media = recommendedMediaEntriesArray[i]
             if (media.score > meanScoreAbove) {
                 media.recommendationCode = 2
             } else if (media.score > meanScoreAll) {
@@ -1441,22 +1440,22 @@ self.onmessage = async ({ data }) => {
                 media.recommendationCode = 0
             }
             const mediaID = media.id
-            recommendedMediaList[mediaID] = media
+            recommendedMediaEntries[mediaID] = media
         }
         // Save Processed Recommendation List and other Data
         const collectionToPut = {
-            recommendedMediaList,
+            recommendedMediaEntries,
             mediaOptions,
-            shouldLoadMedia: true,
-            shouldProcessRecommendation: false,
+            shouldManageMedia: true,
+            shouldProcessRecommendedEntries: false,
         }
         if (hasNewAlgorithmFilter) {
             collectionToPut.algorithmFilters = algorithmFilters
         }
-        const recListMAPE = calculateError(userMediaUserScores, userMediaWeightedScores, minUserScore, usedScoreBasis)
-        if (recListMAPE != null) {
-            collectionToPut.recListMAPE = recListMAPE
-            self.postMessage({ recListMAPE })
+        const recommendationError = calculateError(userMediaUserScores, userMediaWeightedScores, minUserScore, usedScoreBasis)
+        if (recommendationError != null) {
+            collectionToPut.recommendationError = recommendationError
+            self.postMessage({ recommendationError })
         }
         await saveJSONCollection(collectionToPut)
         self.postMessage({ status: null })

@@ -58,10 +58,10 @@
 		dropdownIsVisible,
 		isBackgroundUpdateKey,
 		visitedKey,
-		orderedFilters,
+		orderedMediaOptions,
 		algorithmFilters,
-		nonOrderedFilters,
-		filterConfig,
+		nonOrderedMediaOptions,
+		mediaOptionsConfig,
 		categories,
 		selectedCategory,
 		loadedMediaLists,
@@ -94,7 +94,7 @@
 			// Check Data Loss
 			if ($android) {
 				if (window[$visitedKey] === true) {
-					const isAlreadyVisited = await getIDBData($visitedKey);
+					const isAlreadyVisited = await getIDBData("visited");
 					if (!isAlreadyVisited) {
 						window[$evictedKey] = true;
 						try {
@@ -105,7 +105,7 @@
 						} catch (ex) { console.error(ex) }
 					}
 				} else if (window[$visitedKey] === false) {
-					setIDBData($visitedKey, true, true)
+					setIDBData("visited", true, true)
 					.then(() => {
 						try {
 							JSBridge.pageVisited()
@@ -145,7 +145,7 @@
 				if (!$android || window[$isBackgroundUpdateKey] !== true) {
 					const records = await getIDBRecords([
 						"username",
-						// "orderedFilters",
+						// "orderedMediaOptions",
 						"algorithmFilters",
 						"tagInfo"
 					])
@@ -156,9 +156,9 @@
 							setLSData("username", savedUsername || "")
 							.catch(() => removeLSData("username"))
 						}
-						// $orderedFilters = records.orderedFilters;
-						// $nonOrderedFilters = records.nonOrderedFilters;
-						// $filterConfig = records.filterConfig;
+						// $orderedMediaOptions = records.orderedMediaOptions;
+						// $nonOrderedMediaOptions = records.nonOrderedMediaOptions;
+						// $mediaOptionsConfig = records.mediaOptionsConfig;
 						$algorithmFilters = records.algorithmFilters || [];
 						$tagInfo = records.tagInfo || {};
 						updateTagInfo();
@@ -196,18 +196,18 @@
 
 					let dataIsUpdated;
 					try {
-						JSBridge.setShouldProcessRecommendation(true);
+						JSBridge.setShouldProcessRecommendedEntries(true);
 					} catch (ex) { console.error (ex) }
 
 					try {
 						await requestUserEntries({ initList: true })
 					} catch (ex) { console.error (ex) }
-					dataIsUpdated = window.KanshiBackgroundShouldProcessRecommendation;
+					dataIsUpdated = window.KanshiBackgroundshouldProcessRecommendedEntries;
 
 					try {
 						await requestMediaEntries({ initList: true })
 					} catch (ex) { console.error(ex) }
-					dataIsUpdated = dataIsUpdated || window.KanshiBackgroundShouldProcessRecommendation;
+					dataIsUpdated = dataIsUpdated || window.KanshiBackgroundshouldProcessRecommendedEntries;
 
 					try {
 						await updateTagInfo({ initList: true, getTagInfo: false });
@@ -219,13 +219,13 @@
 							window.shouldUpdateNotifications = true
 							await processRecommendedMediaList({ initList: true })
 							try {
-								JSBridge.setShouldProcessRecommendation(false)
+								JSBridge.setShouldProcessRecommendedEntries(false)
 							} catch (ex) { console.error(ex) }
 							recommendationListIsProcessed = true
 						} catch (ex) { console.error(ex) }
 					} else {
 						try {
-							JSBridge.setShouldProcessRecommendation(false)
+							JSBridge.setShouldProcessRecommendedEntries(false)
 						} catch (ex) { console.error(ex) }
 					}
 					
@@ -234,12 +234,12 @@
 							try {
 								await mediaManager({ updateRecommendedMediaList: true, initList: true })
 								try {
-									JSBridge.setShouldLoadMedia(false);
+									JSBridge.setshouldManageMedia(false);
 								} catch (ex) { console.error(ex) }
 							} catch (ex) { console.error(ex) }
 						} else {
 							try {
-								JSBridge.setShouldLoadMedia(false);
+								JSBridge.setshouldManageMedia(false);
 							} catch (ex) { console.error(ex) }
 						}
 					} catch (ex) { console.error(ex) }
@@ -260,36 +260,36 @@
 				}
 			} else {
 				// Get/Show List
-				let shouldProcessRecommendation;
-				const neareastMediaReleaseAiringAt = getLSData("neareastMediaReleaseAiringAt") ?? (await getIDBData("neareastMediaReleaseAiringAt"));
+				let shouldProcessRecommendedEntries;
+				const nearestMediaReleaseAiringAt = getLSData("nearestMediaReleaseAiringAt") ?? (await getIDBData("nearestMediaReleaseAiringAt"));
 				if (
-					typeof neareastMediaReleaseAiringAt === "number" &&
-					!isNaN(neareastMediaReleaseAiringAt)
+					typeof nearestMediaReleaseAiringAt === "number" &&
+					!isNaN(nearestMediaReleaseAiringAt)
 				) {
-					const neareastMediaReleaseAiringDate = new Date(neareastMediaReleaseAiringAt * 1000);
+					const neareastMediaReleaseAiringDate = new Date(nearestMediaReleaseAiringAt * 1000);
 					if (
 						!isNaN(neareastMediaReleaseAiringDate) &&
 						neareastMediaReleaseAiringDate <= new Date()
 					) {
-						shouldProcessRecommendation = true;
+						shouldProcessRecommendedEntries = true;
 					} else {
-						window.setMediaReleaseUpdateTimeout?.(neareastMediaReleaseAiringAt);
+						window.setMediaReleaseUpdateTimeout?.(nearestMediaReleaseAiringAt);
 					}
 				}
-				if (!shouldProcessRecommendation) {
-					shouldProcessRecommendation = (await getIDBData("shouldProcessRecommendation")) || (await getIDBData("recommendedMediaListIsEmpty"));
+				if (!shouldProcessRecommendedEntries) {
+					shouldProcessRecommendedEntries = (await getIDBData("shouldProcessRecommendedEntries")) || (await hasIDBData(["recommendedMediaEntries"]));
 				}
 
-				let shouldLoadMedia
-				if (shouldProcessRecommendation) {
+				let shouldManageMedia
+				if (shouldProcessRecommendedEntries) {
 					$loadingCategory[""] = new Date()
 					window.shouldUpdateNotifications = true
 					await processRecommendedMediaList({ initList: true })
-					shouldLoadMedia = true
+					shouldManageMedia = true
 				}
 
-				shouldLoadMedia = shouldLoadMedia || $initList !== false || (await getIDBData("shouldLoadMedia"));
-				if (shouldLoadMedia) {
+				shouldManageMedia = shouldManageMedia || $initList !== false || (await getIDBData("shouldManageMedia"));
+				if (shouldManageMedia) {
 					if ($initList !== false) {
 						await mediaManager({ updateRecommendedMediaList: true, initList: true })
 						await mediaLoader({
@@ -1085,30 +1085,30 @@
 
 	// OTHER ANDROID APP CALLABLES
 	window.shouldRefreshMediaList = async (
-		shouldProcessRecommendation,
-		shouldLoadMedia,
+		shouldProcessRecommendedEntries,
+		shouldManageMedia,
 	) => {
 		if ($initData || $initList !== false) return;
 		if ($android && window[$isBackgroundUpdateKey] === true) return;
 		
-		let thisShouldLoadMedia
-		if (shouldProcessRecommendation) {
+		let thisshouldManageMedia
+		if (shouldProcessRecommendedEntries) {
 			try {
 				$loadingCategory[""] = new Date()
 				await processRecommendedMediaList()
-				thisShouldLoadMedia = true
+				thisshouldManageMedia = true
 			} catch (ex) { console.error(ex) }
 		} else {
-			thisShouldLoadMedia = false
+			thisshouldManageMedia = false
 		}		
 
-		let isAlreadyLoaded = !shouldLoadMedia && !thisShouldLoadMedia;
+		let isAlreadyLoaded = !shouldManageMedia && !thisshouldManageMedia;
 		if (isAlreadyLoaded) {
 			try {
 				$loadingCategory[""] = new Date()
 				await mediaLoader({
 					updateRecommendedMediaList: true,
-					updateUserList: true,
+					updateUserData: true,
 				})
 			} catch (ex) { console.error(ex) }
 			window.checkEntries?.();

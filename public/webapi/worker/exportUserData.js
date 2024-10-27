@@ -22,34 +22,35 @@ self.onmessage = async ({ data }) => {
         self.postMessage({ state: 0 }) // Start Deleting Existing File
     }
 
-    const userData = await retrieveJSON("userData")
-    let username
-    if (userData?.userEntries instanceof Array && userData?.userEntries?.length > 0) {
-        username = userData?.username;
-    }
-
-    const userList = await retrieveJSON("userList")
-
+    const username = await retrieveJSON("username")
+    const categories = await retrieveJSON("categories")
     const excludedEntries = await retrieveJSON("excludedEntries")
     const mediaEntries = await retrieveJSON("mediaEntries")
-
     if (
-        (!isJsonObject(userList) || jsonIsEmpty(userList))
+        (!isJsonObject(categories) || jsonIsEmpty(categories))
         || (!isJsonObject(excludedEntries) || jsonIsEmpty(excludedEntries))
         || (!isJsonObject(mediaEntries) || jsonIsEmpty(mediaEntries))
     ) {
         self.postMessage({ missingData: true })
         return
     }
-    let backUpData = {
-        userData,
-        mediaUpdateAt: await retrieveJSON("mediaUpdateAt"),
-        userMediaUpdateAt: await retrieveJSON("userMediaUpdateAt"),
-        tagInfo: await retrieveJSON("tagInfo"),
-        userList,
-        algorithmFilters: await retrieveJSON("algorithmFilters"),
-        excludedEntries,
+
+    const backUpData = {
         mediaEntries,
+        excludedEntries,
+        mediaUpdateAt: await retrieveJSON("mediaUpdateAt"),
+
+        categories,
+        hiddenMediaEntries: await retrieveJSON("hiddenMediaEntries"),
+        algorithmFilters: await retrieveJSON("algorithmFilters"),
+        mediaCautions: await retrieveJSON("mediaCautions"),
+
+        username,
+        userMediaEntries: await retrieveJSON("userMediaEntries"),
+        userMediaUpdateAt: await retrieveJSON("userMediaUpdateAt"),
+
+        tagInfo: await retrieveJSON("tagInfo"),
+        tagInfoUpdateAt: await retrieveJSON("tagInfoUpdateAt"),
     };
     self.postMessage({ progress: 0 })
     let maxRecursion = 0;
