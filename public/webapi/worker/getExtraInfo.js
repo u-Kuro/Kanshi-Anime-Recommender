@@ -12,13 +12,13 @@ self.addEventListener("unhandledrejection", (event) => {
 
 self.onmessage = async ({ data }) => {
     if (!db) {
-        await IDBinit();
+        await IDBInit();
     }
     if (data?.number === 0) {
-        let currentDate = new Date
-        let currentYear = (currentDate).getFullYear()
+        const currentDate = new Date
+        const currentYear = (currentDate).getFullYear()
         let currentSeason
-        let seasons = {
+        const seasons = {
             Winter: new Date(parseInt(currentYear), 0, 1),  // January 1
             Spring: new Date(parseInt(currentYear), 3, 1),  // April 1
             Summer: new Date(parseInt(currentYear), 6, 1),  // July 1
@@ -33,16 +33,23 @@ self.onmessage = async ({ data }) => {
         } else {
             currentSeason = "Fall"
         }
-        let recommendedMediaEntriesArray = Object.values(await retrieveJSON("recommendedMediaEntries") || {})
-        let hiddenMediaEntries = await retrieveJSON("hiddenMediaEntries") || {}
-        let mediaEntries = recommendedMediaEntriesArray.filter((media) => {
+        let {
+            recommendedMediaEntries,
+            hiddenMediaEntries,
+        } = await getIDBRecords([
+            "recommendedMediaEntries",
+            "hiddenMediaEntries"
+        ])
+        recommendedMediaEntries = Object.values(recommendedMediaEntries || {})
+        hiddenMediaEntries = hiddenMediaEntries || {}
+        const mediaEntries = recommendedMediaEntries.filter((media) => {
             if (hiddenMediaEntries[media.id]) return false
             let format = media?.format
             if (!format || format === "Manga" || format === "One Shot" || format === "Novel") return false
             return parseInt(media?.year) === parseInt(currentYear) && media?.season === currentSeason && (media?.weightedScore || 0) > 1
         })
-        let userEntryCount = mediaEntries.filter((media) => media?.userStatus !== "Unseen").length
-        let mediaEntryCount = mediaEntries.length
+        let userEntryCount = mediaEntries.filter((media) => media?.userStatus !== "Unseen").length,
+            mediaEntryCount = mediaEntries.length
         if (userEntryCount && mediaEntryCount) {
             userEntryCount = formatNumber(userEntryCount, userEntryCount > 1000 ? 1 : 0)
             mediaEntryCount = formatNumber(mediaEntryCount, mediaEntryCount > 1000 ? 1 : 0)
@@ -57,7 +64,7 @@ self.onmessage = async ({ data }) => {
             self.postMessage({ message: null })
         }
     } else if (data?.number === 1) {
-        let userMediaEntries = await retrieveJSON("userMediaEntries") || []
+        let userMediaEntries = await getIDBData("userMediaEntries") || []
         userMediaEntries = userMediaEntries.filter((entry) => {
             let userStatus = entry?.status
             return userStatus?.trim?.()?.toLowerCase?.() === "planning"
@@ -82,9 +89,16 @@ self.onmessage = async ({ data }) => {
             self.postMessage({ message: null })
         }
     } else if (data?.number === 2) {
-        let recommendedMediaEntriesArray = Object.values(await retrieveJSON("recommendedMediaEntries") || {})
-        let hiddenMediaEntries = await retrieveJSON("hiddenMediaEntries") || {}
-        let unseenSeries = recommendedMediaEntriesArray.filter((media) => {
+        let {
+            recommendedMediaEntries,
+            hiddenMediaEntries,
+        } = await getIDBRecords([
+            "recommendedMediaEntries",
+            "hiddenMediaEntries"
+        ])
+        recommendedMediaEntries = Object.values(recommendedMediaEntries || {})
+        hiddenMediaEntries = hiddenMediaEntries || {}
+        const unseenSeries = recommendedMediaEntries.filter((media) => {
             if (hiddenMediaEntries[media.id]) return false
             let mediaRelations = media?.mediaRelations
             if (mediaRelations instanceof Array) {
@@ -103,7 +117,7 @@ self.onmessage = async ({ data }) => {
                             typeof mediaRelationID === "number" &&
                             !isNaN(mediaRelationID)
                         ) {
-                            let relationMedia = recommendedMediaEntriesArray?.find?.((media) => media?.id === mediaRelationID)
+                            let relationMedia = recommendedMediaEntries?.find?.((media) => media?.id === mediaRelationID)
                             let relationStatus = relationMedia?.userStatus
                             return relationStatus === "Completed" || relationStatus === "Repeating"
                         }
@@ -113,8 +127,8 @@ self.onmessage = async ({ data }) => {
             }
             return false
         })
-        let myUnseenSeriesCount = unseenSeries?.filter?.((media) => media?.userStatus !== "Unseen")?.length
-        let UnseenSeriesCount = unseenSeries?.length
+        let myUnseenSeriesCount = unseenSeries.filter((media) => media?.userStatus !== "Unseen")?.length
+        let UnseenSeriesCount = unseenSeries.length
         if (UnseenSeriesCount && myUnseenSeriesCount) {
             UnseenSeriesCount = formatNumber(UnseenSeriesCount, UnseenSeriesCount > 1000 ? 1 : 0)
             myUnseenSeriesCount = formatNumber(myUnseenSeriesCount, myUnseenSeriesCount > 1000 ? 1 : 0)
@@ -129,8 +143,7 @@ self.onmessage = async ({ data }) => {
             self.postMessage({ message: null })
         }
     } else if (data?.number === 3) {
-        let recommendedMediaEntriesArray = Object.values(await retrieveJSON("recommendedMediaEntries") || {})
-        let airingMedia = recommendedMediaEntriesArray.map((media) => {
+        const airingMedia = Object.values(await getIDBData("recommendedMediaEntries") || {}).map((media) => {
             let format = media?.format
             if (!format || format === "Manga" || format === "One Shot" || format === "Novel") return null
             if (typeof media?.nextAiringEpisode?.episode === "number"
@@ -168,20 +181,21 @@ self.onmessage = async ({ data }) => {
             if (x !== y) return x - y;
             return x - y;
         })
-        let closestAiringMedia = airingMedia?.[0]
+        const closestAiringMedia = airingMedia[0]
         if (
             closestAiringMedia?.endDate instanceof Date
             && !isNaN(closestAiringMedia?.endDate)
             && closestAiringMedia?.endDate > new Date
         ) {
-            let formattedEndDate = msToTime(closestAiringMedia.endDate.getTime() - (new Date).getTime(), 1)
-            self.postMessage({ message: `${formattedEndDate} until nearest anime Completion`, key: 3 })
+            self.postMessage({ 
+                message: `${msToTime(closestAiringMedia.endDate.getTime() - (new Date).getTime(), 1)} until nearest anime Completion`,
+                key: 3
+            })
         } else {
             self.postMessage({ message: null })
         }
     } else if (data?.number === 4) {
-        let recommendedMediaEntriesArray = Object.values(await retrieveJSON("recommendedMediaEntries") || {})
-        let airingMedia = recommendedMediaEntriesArray.map((media) => {
+        const airingMedia = Object.values(await getIDBData("recommendedMediaEntries") || {}).map((media) => {
             let format = media?.format
             if (!format || format === "Manga" || format === "One Shot" || format === "Novel") return null
             if (typeof media?.nextAiringEpisode?.episode === "number"
@@ -217,7 +231,7 @@ self.onmessage = async ({ data }) => {
             if (x !== y) return x - y;
             return x - y;
         })
-        let closestAiringMedia = airingMedia?.[0]
+        const closestAiringMedia = airingMedia[0]
         if (
             closestAiringMedia?.endDate instanceof Date
             && !isNaN(closestAiringMedia?.endDate)
@@ -225,15 +239,17 @@ self.onmessage = async ({ data }) => {
             && typeof closestAiringMedia?.nextEp === "number"
             && !isNaN(closestAiringMedia?.nextEp)
         ) {
-            let formattedEndDate = msToTime(closestAiringMedia.endDate.getTime() - (new Date).getTime(), 1)
-            self.postMessage({ message: `${formattedEndDate} until nearest anime Release`, key: 4 })
+            self.postMessage({
+                message: `${msToTime(closestAiringMedia.endDate.getTime() - (new Date).getTime(), 1)} until nearest anime Release`,
+                key: 4
+            })
         } else {
             self.postMessage({ message: null })
         }
     } else {
-        let currentDate = new Date
-        let currentYear = (currentDate).getFullYear()
-        let seasons = {
+        const currentDate = new Date
+        const currentYear = (currentDate).getFullYear()
+        const seasons = {
             winter: new Date(parseInt(currentYear), 0, 1),  // January 1
             spring: new Date(parseInt(currentYear), 3, 1),  // April 1
             summer: new Date(parseInt(currentYear), 6, 1),  // July 1
@@ -258,8 +274,10 @@ self.onmessage = async ({ data }) => {
             dateEnd = new Date(dateEndTime)
             seasonName = "Fall"
         }
-        let formattedSeasonEnd = msToTime(dateEnd.getTime() - (new Date).getTime(), 1)
-        self.postMessage({ message: `${formattedSeasonEnd} until ${seasonName} Season Ends`, key: 5 })
+        self.postMessage({
+            message: `${msToTime(dateEnd.getTime() - (new Date).getTime(), 1)} until ${seasonName} Season Ends`,
+            key: 5
+        })
     }
 };
 const formatNumber = (number, dec = 2) => {
@@ -391,26 +409,68 @@ function msToTime(duration, limit) {
 function roundToNearestTenth(number) {
     return Math.round(number * 10) / 10;
 }
-function IDBinit() {
-    return new Promise((resolve) => {
-        let request = indexedDB.open(
-            "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
-            1
-        );
-        request.onsuccess = (event) => {
-            db = event.target.result;
-            resolve()
-        };
-        request.onupgradeneeded = (event) => {
-            db = event.target.result;
-            db.createObjectStore("others");
-            event.target.transaction.oncomplete = () => {
-                resolve();
+function IDBInit() {
+    return new Promise((resolve, reject) => {
+        try {
+            const request = indexedDB.open(
+                "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
+                1
+            );
+            request.onsuccess = ({ target }) => {
+                db = target.result;
+                resolve()
+            };
+            request.onupgradeneeded = ({ target }) => {
+                try {
+                    const { result, transaction } = target
+                    db = result;
+                    const stores = [
+                        // All Media
+                        "mediaEntries", "excludedEntries", "mediaUpdateAt",
+                        // Media Options
+                        "mediaOptions", "orderedMediaOptions",
+                        // Tag Category and Descriptions
+                        "tagInfo", "tagInfoUpdateAt",
+                        // User Data From AniList
+                        "username", "userMediaEntries", "userMediaUpdateAt",
+                        // All Recommended Media
+                        "recommendedMediaEntries",
+                        // User Data In App
+                        "algorithmFilters", "mediaCautions", "hiddenMediaEntries",
+                        "categories", "selectedCategory",
+                        // User Configs In App
+                        "autoPlay", "gridFullView", "showRateLimit", "showStatus",
+                        "autoUpdate", "autoExport",
+                        "runnedAutoUpdateAt", "runnedAutoExportAt",
+                        "exportPathIsAvailable",
+                        // User Configs In App
+                        "shouldManageMedia", "shouldProcessRecommendedEntries",
+                        // Other Info / Flags
+                        "nearestMediaReleaseAiringAt",
+                        "recommendationError",
+                        "visited",
+                        "others",
+                    ]
+                    for (const store of stores) {
+                        db.createObjectStore(store);
+                    }
+                    transaction.oncomplete = () => {
+                        resolve();
+                    }
+                } catch (ex) {
+                    console.error(ex);
+                    reject(ex);
+                    transaction.abort();
+                }
             }
+            request.onerror = (ex) => {
+                console.error(ex);
+                reject(ex);
+            };
+        } catch (ex) {
+            console.error(ex);
+            reject(ex);
         }
-        request.onerror = (error) => {
-            console.error(error);
-        };
     })
 }
 function retrieveJSON(name) {
@@ -433,6 +493,69 @@ function retrieveJSON(name) {
                 console.error(ex);
                 resolve();
             };
+        } catch (ex) {
+            console.error(ex);
+            resolve();
+        }
+    });
+}
+const getIDBData = (key) => {
+    return new Promise((resolve) => {
+        try {
+            const get = db.transaction(key, "readonly")
+                .objectStore(key)
+                .get(key)
+            get.onsuccess = async () => {
+                let value = get.result;
+                if (value instanceof Blob) {
+                    value = await new Response(
+                        value
+                        .stream()
+                        .pipeThrough(new CompressionStream("gzip"))
+                    ).json()
+                }
+                resolve(value);
+            };
+            get.onerror = (ex) => {
+                console.error(ex);
+                resolve();
+            };
+        } catch (ex) {
+            console.error(ex);
+            resolve();
+        }
+    });
+}
+const getIDBRecords = (recordKeys) => {
+    return new Promise(async (resolve) => {
+        try {
+            const transaction = db.transaction(recordKeys, "readonly")
+            resolve(Object.fromEntries(
+                await Promise.all(
+                    recordKeys.map((key) => {
+                        return new Promise((resolve) => {
+                            const get = transaction
+                                .objectStore(key)
+                                .get(key)
+                            get.onsuccess = async () => {
+                                let value = get.result;
+                                if (value instanceof Blob) {
+                                    value = await new Response(
+                                        value
+                                        .stream()
+                                        .pipeThrough(new CompressionStream("gzip"))
+                                    ).json()
+                                }
+                                resolve([key, value]);
+                            };
+                            get.onerror = (ex) => {
+                                console.error(ex);
+                                resolve([key]);
+                            };
+                        })
+                    })
+                )
+            ))
         } catch (ex) {
             console.error(ex);
             resolve();

@@ -125,7 +125,7 @@ self.onmessage = async ({
                     if (medias instanceof Array && medias.length) {
                         for (let media of medias) {
                             const currentId = media?.id;
-                            if (typeof currentId === "number" && !isNaN(currentId) && isFinite(currentId) && currentId <= Number.MAX_SAFE_INTEGER) {
+                            if (isValidNumber(currentId)) {
                                 foundLastHighestID = foundLastHighestID || currentId === lastHighestID;
                                 if (newHighestID == null || currentId > newHighestID) {
                                     newHighestID = currentId;
@@ -409,17 +409,12 @@ self.onmessage = async ({
         }) => id);
         let nonUpdatedMediaIDs = mediaEntriesArray.filter(({
             updatedAt
-        }) => {
-            return updatedAt <= mediaUpdateAt 
-                || typeof updatedAt !== "number" 
-                || isNaN(updatedAt) 
-                || !isFinite(updatedAt) 
-                || !(updatedAt <= Number.MAX_SAFE_INTEGER)
-        }).sort((a, b) => {
+        }) => updatedAt <= mediaUpdateAt || !isValidNumber(updatedAt))
+        .sort((a, b) => {
             let updatedAtA = a?.updatedAt,
                 updatedAtB = b?.updatedAt;
-            updatedAtA = typeof updatedAtA === "number" && !isNaN(updatedAtA) && isFinite(updatedAtA) && updatedAtA <= Number.MAX_SAFE_INTEGER ? updatedAtA : -Infinity;
-            updatedAtB = typeof updatedAtB === "number" && !isNaN(updatedAtB) && isFinite(updatedAtB) && updatedAtB <= Number.MAX_SAFE_INTEGER ? updatedAtB : -Infinity;
+            updatedAtA = isValidNumber(updatedAtA) ? updatedAtA : -Infinity;
+            updatedAtB = isValidNumber(updatedAtB) ? updatedAtB : -Infinity;
             return updatedAtA - updatedAtB
         }).map(({
             id
@@ -481,7 +476,7 @@ self.onmessage = async ({
                     if (medias instanceof Array) {
                         for (let media of medias) {
                             const currentId = media?.id;
-                            if (typeof currentId === "number" && !isNaN(currentId) && isFinite(currentId) && currentId <= Number.MAX_SAFE_INTEGER) {
+                            if (isValidNumber(currentId)) {
                                 pastAiringEpisodeIDs = pastAiringEpisodeIDs.filter(_id => _id !== currentId);
                                 if (
                                     (typeof media?.format !== "string" || !excludedFormats[media?.format?.trim?.()?.toLowerCase?.()]) 
@@ -493,15 +488,10 @@ self.onmessage = async ({
                                     }
                                     let savedMedia = mediaEntries?.[currentId];
                                     if (isJsonObject(savedMedia)) {
-                                        let isPossiblyFinished = typeof savedMedia?.nextAiringEpisode?.episode === "number" 
-                                            && !isNaN(savedMedia?.nextAiringEpisode?.episode) 
-                                            && isFinite(savedMedia?.nextAiringEpisode?.episode)
-                                            && savedMedia?.nextAiringEpisode?.episode <= Number.MAX_SAFE_INTEGER 
-                                            && savedMedia?.nextAiringEpisode?.episode === savedMedia?.episodes 
-                                            && typeof savedMedia?.nextAiringEpisode?.airingAt === "number"
-                                            && !isNaN(savedMedia?.nextAiringEpisode?.airingAt)
-                                            && isFinite(savedMedia?.nextAiringEpisode?.airingAt)
-                                            && savedMedia?.nextAiringEpisode?.airingAt <= Number.MAX_SAFE_INTEGER 
+                                        let isPossiblyFinished = 
+                                            isValidNumber(savedMedia?.nextAiringEpisode?.episode)
+                                            && savedMedia?.nextAiringEpisode?.episode === savedMedia?.episodes
+                                            && isValidNumber(savedMedia?.nextAiringEpisode?.airingAt)
                                             && new Date(savedMedia?.nextAiringEpisode?.airingAt * 1e3) <= new Date;
                                         let newStatusIsStillReleasing = media?.status?.trim?.()?.toLowerCase?.() === "releasing" 
                                             && savedMedia?.status?.trim?.()?.toLowerCase?.() === "releasing";
@@ -708,14 +698,9 @@ self.onmessage = async ({
                     if (medias instanceof Array) {
                         for (let media of medias) {
                             const currentId = media?.id;
-                            if (typeof currentId === "number" && !isNaN(currentId) && isFinite(currentId) && currentId <= Number.MAX_SAFE_INTEGER) {
+                            if (isValidNumber(currentId)) {
                                 currentUpdateAt = media?.updatedAt;
-                                if (currentUpdateAt 
-                                    && typeof currentUpdateAt === "number" 
-                                    && !isNaN(currentUpdateAt) 
-                                    && isFinite(currentUpdateAt) 
-                                    && currentUpdateAt <= Number.MAX_SAFE_INTEGER
-                                ) {
+                                if (currentUpdateAt && isValidNumber(currentUpdateAt)) {
                                     if (currentUpdateAt > currentNewestUpdateAt || currentNewestUpdateAt == null) {
                                         newestUpdateAt = currentNewestUpdateAt = currentUpdateAt;
                                         if (currentLargestDif == null) {
@@ -806,15 +791,9 @@ self.onmessage = async ({
                                         } else if (savedMedia?.dateEdited) {
                                             media.dateEdited = savedMedia?.dateEdited
                                         }
-                                        let isPossiblyFinished = typeof savedMedia?.nextAiringEpisode?.episode === "number" 
-                                            && !isNaN(savedMedia?.nextAiringEpisode?.episode) 
-                                            && isFinite(savedMedia?.nextAiringEpisode?.episode)
-                                            && savedMedia?.nextAiringEpisode?.episode <= Number.MAX_SAFE_INTEGER 
-                                            && savedMedia?.nextAiringEpisode?.episode === savedMedia?.episodes 
-                                            && typeof savedMedia?.nextAiringEpisode?.airingAt === "number" 
-                                            && !isNaN(savedMedia?.nextAiringEpisode?.airingAt) 
-                                            && isFinite(savedMedia?.nextAiringEpisode?.airingAt)
-                                            && savedMedia?.nextAiringEpisode?.airingAt <= Number.MAX_SAFE_INTEGER 
+                                        let isPossiblyFinished = isValidNumber(savedMedia?.nextAiringEpisode?.episode)
+                                            && savedMedia?.nextAiringEpisode?.episode === savedMedia?.episodes
+                                            && isValidNumber(savedMedia?.nextAiringEpisode?.airingAt)
                                             && new Date(savedMedia?.nextAiringEpisode?.airingAt * 1e3) <= new Date;
                                         let newStatusIsStillReleasing = loweredStatus === "releasing" && savedMedia?.status?.trim?.()?.toLowerCase?.() === "releasing";
                                         let newNextAiringEpisodeIsRemoved = !isJsonObject(media?.nextAiringEpisode);
@@ -1140,14 +1119,9 @@ self.onmessage = async ({
     //                 if (medias instanceof Array) {
     //                     for (let media of medias) {
     //                         const currentId = media?.id;
-    //                         if (typeof currentId === "number" && !isNaN(currentId) && isFinite(currentId) && currentId <= Number.MAX_SAFE_INTEGER) {
+    //                         if (isValidNumber(currentId)) {
     //                             currentUpdateAt = media?.updatedAt;
-    //                             if (currentUpdateAt 
-    //                                 && typeof currentUpdateAt === "number" 
-    //                                 && !isNaN(currentUpdateAt) 
-    //                                 && isFinite(currentUpdateAt) 
-    //                                 && currentUpdateAt <= Number.MAX_SAFE_INTEGER
-    //                             ) {
+    //                             if (currentUpdateAt && isValidNumber(currentUpdateAt)) {
     //                                 hasFoundLessOrEqualToOldestUpdateAt = hasFoundLessOrEqualToOldestUpdateAt || currentUpdateAt <= oldestMediaUpdateAt;
     //                                 if (currentUpdateAt > newestUpdateAt || newestUpdateAt == null) {
     //                                     newestUpdateAt = currentUpdateAt;
@@ -1237,15 +1211,9 @@ self.onmessage = async ({
     //                                     } else if (savedMedia?.dateEdited) {
     //                                         media.dateEdited = savedMedia?.dateEdited
     //                                     }
-    //                                     let isPossiblyFinished = typeof savedMedia?.nextAiringEpisode?.episode === "number" 
-    //                                         && !isNaN(savedMedia?.nextAiringEpisode?.episode) 
-    //                                         && isFinite(savedMedia?.nextAiringEpisode?.episode)
-    //                                         && savedMedia?.nextAiringEpisode?.episode <= Number.MAX_SAFE_INTEGER
+    //                                     let isPossiblyFinished = isValidNumber(savedMedia?.nextAiringEpisode?.episode)
     //                                         && savedMedia?.nextAiringEpisode?.episode === savedMedia?.episodes 
-    //                                         && typeof savedMedia?.nextAiringEpisode?.airingAt === "number" 
-    //                                         && !isNaN(savedMedia?.nextAiringEpisode?.airingAt) 
-    //                                         && isFinite(savedMedia?.nextAiringEpisode?.airingAt)
-    //                                         && savedMedia?.nextAiringEpisode?.airingAt <= Number.MAX_SAFE_INTEGER
+    //                                         && isValidNumber(savedMedia?.nextAiringEpisode?.airingAt)
     //                                         && new Date(savedMedia?.nextAiringEpisode?.airingAt * 1e3) <= new Date;
     //                                     let newStatusIsStillReleasing = loweredStatus === "releasing" && savedMedia?.status?.trim?.()?.toLowerCase?.() === "releasing";
     //                                     let newNextAiringEpisodeIsRemoved = !isJsonObject(media?.nextAiringEpisode);
@@ -1567,16 +1535,17 @@ function msToTime(duration, limit) {
         return ""
     }
 }
-
 function isJsonObject(obj) {
     return Object.prototype.toString.call(obj) === "[object Object]"
 }
-
 function jsonIsEmpty(obj) {
     for (const key in obj) {
         return false
     }
     return true
+}
+function isValidNumber(num) {
+    return typeof num === "number" && !isNaN(num) && isFinite(num) && num <= Number.MAX_SAFE_INTEGER
 }
 function isConnected(url = server) {
     if (typeof url !== "string" || url === "") {

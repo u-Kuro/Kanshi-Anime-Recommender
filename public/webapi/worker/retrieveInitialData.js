@@ -105,8 +105,8 @@ function jsonIsEmpty(obj) {
     }
     return true;
 }
-async function getCompressedBlobs(blob) {
-    const arrayBuffer = await new Response(blob.stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
+async function getCompressedBlobs(data) {
+    const arrayBuffer = await new Response(data.stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
     const dataView = new DataView(arrayBuffer);
     let offset = 0;
     const numBlobs = dataView.getUint32(offset, true);

@@ -33,7 +33,7 @@ const progressedFetch = async (url, totalLength, status, getBlob) => {
                             for await (const chunk of response.body) {
                                 controller.enqueue(chunk)
 
-                                receivedLength += chunk.byteLength || chunk.length || 0;
+                                receivedLength += chunk.byteLength ?? 0;
 
                                 if (isDataStatusShowing) continue
                                 isDataStatusShowing = true

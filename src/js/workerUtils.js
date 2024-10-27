@@ -1150,37 +1150,41 @@ const exportUserData = (_data) => {
                         dataStatus.set(null)
                         progress.set(100)
                         isExporting.set(false)
-                        waitForExportApproval?.reject?.(data?.error)
+                        waitForExportApproval?.reject?.(data.error)
                         waitForExportApproval = null
-                        if (data?.missingData) {
+                        if (data.missingData) {
                             window.confirmPromise?.({
                                 isAlert: true,
                                 title: "Back up failed",
                                 text: `Data may be incomplete or corrupted. If this always occurs during export, please restore from a backup file or clear the ${get(android) ? "application" : "website"} data.`,
                             })
                         } else {
-                            console.error(data?.error)
+                            console.error(data.error)
                             window.confirmPromise?.({
                                 isAlert: true,
                                 title: "Back up failed",
-                                text: typeof data?.error === "string" && data.error !== "Something went wrong" && data.error
+                                text: typeof data.error === "string" && data.error !== "Something went wrong" && data.error
                                 ? data.error : "Something went wrong while processing your backup (B1)."
                             })
                         }
                         exportUserDataWorker?.terminate?.();
                         rerunImportantWork(_data?.isManual)
-                        reject(data?.error)
+                        reject(data.error)
                     } else if (get(android)) {
                         try {
-                            let chunk = data?.chunk || ""
-                            let state = data.state
+                            const { state, chunk, loaded } = data || {}
+                            // Show Backup Progress
+                            if (loaded > 0 && loaded < 100) {
+                                progress.set(loaded)
+                                dataStatus.set(`${loaded.toFixed(2)}% Exporting User Data`)
+                            }
                             // 0 - start | 1 - ongoing | 2 - done
                             if (state === 0) {
                                 JSBridge.exportJSON("", 0, "")
                             } else if (state === 1 && typeof chunk === "string") {
-                                JSBridge.exportJSON(chunk, 1, "")
+                                JSBridge.exportJSON(chunk || "", 1, "")
                             } else if (state === 2 && typeof chunk === "string") {
-                                JSBridge.exportJSON(chunk, 2, `Kanshi.${data?.username?.toLowerCase?.() || "backup"}.json`)
+                                JSBridge.exportJSON(chunk || "", 2, `Kanshi.${data.username?.toLowerCase?.() || "backup"}.gzip`)
                                 dataStatusPrio = false
                                 isExporting.set(false)
                                 exportUserDataWorker?.terminate?.();
@@ -1246,7 +1250,7 @@ const exportUserData = (_data) => {
                         dataStatusPrio = false
                         dataStatus.set(null)
                         progress.set(100)
-                        downloadLink(data.url, `Kanshi.${data?.username?.toLowerCase?.() || "backup"}.json`)
+                        downloadLink(data.url, `Kanshi.${data?.username?.toLowerCase?.() || "backup"}.gzip`)
                         isExporting.set(false)
                         rerunImportantWork(_data?.isManual)
                         resolve()
@@ -1348,15 +1352,15 @@ const importUserData = (_data) => {
                         rerunImportantWork()
                         console.error(data.error)
                         reject(data.error || "Something went wrong")
-                    } else if (hasOwnProp?.call?.(data, "importedUsername")) {
-                        if (typeof data?.importedUsername === "string") {
-                            setLSData("username", data.importedUsername)
+                    } else if (hasOwnProp?.call?.(data, "username")) {
+                        if (typeof data?.username === "string") {
+                            setLSData("username", data.username)
                             .catch(() => removeLSData("username"));
                             username.set(data.importedUsername)
                         }
-                    } else if (hasOwnProp?.call?.(data, "importedHiddenMediaEntries")) {
-                        if (isJsonObject(data?.importedHiddenMediaEntries)) {
-                            hiddenMediaEntries.set(data?.importedHiddenMediaEntries)
+                    } else if (hasOwnProp?.call?.(data, "hiddenMediaEntries")) {
+                        if (isJsonObject(data?.hiddenMediaEntries)) {
+                            hiddenMediaEntries.set(data?.hiddenMediaEntries)
                         }
                     } else if (hasOwnProp?.call?.(data, "mediaCautions")) {
                         if (data?.mediaCautions instanceof Array) {
@@ -1694,58 +1698,6 @@ const retrieveInitialData = (_data) => {
     })
 }
 
-let getFilterOptionsTerminateTimeout, getFilterOptionsWorker;
-const getFilterOptions = (_data) => {
-    return new Promise((resolve, reject) => {
-        clearTimeout(getFilterOptionsTerminateTimeout)
-        getFilterOptionsWorker?.terminate?.()
-        progressedFetch("./webapi/worker/getFilterOptions.js", 68663, "Initializing Filters")
-            .then(url => {
-                clearTimeout(getFilterOptionsTerminateTimeout)
-                getFilterOptionsWorker?.terminate?.()
-                getFilterOptionsWorker = new Worker(url)
-                getFilterOptionsWorker.postMessage(_data)
-                getFilterOptionsWorker.onmessage = ({ data }) => {
-                    if (hasOwnProp?.call?.(data, "status")) {
-                        dataStatusPrio = true
-                        dataStatus.set(data.status)
-                        return
-                    }
-                    if (hasOwnProp?.call?.(data, "error")) {
-                        dataStatusPrio = false
-                        dataStatus.set(null)
-                        alertError()
-                        getFilterOptionsWorker?.terminate?.()
-                        console.error(data.error)
-                        reject(data.error)
-                    } else {
-                        dataStatusPrio = false
-                        dataStatus.set(null)
-                        getFilterOptionsTerminateTimeout = setTimeout(() => {
-                            getFilterOptionsWorker?.terminate?.();
-                        }, terminateDelay)
-                        resolve(data)
-                    }
-                }
-                getFilterOptionsWorker.onerror = (error) => {
-                    dataStatusPrio = false
-                    dataStatus.set(null)
-                    alertError()
-                    getFilterOptionsWorker?.terminate?.()
-                    console.error(error)
-                    reject(error)
-                }
-            }).catch((error) => {
-                dataStatusPrio = false
-                dataStatus.set(null)
-                alertError()
-                getFilterOptionsWorker?.terminate?.()
-                console.error(error)
-                reject(error)
-            })
-    })
-}
-
 let getOrderedFiltersWorker
 const getOrderedFilters = async () => {
     try {
@@ -1868,7 +1820,6 @@ export {
     saveIDBdata,
     getIDBdata,
     retrieveInitialData,
-    getFilterOptions,
     updateTagInfo,
     requestMediaEntries,
     requestUserEntries,

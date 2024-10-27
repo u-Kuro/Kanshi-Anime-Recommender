@@ -12,23 +12,12 @@ self.addEventListener("unhandledrejection", (event) => {
 
 self.onmessage = async ({ data }) => {
     try {
-        if (!db) await IDBinit()
-        if (data.name === "checkInitialData") {
-            self.postMessage(
-                await checkData("mediaEntries")
-                || await checkData("excludedEntries")
-                || await checkData("orderedMediaOptions")
-                || await checkData("tagInfo")
-            )
-        } else if (data.name === "username") {
-            self.postMessage(await retrieveJSON("username") || "")
-        } else if (data.name === "recommendedMediaEntriesIsEmpty") {
-            self.postMessage(await checkData("recommendedMediaEntries"))
-        } else if (data.name === "aniIdsNotificationToBeUpdated") {
+        if (!db) await IDBInit()
+        if (data.name === "aniIdsNotificationToBeUpdated") {
             let updatedAniIdsNotification = {}
             let aniIdsNotificationToBeUpdated = data?.aniIdsNotificationToBeUpdated
             if (aniIdsNotificationToBeUpdated instanceof Array && aniIdsNotificationToBeUpdated.length > 0) {
-                let recommendedMediaEntries = await retrieveJSON("recommendedMediaEntries")
+                let recommendedMediaEntries = await getIDBData("recommendedMediaEntries")
                 if (recommendedMediaEntries) {
                     updatedAniIdsNotification = aniIdsNotificationToBeUpdated.reduce((result, mediaId) => {
                         let media = recommendedMediaEntries?.[mediaId]
@@ -51,8 +40,8 @@ self.onmessage = async ({ data }) => {
                 }
             }
             self.postMessage(updatedAniIdsNotification)
-        } else if (data.name) {
-            self.postMessage(await retrieveJSON(data.name))
+        } else {
+            self.postMessage(await getIDBData(data.name))
         }
     } catch (reason) {
         console.error(reason)
@@ -63,63 +52,86 @@ self.onmessage = async ({ data }) => {
         self.postMessage({ "Failed to retrieve the data": error })
     }
 }
-function IDBinit() {
-    return new Promise((resolve) => {
-        let request = indexedDB.open(
-            "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
-            1
-        );
-        request.onsuccess = (event) => {
-            db = event.target.result;
-            resolve()
-        };
-        request.onupgradeneeded = (event) => {
-            db = event.target.result;
-            db.createObjectStore("others");
-            event.target.transaction.oncomplete = () => {
-                resolve();
-            }
-        }
-        request.onerror = (error) => {
-            console.error(error);
-        };
-    })
-}
-function checkData(name) {
-    return new Promise((resolve) => {
+function IDBInit() {
+    return new Promise((resolve, reject) => {
         try {
-            let get = db
-                .transaction("others", "readonly")
-                .objectStore("others")
-                .get(name);
-            get.onsuccess = () => {
-                return resolve(get.result !== undefined)
+            const request = indexedDB.open(
+                "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
+                1
+            );
+            request.onsuccess = ({ target }) => {
+                db = target.result;
+                resolve()
             };
-            get.onerror = (ex) => {
+            request.onupgradeneeded = ({ target }) => {
+                try {
+                    const { result, transaction } = target
+                    db = result;
+                    const stores = [
+                        // All Media
+                        "mediaEntries", "excludedEntries", "mediaUpdateAt",
+                        // Media Options
+                        "mediaOptions", "orderedMediaOptions",
+                        // Tag Category and Descriptions
+                        "tagInfo", "tagInfoUpdateAt",
+                        // User Data From AniList
+                        "username", "userMediaEntries", "userMediaUpdateAt",
+                        // All Recommended Media
+                        "recommendedMediaEntries",
+                        // User Data In App
+                        "algorithmFilters", "mediaCautions", "hiddenMediaEntries",
+                        "categories", "selectedCategory",
+                        // User Configs In App
+                        "autoPlay", "gridFullView", "showRateLimit", "showStatus",
+                        "autoUpdate", "autoExport",
+                        "runnedAutoUpdateAt", "runnedAutoExportAt",
+                        "exportPathIsAvailable",
+                        // User Configs In App
+                        "shouldManageMedia", "shouldProcessRecommendedEntries",
+                        // Other Info / Flags
+                        "nearestMediaReleaseAiringAt",
+                        "recommendationError",
+                        "visited",
+                        "others",
+                    ]
+                    for (const store of stores) {
+                        db.createObjectStore(store);
+                    }
+                    transaction.oncomplete = () => {
+                        resolve();
+                    }
+                } catch (ex) {
+                    console.error(ex);
+                    reject(ex);
+                    transaction.abort();
+                }
+            }
+            request.onerror = (ex) => {
                 console.error(ex);
-                resolve(false);
+                reject(ex);
             };
         } catch (ex) {
             console.error(ex);
-            resolve(false);
+            reject(ex);
         }
-    });
+    })
 }
-function retrieveJSON(name) {
+const getIDBData = (key) => {
     return new Promise((resolve) => {
         try {
-            let get = db
-                .transaction("others", "readonly")
-                .objectStore("others")
-                .get(name);
-            get.onsuccess = () => {
-                let result = get.result;
-                if (result instanceof Blob) {
-                    result = JSON.parse((new FileReaderSync()).readAsText(result));
-                } else if (result instanceof ArrayBuffer) {
-                    result = JSON.parse((new TextDecoder()).decode(result));
+            const get = db.transaction(key, "readonly")
+                .objectStore(key)
+                .get(key)
+            get.onsuccess = async () => {
+                let value = get.result;
+                if (value instanceof Blob) {
+                    value = await new Response(
+                        value
+                        .stream()
+                        .pipeThrough(new CompressionStream("gzip"))
+                    ).json()
                 }
-                resolve(result);
+                resolve(value);
             };
             get.onerror = (ex) => {
                 console.error(ex);

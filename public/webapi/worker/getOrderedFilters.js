@@ -11,9 +11,9 @@ self.addEventListener("unhandledrejection", (event) => {
 });
 
 self.onmessage = async ({ data }) => {
-    if (!db) await IDBinit()
+    if (!db) await IDBInit()
 
-    const mediaOptions = await retrieveJSON("mediaOptions")
+    const mediaOptions = await getIDBData("mediaOptions")
     if (isJsonObject(mediaOptions) && !jsonIsEmpty(mediaOptions)) {
         const orderedMediaOptions = {
             sortFilter: [
@@ -74,7 +74,7 @@ self.onmessage = async ({ data }) => {
             "Country Of Origin": { TW: 3, CN: 2, KR: 1, JP: 0 },
         }
         const algorithmFilterSelections = { Genre: 1, Tag: 1, "Tag Category": 1 }
-        for (let i = 0, l = orderedFiltersKeys.length; i < l; i++) {
+        for (let i = 0; i < orderedFiltersKeys.length; i++) {
             const filterKey = orderedFiltersKeys[i], isAlgorithmFilterSelection = algorithmFilterSelections[filterKey]
             let options = Object.keys(mediaOptions[filterKey])
                 .reduce((uniqueOptions, k) => {
@@ -84,7 +84,7 @@ self.onmessage = async ({ data }) => {
                     return uniqueOptions;
                 }, {})
             if (isAlgorithmFilterSelection) {
-                delete options["All"]
+                delete options.All
                 options = Object.keys(options)
             } else {
                 options = Object.keys(options)
@@ -92,11 +92,6 @@ self.onmessage = async ({ data }) => {
             const optionSort = optionsSort[filterKey]
             if (optionSort === "descnum") {
                 options.sort((a, b) => parseFloat(b) - parseFloat(a))
-                // }  else if (optionSort === "ascnum") {
-                //     options.sort((a, b) => parseFloat(a) - parseFloat(b))
-                // } else if (optionSort === "desclet") {
-                //     options.sort((a, b) => a.localeCompare(b, undefined, {sensitivity: "base"}))
-                //     options.reverse()
             } else if (isJsonObject(optionSort)) {
                 options.sort((a, b) => {
                     const optionSortA = optionSort[a];
@@ -144,46 +139,89 @@ self.onmessage = async ({ data }) => {
         }
         self.postMessage({ orderedMediaOptions })
     } else {
-        self.postMessage({ error: "Filters not found." })
+        self.postMessage({ error: "Filters not found" })
     }
 };
-function IDBinit() {
-    return new Promise((resolve) => {
-        let request = indexedDB.open(
-            "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
-            1
-        );
-        request.onsuccess = (event) => {
-            db = event.target.result;
-            resolve()
-        };
-        request.onupgradeneeded = (event) => {
-            db = event.target.result;
-            db.createObjectStore("others");
-            event.target.transaction.oncomplete = () => {
-                resolve();
+function IDBInit() {
+    return new Promise((resolve, reject) => {
+        try {
+            const request = indexedDB.open(
+                "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70",
+                1
+            );
+            request.onsuccess = ({ target }) => {
+                db = target.result;
+                resolve()
+            };
+            request.onupgradeneeded = ({ target }) => {
+                try {
+                    const { result, transaction } = target
+                    db = result;
+                    const stores = [
+                        // All Media
+                        "mediaEntries", "excludedEntries", "mediaUpdateAt",
+                        // Media Options
+                        "mediaOptions", "orderedMediaOptions",
+                        // Tag Category and Descriptions
+                        "tagInfo", "tagInfoUpdateAt",
+                        // User Data From AniList
+                        "username", "userMediaEntries", "userMediaUpdateAt",
+                        // All Recommended Media
+                        "recommendedMediaEntries",
+                        // User Data In App
+                        "algorithmFilters", "mediaCautions", "hiddenMediaEntries",
+                        "categories", "selectedCategory",
+                        // User Configs In App
+                        "autoPlay", "gridFullView", "showRateLimit", "showStatus",
+                        "autoUpdate", "autoExport",
+                        "runnedAutoUpdateAt", "runnedAutoExportAt",
+                        "exportPathIsAvailable",
+                        // User Configs In App
+                        "shouldManageMedia", "shouldProcessRecommendedEntries",
+                        // Other Info / Flags
+                        "nearestMediaReleaseAiringAt",
+                        "recommendationError",
+                        "visited",
+                        "others",
+                    ]
+                    for (const store of stores) {
+                        db.createObjectStore(store);
+                    }
+                    transaction.oncomplete = () => {
+                        resolve();
+                    }
+                } catch (ex) {
+                    console.error(ex);
+                    reject(ex);
+                    transaction.abort();
+                }
             }
+            request.onerror = (ex) => {
+                console.error(ex);
+                reject(ex);
+            };
+        } catch (ex) {
+            console.error(ex);
+            reject(ex);
         }
-        request.onerror = (error) => {
-            console.error(error);
-        };
     })
 }
-function retrieveJSON(name) {
+const getIDBData = (key) => {
     return new Promise((resolve) => {
         try {
-            let get = db
-                .transaction("others", "readonly")
-                .objectStore("others")
-                .get(name);
-            get.onsuccess = () => {
-                let result = get.result;
-                if (result instanceof Blob) {
-                    result = JSON.parse((new FileReaderSync()).readAsText(result));
-                } else if (result instanceof ArrayBuffer) {
-                    result = JSON.parse((new TextDecoder()).decode(result));
+            const get = db.transaction(key, "readonly")
+                .objectStore(key)
+                .get(key)
+            get.onsuccess = async () => {
+                let value = get.result;
+                if (value instanceof Blob) {
+                    value = await new Response(
+                        value
+                        .stream()
+                        .pipeThrough(new CompressionStream("gzip"))
+                    ).json()
                 }
-                resolve(result);
+                resolve(value);
             };
             get.onerror = (ex) => {
                 console.error(ex);
