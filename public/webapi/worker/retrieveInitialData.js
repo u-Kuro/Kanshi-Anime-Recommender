@@ -108,6 +108,7 @@ function IDBInit() {
 function setIDBRecords(records) {
     return new Promise(async (resolve, reject) => {
         try {
+            console.log(Object.keys(records))
             const transaction = db.transaction(Object.keys(records), "readwrite");
             for (const key in records) {
                 const store = transaction.objectStore(key);
@@ -135,69 +136,6 @@ function setIDBRecords(records) {
         } catch (ex) {
             console.error(ex);
             reject(ex);
-        }
-    });
-}
-function getIDBData(key) {
-    return new Promise((resolve) => {
-        try {
-            const get = db.transaction(key, "readonly")
-                .objectStore(key)
-                .get(key)
-            get.onsuccess = async () => {
-                let value = get.result;
-                if (value instanceof Blob) {
-                    value = await new Response(
-                        value
-                        .stream()
-                        .pipeThrough(new CompressionStream("gzip"))
-                    ).json()
-                }
-                resolve(value);
-            };
-            get.onerror = (ex) => {
-                console.error(ex);
-                resolve();
-            };
-        } catch (ex) {
-            console.error(ex);
-            resolve();
-        }
-    });
-}
-function getIDBRecords(recordKeys) {
-    return new Promise(async (resolve) => {
-        try {
-            const transaction = db.transaction(recordKeys, "readonly")
-            resolve(Object.fromEntries(
-                await Promise.all(
-                    recordKeys.map((key) => {
-                        return new Promise((resolve) => {
-                            const get = transaction
-                                .objectStore(key)
-                                .get(key)
-                            get.onsuccess = async () => {
-                                let value = get.result;
-                                if (value instanceof Blob) {
-                                    value = await new Response(
-                                        value
-                                        .stream()
-                                        .pipeThrough(new CompressionStream("gzip"))
-                                    ).json()
-                                }
-                                resolve([key, value]);
-                            };
-                            get.onerror = (ex) => {
-                                console.error(ex);
-                                resolve([key]);
-                            };
-                        })
-                    })
-                )
-            ))
-        } catch (ex) {
-            console.error(ex);
-            resolve();
         }
     });
 }

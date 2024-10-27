@@ -121,14 +121,8 @@ const initMediaLoader = async () => {
     }
 }
 
-let mediaLoaderWorker, mediaLoaderWorkerPromise, mediaLoaderPromises = {};
-function getMediaLoaderWorker() {
-    mediaLoaderWorkerPromise = new Promise(async (resolve) => {
-        resolve(new Worker(await progressedFetch("./webapi/worker/mediaLoader.js", 22844, "Checking Existing List")))
-        mediaLoaderWorkerPromise = null
-    })
-    return mediaLoaderWorkerPromise
-}
+let mediaLoaderWorker, mediaLoaderPromises = {};
+
 const mediaLoader = (_data = {}) => {
     if (get(initList) !== false && !_data?.initList) {
         return
@@ -137,9 +131,8 @@ const mediaLoader = (_data = {}) => {
         let postId = getUniqueId()
         _data.postId = postId
         mediaLoaderPromises[postId] = { resolve, reject }
-
         try {
-            mediaLoaderWorker = mediaLoaderWorker || mediaLoaderWorkerPromise || await getMediaLoaderWorker()
+            mediaLoaderWorker = mediaLoaderWorker || new Worker(await progressedFetch("./webapi/worker/mediaLoader.js", 22844, "Checking Existing List"))
         } catch (ex) {
             alertError()
 
@@ -150,9 +143,9 @@ const mediaLoader = (_data = {}) => {
 
             return reject(ex)
         }
-
+        
         mediaLoaderWorker.postMessage(_data)
-
+        
         if (mediaLoaderWorker.onmessage) return
         mediaLoaderWorker.onmessage = async ({ data }) => {
             if (hasOwnProp.call(data, "progress")) {

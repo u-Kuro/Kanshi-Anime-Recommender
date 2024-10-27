@@ -5,10 +5,10 @@ import { android, appID, dataStatus, progress } from "./globalValues.js";
 let version, appIDNotChecked = true
 const loadedRequestUrlPromises = {}
 
-const progressedFetch = async (url, totalLength, status, getBlob) => {
+const progressedFetch = (url, totalLength, status, getBlob) => {
     if (loadedRequestUrlPromises[url]) {
         return loadedRequestUrlPromises[url]
-    }
+    }    
     loadedRequestUrlPromises[url] = (async () => {
         // Check App ID/Version Once for Consistency
         if (appIDNotChecked) {
@@ -16,12 +16,9 @@ const progressedFetch = async (url, totalLength, status, getBlob) => {
             version = get(appID)
         }
 
-        if (typeof version === "number") {
-            url = url + "?v=" + version
-        }
 
         try {
-            let response = await fetch(url)
+            let response = await fetch(typeof version === "number" ? url : url + "?" + version)
 
             if (totalLength && status) {
                 try {
@@ -71,7 +68,6 @@ const progressedFetch = async (url, totalLength, status, getBlob) => {
             }
 
             if (getBlob) {
-                delete loadedRequestUrlPromises[url]
                 return await response.blob()
             } else {
                 return url

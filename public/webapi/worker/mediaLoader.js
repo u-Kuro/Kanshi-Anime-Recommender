@@ -1,3 +1,13 @@
+self.addEventListener("unhandledrejection", (event) => {
+    const reason = event?.reason
+    console.error(reason)
+    
+    let error = reason?.stack || reason?.message
+    if (typeof error !== "string" || !error) {
+        error = "Something went wrong"
+    }
+    self.postMessage({ error })
+});
 let db,
     categories,
     mediaCautions,
@@ -25,18 +35,8 @@ let db,
 // K Icon
 const hasOwnProperty = Object.prototype.hasOwnProperty
 
-self.addEventListener("unhandledrejection", (event) => {
-    const reason = event?.reason
-    console.error(reason)
-    
-    let error = reason?.stack || reason?.message
-    if (typeof error !== "string" || !error) {
-        error = "Something went wrong"
-    }
-    self.postMessage({ error })
-});
-
 self.onmessage = ({ data }) => {
+    console.log("ass")
     messageQueue.push(data)
     if (!isProcessing) {
         isProcessing = true;
@@ -437,7 +437,6 @@ async function executeMessage() {
         isProcessing = false;
     }
 }
-
 function editMedia(media, shownSortName) {
     if (media == null) return null
 
