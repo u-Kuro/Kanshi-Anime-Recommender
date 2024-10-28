@@ -1,16 +1,11 @@
 <script>
-    import { onDestroy, onMount } from "svelte";
-    import { fade } from "svelte/transition";
     import { sineOut } from "svelte/easing";
-    import { cacheImage } from "../../js/caching.js";
-    import {
-        addClass,
-        isJsonObject,
-        ncsCompare,
-        removeClass,
-        requestImmediate,
-        showToast,
-    } from "../../js/others/helper.js";
+    import { fade } from "svelte/transition";
+    import { onDestroy, onMount } from "svelte";
+    import { mediaLoader } from "../../js/workerUtils.js";
+    import { addClass, removeClass } from "../../js/utils/domUtils.js";
+    import { requestImmediate, showToast } from "../../js/utils/appUtils";
+    import { isJsonObject, equalsIgnoreCase } from "../../js/utils/dataUtils.js";
     import {
         android,
         popupVisible,
@@ -40,14 +35,13 @@
         shouldLoadAllList,
         listReloadAvailable,
     } from "../../js/globalValues.js";
-    import { mediaLoader } from "../../js/workerUtils.js";
+    
 
     export let mainCategory;
     
     const subscriptions = {}
     let subscriptionId = 0
 
-    const emptyImage = "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
     let numberOfPageLoadedGrid = Math.max(5, (($windowHeight - 239) / 250.525) * 5);
 
     subscriptions[subscriptionId++] =
@@ -376,18 +370,6 @@
         }
     }
 
-    async function addImage(node, imageUrl) {
-        if (imageUrl && imageUrl !== emptyImage) {
-            node.src = imageUrl;
-            let newImageUrl = await cacheImage(imageUrl);
-            if (newImageUrl) {
-                node.src = newImageUrl;
-            }
-        } else {
-            node.src = emptyImage;
-        }
-    }
-
     let waitForOnVeryLeft;
     const mediaGridOnScroll = () => {
         window.mediaGridScrolled?.(mediaGridEl.scrollLeft);
@@ -439,7 +421,7 @@
 					target.style.pointerEvents = "";
 				}, 500);
 				let text2 = target.dataset.secondcopy;
-				if (text2 && !ncsCompare(text2, text)) {
+				if (text2 && !equalsIgnoreCase(text2, text)) {
 					window.copyToClipBoard?.(text2);
 					requestImmediate(() => {
 						window.copyToClipBoard?.(text);
@@ -473,9 +455,9 @@
 
 <div
     data-category="{mainCategory}"
-    class="{"category-list" + (mainCategory === $selectedCategory || mainCategory === ''
-        ? ' viewed'
-        : '') + ($gridFullView ? ' full-view' : '')}"
+    class="{"category-list" + (mainCategory === $selectedCategory || mainCategory === ""
+        ? " viewed"
+        : "") + ($gridFullView ? " full-view" : "")}"
     style:--media-grid-height="{($mobile && !$android
         ? $trueWindowHeight
         : $windowHeight) + "px"}"
@@ -483,16 +465,16 @@
     {#if true}
         {@const mediaList = $loadedMediaLists?.[mainCategory]?.mediaList}
         <section
-            class="{'image-grid ' +
-                ($gridFullView ? ' full-view' : '') +
-                (mediaList?.length === 0 && !$initData ? ' empty-grid' : '') +
+            class="{"image-grid " +
+                ($gridFullView ? " full-view" : "") +
+                (mediaList?.length === 0 && !$initData ? " empty-grid" : "") +
                 ($listReloadAvailable
                 || $loadingCategory[""]
                 || $loadingCategory[mainCategory]
                 || latestSearchDate
                 || $initList !== false
-                    ? ' semi-loading'
-                    : '')
+                    ? " semi-loading"
+                    : "")
             }"
             data-category="{mainCategory}"
             bind:this="{mediaGridEl}"
@@ -506,7 +488,7 @@
                     if (!isWholeGridSeen && e?.deltaY > 0) return;
                     // If its scrolled to very left and see previous
                     if (isOnVeryLeftOfMediaGrid && e?.deltaY < 0) return;
-                    horizontalWheel(e, 'image-grid');
+                    horizontalWheel(e, "image-grid");
                 }
             }}"
             on:scroll="{(e) => {
@@ -529,14 +511,14 @@
                     <div
                         class="image-card"
                         bind:this="{media.gridElement}"
-                        title="{(media?.shownTitle ? media?.shownTitle+'\n\n' : '') + (media?.briefInfo || '')}"
+                        title="{(media?.shownTitle ? media?.shownTitle+"\n\n" : "") + (media?.briefInfo || "")}"
                     >
                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                         <div
                             class="shimmer"
                             tabindex="{$menuVisible || $popupVisible
-                                ? ''
-                                : '0'}"
+                                ? ""
+                                : "0"}"
                             on:click="{handleOpenPopup(mediaIndex)}"
                             on:pointerdown="{(e) => {
                                 handleOpenOption(e, mediaIndex)
@@ -544,25 +526,19 @@
                             on:pointerup="{cancelOpenOption}"
                             on:pointercancel="{cancelOpenOption}"
                             on:keyup="{(e) =>
-                                e.key === 'Enter' &&
+                                e.key === "Enter" &&
                                 handleOpenPopup(mediaIndex)}"
                             role="button"
                             aria-label="Open Detailed Information for the Media"
                         >
                             {#if media?.coverImageUrl || media?.bannerImageUrl || media?.trailerThumbnailUrl}
-                                {#key media?.coverImageUrl || media?.bannerImageUrl || media?.trailerThumbnailUrl}
+                                {#key media.coverImageUrl || media.bannerImageUrl || media.trailerThumbnailUrl}
                                     <img
-                                        use:addImage="{media?.coverImageUrl || media?.bannerImageUrl || media?.trailerThumbnailUrl}"
-                                        fetchpriority="{mediaIndex >
-                                        numberOfPageLoadedGrid
-                                            ? ''
-                                            : 'high'}"
-                                        loading="{mediaIndex >
-                                        numberOfPageLoadedGrid
-                                            ? 'lazy'
-                                            : 'eager'}"
+                                        src={media.coverImageUrl || media.bannerImageUrl || media.trailerThumbnailUrl}
+                                        fetchpriority="{mediaIndex > numberOfPageLoadedGrid ? "" : "high"}"
+                                        loading="{mediaIndex > numberOfPageLoadedGrid ? "lazy" : "eager"}"
                                         class="image-card-thumb"
-                                        alt="{(media?.shownTitle || '') + ' Cover'}"
+                                        alt="{(media?.shownTitle || "") + " Cover"}"
                                         width="180px"
                                         height="254.531px"
                                         on:load="{(e) => {
@@ -584,13 +560,13 @@
                             >
                                 <span
                                     class="title copy"
-                                    data-copy="{media?.shownTitle || ''}"
-                                    data-secondcopy="{media?.copiedTitle || ''}"
+                                    data-copy="{media?.shownTitle || ""}"
+                                    data-secondcopy="{media?.copiedTitle || ""}"
                                 >{media?.shownTitle || "N/A"}</span>
                                 <span
                                     class="brief-info-wrapper copy"
-                                    data-copy="{media?.shownTitle || ''}"
-                                    data-secondcopy="{media?.copiedTitle || ''}"
+                                    data-copy="{media?.shownTitle || ""}"
+                                    data-secondcopy="{media?.copiedTitle || ""}"
                                 >
                                     <div class="brief-info">
                                         <span>
@@ -634,7 +610,7 @@
                                                                 0
                                                             ? "(" +
                                                                 media.episodeProgress +
-                                                                ' Ch")'
+                                                                " Ch\")"
                                                             : media.volumes >
                                                                 0
                                                                 ? "(" +
@@ -644,7 +620,7 @@
                                                                     0
                                                                 ? "(" +
                                                                     media.volumeProgress +
-                                                                    ' Vol")'
+                                                                    " Vol\")"
                                                                 : ""
                                                     }`}
                                                 {:else if isNovel}
@@ -657,7 +633,7 @@
                                                                 0
                                                             ? "(" +
                                                                 media.volumeProgress +
-                                                                ' Vol")'
+                                                                " Vol\")"
                                                             : media.chapters >
                                                                 0
                                                                 ? "(" +
@@ -667,7 +643,7 @@
                                                                     0
                                                                 ? "(" +
                                                                     media.episodeProgress +
-                                                                    ' Ch")'
+                                                                    " Ch\")"
                                                                 : ""
                                                     }`}
                                                 {:else}
@@ -680,7 +656,7 @@
                                                                 0
                                                             ? "(" +
                                                                 media.episodeProgress +
-                                                                '")'
+                                                                "\")"
                                                             : ""
                                                     }`}
                                                 {/if}
@@ -783,9 +759,9 @@
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
             <div
                 class="go-back-grid full-view"
-                tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
+                tabindex="{$menuVisible || $popupVisible ? "" : "0"}"
                 on:click="{goBackGrid}"
-                on:keyup="{(e) => e.key === 'Enter' && goBackGrid(e)}"
+                on:keyup="{(e) => e.key === "Enter" && goBackGrid(e)}"
                 in:fade="{{ duration: 200, easing: sineOut }}"
                 out:fade="{{ duration: 200, easing: sineOut }}"
             >

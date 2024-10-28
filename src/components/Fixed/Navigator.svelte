@@ -1,14 +1,9 @@
 <script>
     import { onMount } from "svelte";
     import { requestUserEntries } from "../../js/workerUtils.js";
-    import {
-        addClass,
-        removeClass,
-        removeLocalStorage,
-        requestImmediate,
-        setLocalStorage,
-        showToast,
-    } from "../../js/others/helper.js";
+    import { setLSData, removeLSData } from "../../js/database.js";
+    import { addClass, removeClass } from "../../js/utils/domUtils.js";
+    import { requestImmediate, showToast } from "../../js/utils/appUtils.js";
     import {
         username,
         dataStatus,
@@ -118,7 +113,7 @@
                     }
                     $dataStatus = "Getting User Entries";
                     $userRequestIsRunning = true;
-                    removeLocalStorage("username");
+                    removeLSData("username");
                     $loadingCategory[""] = new Date()
                     requestUserEntries({
                         username: typedUsername,
@@ -152,8 +147,8 @@
                             console.error(error);
                         })
                         .finally(() => {
-                            setLocalStorage("username", $username)
-                            .catch(() => removeLocalStorage("username"));
+                            setLSData("username", $username)
+                            .catch(() => removeLSData("username"));
                         });
                     resetProgress.update((e) => !e);
                 } else {
@@ -364,24 +359,24 @@
 <header
     id="nav-container"
     bind:this="{navContainerEl}"
-    class="{'nav-container' +
-        (delayedMenuVis ? ' menu-visible' : '') +
+    class="{"nav-container" +
+        (delayedMenuVis ? " menu-visible" : "") +
         (delayedMenuVis || delayedPopupVis ||
         (!navHasNoBackOption && ($popupVisible || $menuVisible))
-            ? ' delayed-full-screen-popup'
-            : '')}"
-    on:keyup="{(e) => e.key === 'Enter' && handleMenuVisibility(e)}"
+            ? " delayed-full-screen-popup"
+            : "")}"
+    on:keyup="{(e) => e.key === "Enter" && handleMenuVisibility(e)}"
     on:click="{handleMenuVisibility}"
 >
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <nav
         id="nav"
-        class="{'nav ' +
-            (delayedPopupVis ? ' popup-visible' : '') +
+        class="{"nav " +
+            (delayedPopupVis ? " popup-visible" : "") +
             (inputUsernameEl === document?.activeElement
-                ? ' input-focused'
-                : '')}"
+                ? " input-focused"
+                : "")}"
         bind:this="{navEl}"
     >
         <div class="go-back-container" on:click="{handleGoBack}">
@@ -390,7 +385,7 @@
                 class="closing-x"
                 viewBox="0 0 24 24"
                 tabindex="0"
-                on:keyup="{(e) => e.key === 'Enter' && handleGoBack(e)}"
+                on:keyup="{(e) => e.key === "Enter" && handleGoBack(e)}"
                 role="button"
                 aria-label="Close Fixed Popup Element"
             >
@@ -403,7 +398,7 @@
                 viewBox="0 0 500 500"
                 role="button"
                 aria-label="Cancel Username Search"
-                on:keyup="{(e) => e.key === 'Enter' && handleGoBack(e)}"
+                on:keyup="{(e) => e.key === "Enter" && handleGoBack(e)}"
             >
                 <path
                     d="M 30.047 225.832 C 17.045 238.409 17.045 259.255 30.047 271.832 L 190.047 431.832 C 207.752 449.537 237.985 441.437 244.465 417.251 C 247.473 406.026 244.264 394.049 236.047 385.832 L 130.047 280.832 L 437.047 280.832 C 461.68 280.832 477.076 254.165 464.76 232.832 C 459.043 222.931 448.479 216.832 437.047 216.832 L 130.047 216.832 L 236.047 111.832 C 253.752 94.127 245.651 63.894 221.465 57.413 C 210.241 54.406 198.264 57.615 190.047 65.832 L 30.047 225.832 Z"
@@ -417,12 +412,12 @@
             <input
                 id="username-input"
                 type="search"
-                tabindex="{$popupVisible && $windowWidth > 750 ? '-1' : '0'}"
+                tabindex="{$popupVisible && $windowWidth > 750 ? "-1" : "0"}"
                 enterkeyhint="search"
                 autocomplete="off"
                 placeholder="Your Anilist Username"
-                class="{$android ? 'android' : ''}"
-                on:keyup="{(e) => e.key === 'Enter' && updateUsername(e)}"
+                class="{$android ? "android" : ""}"
+                on:keyup="{(e) => e.key === "Enter" && updateUsername(e)}"
                 on:focusin="{onfocusUsernameInput}"
                 on:focusout="{onfocusUsernameInput}"
                 bind:value="{typedUsername}"
@@ -437,7 +432,7 @@
                     }
                 }}"
                 on:keyup="{(e) => {
-                    if (e.key !== 'Enter') return;
+                    if (e.key !== "Enter") return;
                     if (!$popupVisible) {
                         focusInputUsernameEl();
                     }
@@ -459,9 +454,9 @@
                     class="media-release-icon"
                     role="button"
                     aria-label="Media Releases"
-                    tabindex="{$popupVisible && $windowWidth > 750 ? '-1' : '0'}"
+                    tabindex="{$popupVisible && $windowWidth > 750 ? "-1" : "0"}"
                     on:keyup="{(e) => {
-                        if (e.key === 'Enter') {
+                        if (e.key === "Enter") {
                             e.stopPropagation();
                             handleMediaRelease();
                         }
@@ -485,12 +480,12 @@
                     class="logo-icon"
                     role="button"
                     aria-label="Open Menu"
-                    tabindex="{$popupVisible && $windowWidth > 750 ? '-1' : '0'}"
+                    tabindex="{$popupVisible && $windowWidth > 750 ? "-1" : "0"}"
                     on:keyup="{(e) => {
-                        if (e.key === 'Enter') {
+                        if (e.key === "Enter") {
                             e.stopPropagation();
                             $menuVisible = !$menuVisible;
-                        } else if (e.key !== 'Escape') {
+                        } else if (e.key !== "Escape") {
                             e.stopPropagation();
                         }
                     }}"

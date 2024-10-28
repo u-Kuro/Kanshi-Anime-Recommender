@@ -1,10 +1,11 @@
 <script>
-    import { createEventDispatcher, afterUpdate, tick } from "svelte";
-    import { fade } from "svelte/transition";
     import { sineOut } from "svelte/easing";
+    import { fade } from "svelte/transition";
     import { initData } from "../../js/globalValues.js";
-    import { addClass, removeClass, requestImmediate } from "../../js/others/helper.js";
-
+    import { requestImmediate } from "../../js/utils/appUtils.js";
+    import { createEventDispatcher, afterUpdate, tick } from "svelte";
+    import { addClass, removeClass } from "../../js/utils/domUtils.js";
+    
     const dispatch = createEventDispatcher();
 
     export let showConfirm = false;
@@ -83,7 +84,7 @@
     }
 
     function getTextFromHTML(htmlString) {
-        const tempElement = document.createElement('div');
+        const tempElement = document.createElement("div");
         tempElement.innerHTML = htmlString;
         return tempElement.textContent || tempElement.innerText;
     }
@@ -127,7 +128,7 @@
         class="fixed-confirm-dialog"
         on:click="{handleConfirmVisibility}"
         on:touchend|passive="{handleConfirmVisibility}"
-        on:keydown="{(e) => e.key === 'Enter' && handleConfirmVisibility(e)}"
+        on:keydown="{(e) => e.key === "Enter" && handleConfirmVisibility(e)}"
         in:fade="{{ duration: 200, easing: sineOut }}"
         out:fade="{{ duration: 200, easing: sineOut }}"
         role="alertdialog" 
@@ -155,7 +156,7 @@
                             class="button"
                             on:click="{handleCancel}"
                             on:keydown="{(e) =>
-                                e.key === 'Enter' && handleCancel(e)}"
+                                e.key === "Enter" && handleCancel(e)}"
                             >{cancelLabel}</button
                         >
                     {/if}
@@ -164,7 +165,7 @@
                         bind:this="{confirmButtonEl}"
                         on:click="{handleConfirm}"
                         on:keydown="{(e) =>
-                            e.key === 'Enter' && handleConfirm(e)}"
+                            e.key === "Enter" && handleConfirm(e)}"
                         >{confirmLabel}</button
                     >
                 </div>

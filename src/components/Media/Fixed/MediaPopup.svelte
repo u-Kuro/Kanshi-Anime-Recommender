@@ -1,31 +1,29 @@
 <script>
     import { onMount, tick } from "svelte";
-    import { fade } from "svelte/transition";
     import { sineOut } from "svelte/easing";
-    import { cacheImage } from "../../../js/caching.js";
-    import { mediaLoader, mediaManager, saveIDBdata, getIDBdata } from "../../../js/workerUtils.js";
+    import { fade } from "svelte/transition";
+    import { equalsIgnoreCase } from "../../../js/utils/dataUtils.js";
+    import { mediaLoader, mediaManager } from "../../../js/workerUtils.js";
+    import { requestImmediate, showToast, getUniqueId } from "../../../js/utils/appUtils.js";
+    import { getIDBData, setIDBData, setLSData, removeLSData } from "../../../js/database.js";
     import {
-        scrollToElement,
-        getChildIndex,
-        msToTime,
         addClass,
         removeClass,
+        getChildIndex,
         getMostVisibleElement,
+        scrollToElement,
         dragScroll,
+    } from "../../../js/utils/domUtils.js";
+    import {
+        msToTime,
         formatYear,
         formatMonth,
         formatDay,
         formatTime,
         formatWeekday,
-        setLocalStorage,
-        removeLocalStorage,
-        requestImmediate,
-        ncsCompare,
-        showToast,
-        getUniqueId,
-    } from "../../../js/others/helper.js";
+    } from "../../../js/utils/formatUtils.js";
     import {
-        hiddenEntries,
+        hiddenMediaEntries,
         ytPlayers,
         autoPlay,
         popupVisible,
@@ -55,8 +53,6 @@
         shouldLoadAllList,
         listReloadAvailable,
     } from "../../../js/globalValues.js";
-
-    const emptyImage = "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
 
     let mostVisiblePopupHeader,
         currentHeaderIdx,
@@ -116,21 +112,21 @@
     }
 
     async function handleHideShow(mediaID, title) {
-        if ($initList !== false || !$hiddenEntries) {
+        if ($initList !== false || !$hiddenMediaEntries) {
             return pleaseWaitAlert()
         }
-        let isHidden = $hiddenEntries[mediaID];
+        let isHidden = $hiddenMediaEntries[mediaID];
         title = title ? `<span style="color:hsl(var(--ac-color));">${title}</span>` : "this entry";
         if (isHidden) {
             if (await $confirmPromise(`Do you want to unhide ${title} in your recommendation list?`)) {
                 mediaManager({ showId: mediaID });
-                delete $hiddenEntries[mediaID];
-                $hiddenEntries = $hiddenEntries
+                delete $hiddenMediaEntries[mediaID];
+                $hiddenMediaEntries = $hiddenMediaEntries
             }
         } else {
             if (await $confirmPromise(`Do you want to hide ${title} in your recommendation list?`)) {
                 mediaManager({ removeId: mediaID });
-                $hiddenEntries[mediaID] = 1;
+                $hiddenMediaEntries[mediaID] = 1;
             }
         }
     }
@@ -369,9 +365,9 @@
 
     autoPlay.subscribe((val) => {
         if (typeof val === "boolean") {
-            setLocalStorage("autoPlay", val)
-            .catch(() => removeLocalStorage("autoPlay"))
-            .finally(() => saveIDBdata(val, "autoPlay"));
+            setLSData("autoPlay", val)
+            .catch(() => removeLSData("autoPlay"))
+            .finally(() => setIDBData("autoPlay", val));
             const visibleTrailer = mostVisiblePopupHeader?.querySelector(".trailer");
             for (let i = 0; i < $ytPlayers.length; i++) {
                 const ytPlayer = $ytPlayers[i]?.ytPlayer
@@ -1245,7 +1241,7 @@
 
     function showFullScreenEditedHTMLInfo(editedHTMLString) {
         if (!editedHTMLString) return;
-        let newFullDescriptionPopup = editedHTMLString || '';
+        let newFullDescriptionPopup = editedHTMLString || "";
         if (fullDescriptionPopup === newFullDescriptionPopup) {
             fullDescriptionPopup = null;
         } else {
@@ -1255,7 +1251,7 @@
     }
     function showFullScreenInfo(info) {
         if (!info) return;
-        let newFullDescriptionPopup = editHTMLString(info) || '';
+        let newFullDescriptionPopup = editHTMLString(info) || "";
         if (fullDescriptionPopup === newFullDescriptionPopup) {
             fullDescriptionPopup = null;
         } else {
@@ -1285,18 +1281,6 @@
     window.closeFullScreenItem = () => {
         fullDescriptionPopup = fullImagePopup = null;
     };
-
-    async function addImage(node, imageUrl) {
-        if (imageUrl && imageUrl !== emptyImage) {
-            node.src = imageUrl;
-            let newImageUrl = await cacheImage(imageUrl);
-            if (newImageUrl) {
-                node.src = newImageUrl;
-            }
-        } else {
-            node.src = emptyImage;
-        }
-    }
 
     let topPopupVisibleCount = $windowHeight >= 1000 ? 2 : 1,
         bottomPopupVisibleCount = Math.floor(Math.max(1, $windowHeight / 640)) || 1
@@ -1338,7 +1322,7 @@
             info.removeEventListener(e.type, addInfoDragScroll);
             if (info.addedCustomDragScroll) return;
             info.addedCustomDragScroll = true;
-            dragScroll(info, 'x');
+            dragScroll(info, "x");
             if (hasDragScroll == null) {
                 hasDragScroll = true
             }
@@ -1417,11 +1401,11 @@
             }
         }).observe(popupContainer, { childList: true, subtree: true });
 
-        $autoPlay = $autoPlay ?? (await getIDBdata("autoPlay"));
+        $autoPlay = $autoPlay ?? (await getIDBData("autoPlay"));
         if ($autoPlay == null) {
-            setLocalStorage("autoPlay", $autoPlay = false)
-            .catch(() => removeLocalStorage("autoPlay"))
-            .finally(() => saveIDBdata(false, "autoPlay"));
+            setLSData("autoPlay", $autoPlay = false)
+            .catch(() => removeLSData("autoPlay"))
+            .finally(() => setIDBData("autoPlay", false));
         }
     });
     
@@ -1443,7 +1427,7 @@
 					target.style.pointerEvents = "";
 				}, 500);
 				let text2 = target.dataset.secondcopy;
-				if (text2 && !ncsCompare(text2, text)) {
+				if (text2 && !equalsIgnoreCase(text2, text)) {
 					window.copyToClipBoard?.(text2);
 					requestImmediate(() => {
 						window.copyToClipBoard?.(text);
@@ -1470,9 +1454,9 @@
     id="popup-wrapper"
     class="popup-wrapper"
     on:click="{handlePopupVisibility}"
-    on:keyup="{(e) => e.key === 'Enter' && handlePopupVisibility(e)}"
+    on:keyup="{(e) => e.key === "Enter" && handlePopupVisibility(e)}"
     bind:this="{popupWrapper}"
-    tabindex="{!$menuVisible && $popupVisible ? '0' : '-1'}"
+    tabindex="{!$menuVisible && $popupVisible ? "0" : "-1"}"
 >
     <section
         id="popup-container"
@@ -1500,11 +1484,11 @@
                         <div class="popup-main" use:popupMainEl>
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                             <div
-                                class="{'popup-header ' + (media.trailerID ? 'loader' : '')}"
+                                class="{"popup-header " + (media.trailerID ? "loader" : "")}"
                                 bind:this="{media.popupHeader}"
                                 tabindex="{!$menuVisible && $popupVisible
-                                    ? '0'
-                                    : '-1'}"
+                                    ? "0"
+                                    : "-1"}"
                                 on:click="{() => {
                                     if (!$popupVisible) return;
                                     openMoreInfo(
@@ -1515,7 +1499,7 @@
                                 }}"
                                 on:keyup="{(e) => {
                                     if (!$popupVisible) return;
-                                    if (e.key === 'Enter') {
+                                    if (e.key === "Enter") {
                                         openMoreInfo(
                                             media.trailerID,
                                             media.bannerImageUrl || media.trailerThumbnailUrl,
@@ -1539,15 +1523,15 @@
                                     {#if media.bannerImageUrl || media.trailerThumbnailUrl}
                                         {#key media.bannerImageUrl || media.trailerThumbnailUrl}
                                             <img
-                                                use:addImage="{media.bannerImageUrl || media.trailerThumbnailUrl}"
+                                                src={media.bannerImageUrl || media.trailerThumbnailUrl}
                                                 loading="lazy"
                                                 width="640px"
                                                 height="360px"
                                                 alt="{(media?.shownTitle ||
-                                                    '') +
+                                                    "") +
                                                     (media.bannerImageUrl
-                                                        ? ' Banner'
-                                                        : ' Thumbnail')}"
+                                                        ? " Banner"
+                                                        : " Thumbnail")}"
                                                 class="banner-img"
                                                 on:load="{(e) => {
                                                     removeClass(
@@ -1580,17 +1564,17 @@
                                     <div class="auto-play-container">
                                         <label 
                                             class="switch"
-                                            tabindex="{!$menuVisible && $popupVisible ? '0' : '-1'}"
-                                            on:keyup="{(e) => e.key === 'Enter' && changeAutoPlay(e)}"
+                                            tabindex="{!$menuVisible && $popupVisible ? "0" : "-1"}"
+                                            on:keyup="{(e) => e.key === "Enter" && changeAutoPlay(e)}"
                                         >
                                             <label
                                                 class="disable-interaction"
-                                                for="{'auto-play-' + media?.id}"
+                                                for="{"auto-play-" + media?.id}"
                                             >
                                                 Auto Play
                                             </label>
                                             <input
-                                                id="{'auto-play-' + media?.id}"
+                                                id="{"auto-play-" + media?.id}"
                                                 type="checkbox"
                                                 class="auto-play-toggle"
                                                 bind:checked="{$autoPlay}"
@@ -1604,7 +1588,7 @@
                                             class="auto-play-label"
                                             on:click="{changeAutoPlay}"
                                             on:keyup="{(e) =>
-                                                e.key === 'Enter' &&
+                                                e.key === "Enter" &&
                                                 changeAutoPlay(e)}"
                                         >
                                             {#if $windowWidth >= 290}
@@ -1620,8 +1604,8 @@
                                             class="list-update-container"
                                             tabindex="{!$menuVisible &&
                                             $popupVisible
-                                                ? '0'
-                                                : '-1'}"
+                                                ? "0"
+                                                : "-1"}"
                                             on:click="{() => {
                                                 if ($listUpdateAvailable || $loadingCategory[""] || $loadingCategory[$selectedCategory]) {
                                                     updateList()
@@ -1630,7 +1614,7 @@
                                                 }
                                             }}"
                                             on:keyup="{(e) => {
-                                                if (e.key === 'Enter') return
+                                                if (e.key === "Enter") return
                                                 if ($listUpdateAvailable || $loadingCategory[""] || $loadingCategory[$selectedCategory]) {
                                                     updateList()
                                                 } else {
@@ -1662,7 +1646,7 @@
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                         <a
                                             class="icon-button"
-                                            tabindex="{!$menuVisible && $popupVisible ? '0' : '-1'}"
+                                            tabindex="{!$menuVisible && $popupVisible ? "0" : "-1"}"
                                             rel="noopener noreferrer"
                                             target="_blank"
                                             href="{`https://www.youtube.com/watch?v=${media.trailerID}`}"
@@ -1687,15 +1671,15 @@
                                                 class="icon-button"
                                                 tabindex="{!$menuVisible &&
                                                 $popupVisible
-                                                    ? '0'
-                                                    : '-1'}"
+                                                    ? "0"
+                                                    : "-1"}"
                                                 on:click="{() => {
                                                     if (!$popupVisible) return;
                                                     showFullScreenImage(media.bannerImageUrl || media.trailerThumbnailUrl)
                                                 }}"
                                                 on:keyup="{(e) => {
                                                     if (!$popupVisible) return;
-                                                    if (e.key === 'Enter') {
+                                                    if (e.key === "Enter") {
                                                         showFullScreenImage(media.bannerImageUrl || media.trailerThumbnailUrl)
                                                     }
                                                 }}"
@@ -1729,14 +1713,14 @@
                                         on:scroll="{itemScroll}"
                                     >
                                         <a
-                                            tabindex="{!$menuVisible && $popupVisible ? '' : '-1'}"
-                                            rel="{media.mediaUrl ? 'noopener noreferrer' : ''}"
-                                            target="{media.mediaUrl ? '_blank' : ''}"
-                                            href="{media.mediaUrl || 'javascript:void(0)'}"
-                                            class="{media?.contentCautionColor + '-color media-title copy'}"
-                                            title="{media?.shownTitle || ''}"
-                                            data-copy="{media?.shownTitle || ''}"
-                                            data-secondcopy="{media?.copiedTitle || ''}"
+                                            tabindex="{!$menuVisible && $popupVisible ? "" : "-1"}"
+                                            rel="{media.mediaUrl ? "noopener noreferrer" : ""}"
+                                            target="{media.mediaUrl ? "_blank" : ""}"
+                                            href="{media.mediaUrl || "javascript:void(0)"}"
+                                            class="{media?.contentCautionColor + "-color media-title copy"}"
+                                            title="{media?.shownTitle || ""}"
+                                            data-copy="{media?.shownTitle || ""}"
+                                            data-secondcopy="{media?.copiedTitle || ""}"
                                             style:overflow="{$popupIsGoingBack ? "hidden" : ""}"
                                             on:scroll="{itemScroll}"
                                             aria-label="Open in AniList"
@@ -1874,10 +1858,10 @@
                                         <h4
                                             class="user-info"
                                             on:click="{() => openInAnilist(media.mediaUrl)}"
-                                            on:keyup="{(e) => e.key === 'Enter' && openInAnilist(media.mediaUrl)}"
+                                            on:keyup="{(e) => e.key === "Enter" && openInAnilist(media.mediaUrl)}"
                                             aria-label="Open in AniList"
                                         >
-                                            <span class="{media?.userStatusColor ? media.userStatusColor+'-color' : ''}">
+                                            <span class="{media?.userStatusColor ? media.userStatusColor+"-color" : ""}">
                                                 {media.userStatus || "N/A"}
                                             </span>
                                             {#if true}
@@ -2077,7 +2061,7 @@
                                                     Studio
                                                 </div>
                                                 <div
-                                                    class="{'studio-popup info'}"
+                                                    class="{"studio-popup info"}"
                                                     on:scroll="{itemScroll}"
                                                     on:mouseenter="{addInfoDragScroll}"
                                                 >
@@ -2085,25 +2069,25 @@
                                                         <a
                                                             tabindex="{!$menuVisible &&
                                                             $popupVisible
-                                                                ? ''
-                                                                : '-1'}"
+                                                                ? ""
+                                                                : "-1"}"
                                                             class="{studios?.studioColor
                                                                 ? `${studios?.studioColor}-color`
-                                                                : ''}"
+                                                                : ""}"
                                                             rel="{studios
                                                                 ?.studio
                                                                 ?.studioUrl
-                                                                ? 'noopener noreferrer'
-                                                                : ''}"
+                                                                ? "noopener noreferrer"
+                                                                : ""}"
                                                             target="{studios
                                                                 ?.studio
                                                                 ?.studioUrl
-                                                                ? '_blank'
-                                                                : ''}"
+                                                                ? "_blank"
+                                                                : ""}"
                                                             href="{studios
                                                                 ?.studio
                                                                 ?.studioUrl ||
-                                                                'javascript:void(0)'}"
+                                                                "javascript:void(0)"}"
                                                             aria-label="Open Studio in AniList"
                                                         >
                                                             {studios?.studio
@@ -2120,7 +2104,7 @@
                                                     Genre
                                                 </div>
                                                 <div
-                                                    class="{'genres-popup info'}"
+                                                    class="{"genres-popup info"}"
                                                     on:scroll="{itemScroll}"
                                                     on:mouseenter="{addInfoDragScroll}"
                                                 >
@@ -2128,7 +2112,7 @@
                                                         <span
                                                             class="{genres?.genreColor
                                                                 ? `${genres?.genreColor}-color`
-                                                                : ''}"
+                                                                : ""}"
                                                             >{genres?.genre ||
                                                                 "N/A"}
                                                         </span>
@@ -2139,7 +2123,7 @@
                                         {#if media?.shownTags?.length}
                                             <div class="tag-info">
                                                 <div
-                                                    class="{'tags-info-content info'}"
+                                                    class="{"tags-info-content info"}"
                                                     on:scroll="{itemScroll}"
                                                     on:mouseenter="{addInfoDragScroll}"
                                                 >
@@ -2147,8 +2131,8 @@
                                                         <span
                                                             tabindex="{!$menuVisible &&
                                                             $popupVisible
-                                                                ? '0'
-                                                                : ''}"
+                                                                ? "0"
+                                                                : ""}"
                                                             on:click="{() => {
                                                                 if (!$popupVisible) return;
                                                                 if (hasDragScroll == null || !itemIsScrolling) {
@@ -2164,7 +2148,7 @@
                                                                     !$popupVisible
                                                                 )
                                                                     return;
-                                                                if (e.key === 'Enter' &&
+                                                                if (e.key === "Enter" &&
                                                                    (hasDragScroll == null || !itemIsScrolling)
                                                                 ) {
                                                                     showFullScreenInfo(
@@ -2176,7 +2160,7 @@
                                                             }}"
                                                             class="{tags?.tagColor
                                                                 ? `${tags?.tagColor}-color`
-                                                                : ''}"
+                                                                : ""}"
                                                             role="button"
                                                             aria-label="Open Tag Description"
                                                             >{@html tags?.tag ||
@@ -2193,19 +2177,17 @@
                                             {#key media.coverImageUrl || media.bannerImageUrl || media.trailerThumbnailUrl}
                                                 <div class="shimmer">
                                                     <img
-                                                        use:addImage="{media.coverImageUrl ||
-                                                            media.bannerImageUrl ||
-                                                            media.trailerThumbnailUrl}"
+                                                        src={media.coverImageUrl || media.bannerImageUrl || media.trailerThumbnailUrl}
                                                         loading="lazy"
                                                         width="150px"
                                                         height="210px"
-                                                        alt="{(media?.shownTitle || '') +
+                                                        alt="{(media?.shownTitle || "") +
                                                             (media.coverImageUrl
-                                                                ? ' Cover'
+                                                                ? " Cover"
                                                                 : media.bannerImageUrl
-                                                                ? ' Banner'
-                                                                : ' Thumbnail')}"
-                                                        tabindex="{!$menuVisible && $popupVisible ? '0' : '-1'}"
+                                                                ? " Banner"
+                                                                : " Thumbnail")}"
+                                                        tabindex="{!$menuVisible && $popupVisible ? "0" : "-1"}"
                                                         class="cover-img"
                                                         on:load="{(e) => {
                                                             removeClass(
@@ -2237,7 +2219,7 @@
                                                         }}"
                                                         on:keyup="{(e) => {
                                                             if (!$popupVisible) return;
-                                                            if (e.key === 'Enter') {
+                                                            if (e.key === "Enter") {
                                                                 showFullScreenImage(
                                                                     media.coverImageUrl ||
                                                                     media.bannerImageUrl ||
@@ -2252,21 +2234,21 @@
                                             {/key}
                                         {/if}
                                         {#if media?.description}
-                                            {@const editedHTMLString = editHTMLString(media?.description) || ''}
+                                            {@const editedHTMLString = editHTMLString(media?.description) || ""}
                                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                             <div
                                                 class="media-description-wrapper"
                                                 tabindex="{!$menuVisible &&
                                                 $popupVisible
-                                                    ? '0'
-                                                    : '-1'}"
+                                                    ? "0"
+                                                    : "-1"}"
                                                 on:click="{() => {
                                                     if (!$popupVisible) return;
                                                     showFullScreenEditedHTMLInfo(editedHTMLString);
                                                 }}"
                                                 on:keyup="{(e) => {
                                                     if (!$popupVisible) return;
-                                                    if (e.key === 'Enter') {
+                                                    if (e.key === "Enter") {
                                                         showFullScreenEditedHTMLInfo(editedHTMLString);
                                                     }
                                                 }}"
@@ -2276,7 +2258,7 @@
                                                 <div
                                                     class="media-description"
                                                 >
-                                                    {@html editedHTMLString || ''}
+                                                    {@html editedHTMLString || ""}
                                                 </div>
                                             </div>
                                         {/if}
@@ -2286,8 +2268,8 @@
                             <div class="popup-footer">
                                 <button
                                     tabindex="{!$menuVisible && $popupVisible
-                                        ? ''
-                                        : '-1'}"
+                                        ? ""
+                                        : "-1"}"
                                     class="hide-show-btn"
                                     style:overflow="{$popupIsGoingBack
                                         ? "hidden"
@@ -2301,7 +2283,7 @@
                                     }}"
                                     on:keyup="{(e) => {
                                         if (!$popupVisible) return;
-                                        if (e.key === 'Enter') {
+                                        if (e.key === "Enter") {
                                             e.stopImmediatePropagation();
                                             handleHideShow(
                                                 media.id,
@@ -2318,9 +2300,9 @@
                                             d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-72-280h144a24 24 0 1 1 0 48H184a24 24 0 1 1 0-48z"
                                         ></path></svg
                                     >
-                                    {#if $hiddenEntries}
+                                    {#if $hiddenMediaEntries}
                                         {" " +
-                                            ($hiddenEntries[media?.id]
+                                            ($hiddenMediaEntries[media?.id]
                                                 ? "Show"
                                                 : "Hide")}
                                     {:else}
@@ -2328,12 +2310,12 @@
                                     {/if}
                                 </button>
                                 <a
-                                    tabindex="{!$menuVisible && $popupVisible ? '' : '-1'}"
+                                    tabindex="{!$menuVisible && $popupVisible ? "" : "-1"}"
                                     class="more-videos"
                                     style:overflow="{$popupIsGoingBack ? "hidden" : ""}"
-                                    rel="{youtubeRelatedLink ? 'noopener noreferrer' : ''}"
-                                    target="{youtubeRelatedLink ? '_blank' : ''}"
-                                    href="{youtubeRelatedLink || 'javascript:void(0)'}"
+                                    rel="{youtubeRelatedLink ? "noopener noreferrer" : ""}"
+                                    target="{youtubeRelatedLink ? "_blank" : ""}"
+                                    href="{youtubeRelatedLink || "javascript:void(0)"}"
                                     aria-label="Open Related YouTube Videos"
                                 >
                                     <!-- youtube logo -->
@@ -2344,11 +2326,11 @@
                                     </svg> YouTube
                                 </a>
                                 <button
-                                    tabindex="{!$menuVisible && $popupVisible ? '' : '-1'}"
+                                    tabindex="{!$menuVisible && $popupVisible ? "" : "-1"}"
                                     class="open-anilist"
                                     style:overflow="{$popupIsGoingBack ? "hidden" : ""}"
                                     on:click="{() => openInAnilist(media.mediaUrl)}"
-                                    on:keyup="{(e) => e.key === 'Enter' && openInAnilist(media.mediaUrl)}"
+                                    on:keyup="{(e) => e.key === "Enter" && openInAnilist(media.mediaUrl)}"
                                     aria-label="Open in AniList"
                                 >
                                     <!-- anilist logo -->
@@ -2392,7 +2374,7 @@
 </div>
 {#if $popupVisible && $popupIsGoingBack}
     <div
-        class="{'go-back-grid-highlight' + (willGoBack ? ' will-go-back' : '')}"
+        class="{"go-back-grid-highlight" + (willGoBack ? " will-go-back" : "")}"
         in:fade="{{ duration: 200, easing: sineOut }}"
         out:fade="{{ duration: 200, easing: sineOut }}"
     >
@@ -2411,7 +2393,7 @@
         class="full-popup-wrapper"
         on:click="{() => (fullImagePopup = fullDescriptionPopup = null)}"
         on:keyup="{(e) =>
-            e.key === 'Enter' &&
+            e.key === "Enter" &&
             (fullImagePopup = fullDescriptionPopup = null)}"
         on:touchstart|passive="{fullViewTouchStart}"
         on:touchend|passive="{fullViewTouchEnd}"
@@ -2425,7 +2407,7 @@
                 <div
                     use:isDescriptionScrollable
                     on:keyup="{(e) =>
-                        e.key === 'Enter' &&
+                        e.key === "Enter" &&
                         (fullImagePopup = fullDescriptionPopup = null)}"
                     tabindex="0"
                     class="full-popup-description"
@@ -2441,7 +2423,7 @@
         class="full-popup-wrapper"
         on:click="{() => (fullDescriptionPopup = fullImagePopup = null)}"
         on:keyup="{(e) =>
-            e.key === 'Enter' &&
+            e.key === "Enter" &&
             (fullDescriptionPopup = fullImagePopup = null)}"
         on:touchstart|passive="{fullViewTouchStart}"
         on:touchend|passive="{fullViewTouchEnd}"
@@ -2453,14 +2435,14 @@
         <div class="full-popup">
             {#key fullImagePopup}
                 <img
-                    use:addImage="{fullImagePopup}"
+                    src="{fullImagePopup}"
                     tabindex="0"
                     class="full-popup-image"
                     loading="lazy"
                     alt="Full View"
-                    on:keyup="{(e) => e.key === 'Enter' && (fullDescriptionPopup = fullImagePopup = null)}"
+                    on:keyup="{(e) => e.key === "Enter" && (fullDescriptionPopup = fullImagePopup = null)}"
                     on:error="{(e) => {
-                        addClass(e.target, 'display-none');
+                        addClass(e.target, "display-none");
                     }}"
                 />
             {/key}
@@ -3076,7 +3058,6 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
         font-size: 12px;
-        text-transform: capitalize;
         overflow-y: hidden;
         overflow-x: auto;
         display: flex;
@@ -3385,13 +3366,11 @@
         width: 100% !important;
     }
     :global(.full-popup-description .custom-h1) {
-        text-transform: capitalize !important;
         font-size: 15px !important;
         font-weight: 500 !important;
         min-height: 23px !important;
     }
     :global(.full-popup-description .custom-extra) {
-        text-transform: capitalize !important;
         min-height: 20px !important;
         width: fit-content !important;
         min-width: 62.4px !important;
@@ -3408,7 +3387,6 @@
         min-width: 100% !important;
     }
     :global(.full-popup-description .custom-table-list > li) {
-        text-transform: capitalize !important;
         width: fit-content !important;
         min-width: 50% !important;
         cursor: pointer !important;

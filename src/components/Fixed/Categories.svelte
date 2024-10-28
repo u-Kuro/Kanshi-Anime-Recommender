@@ -1,12 +1,8 @@
 <script>
     import { onMount, tick } from "svelte";
-    import {
-        getElementWidth,
-        getLocalStorage,
-        requestImmediate,
-        showToast,
-        trimAllEmptyChar,
-    } from "../../js/others/helper.js";
+    import { getLSData } from "../../js/database.js";
+    import { getElementWidth } from "../../js/utils/domUtils.js";
+    import { requestImmediate, showToast } from "../../js/utils/appUtils";
     import {
         gridFullView,
         android,
@@ -167,7 +163,7 @@
         }
     }
 
-    let shouldScrollSnap = getLocalStorage("nonScrollSnapFilters") ?? true;
+    let shouldScrollSnap = getLSData("nonScrollSnapFilters") ?? true;
     function horizontalWheel(event, parentClass) {
         let element = event.target;
         let classList = element.classList;
@@ -288,19 +284,19 @@
 
 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 <div
-    class="{'bottom-nav-container' +
-        (categoriesNavVisible ? '' : ' hide') +
-        (immediateCustomFilNavChange ? ' immediate' : '') +
-        ($android ? ' android' : '')}"
+    class="{"bottom-nav-container" +
+        (categoriesNavVisible ? "" : " hide") +
+        (immediateCustomFilNavChange ? " immediate" : "") +
+        ($android ? " android" : "")}"
 >
     <nav
         id="categories-nav"
         bind:this="{categoriesNav}"
-        class="{'nav' +
-            ($hasWheel ? ' hasWheel' : '') +
-            (shouldScrollSnap && $android ? ' android' : '')}"
+        class="{"nav" +
+            ($hasWheel ? " hasWheel" : "") +
+            (shouldScrollSnap && $android ? " android" : "")}"
         on:wheel="{(e) => {
-            horizontalWheel(e, 'nav');
+            horizontalWheel(e, "nav");
         }}"
         aria-label="Select a category"
     >
@@ -311,17 +307,17 @@
         ></div>
         {#each $categoriesKeys || [] as categoryName (categoryName || {})}
             <span
-                tabindex="{$menuVisible || $popupVisible ? '' : '0'}"
+                tabindex="{$menuVisible || $popupVisible ? "" : "0"}"
                 on:click="{selectCategory(categoryName)}"
                 on:keyup="{(e) => {
-                    e.key === 'Enter' && selectCategory(categoryName);
+                    e.key === "Enter" && selectCategory(categoryName);
                 }}"
                 data-category="{categoryName}"
-                class="{'category' +
-                    (categoryName === $selectedCategory ? ' selected' : '')}"
+                class="{"category" +
+                    (categoryName === $selectedCategory ? " selected" : "")}"
                 role="button"
                 aria-label="category"
-                >{trimAllEmptyChar(categoryName) || ""}
+                >{categoryName.trim() || ""}
             </span>
         {/each}
     </nav>
@@ -329,7 +325,7 @@
         class="prev-category"
         on:click="{(e) => goToNextPrevCategory(e, false)}"
         on:keyup="{(e) => {
-            e.key === 'Enter' && goToNextPrevCategory(e, false);
+            e.key === "Enter" && goToNextPrevCategory(e, false);
         }}"
         aria-label="Select Previous Category"
     ></div>
@@ -337,7 +333,7 @@
         class="next-category"
         on:click="{(e) => goToNextPrevCategory(e, true)}"
         on:keyup="{(e) => {
-            e.key === 'Enter' && goToNextPrevCategory(true);
+            e.key === "Enter" && goToNextPrevCategory(true);
         }}"
         aria-label="Select Next Category"
     ></div>

@@ -34,8 +34,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.browser.customtabs.CustomTabColorSchemeParams;
-import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -59,6 +57,7 @@ public class MediaReleaseActivity extends AppCompatActivity {
     public static WeakReference<MediaReleaseActivity> weakActivity;
     public static final AtomicBoolean showUnseenMedia = new AtomicBoolean(false);
     public static final AtomicReference<String> selectedMediaReleaseOption = new AtomicReference<>("Updates");
+    private final CustomTabsHelper customTabsIntent = CustomTabsHelper.getInstance();
     Spinner mediaReleaseSpinner;
     SharedPreferences prefs;
     SharedPreferences.Editor prefsEdit;
@@ -456,13 +455,12 @@ public class MediaReleaseActivity extends AppCompatActivity {
 
     public void openMediaInAniList(String url) {
         try {
-            CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
-                    .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(getResources().getColor(R.color.dark_blue)).build())
-                    .setStartAnimations(MediaReleaseActivity.this, R.anim.fade_in, R.anim.remove)
-                    .setExitAnimations(MediaReleaseActivity.this, R.anim.fade_out, R.anim.remove)
-                    .setShowTitle(true)
-                    .build();
-            customTabsIntent.launchUrl(MediaReleaseActivity.this, Uri.parse(url));
+            customTabsIntent.launchUrl(
+                MediaReleaseActivity.this,
+                Uri.parse(url),
+                getResources().getColor(R.color.dark_blue),
+                true
+            );
             overridePendingTransition(R.anim.remove, R.anim.remove);
         } catch (Exception ignored) {
             showToast(Toast.makeText(getApplicationContext(), "Can't open the link", Toast.LENGTH_LONG));

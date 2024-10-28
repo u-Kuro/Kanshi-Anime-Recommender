@@ -49,7 +49,7 @@ public class Configs {
         }
         return null;
     }
-    private static final String UNIQUE_KEY = "Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70";
+    private static final String UNIQUE_KEY = "Kanshi.Media.Recommendations.AniList.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70";
     public static final String IS_BACKGROUND_UPDATE_KEY = UNIQUE_KEY +".isBackgroundUpdate";
     public static final String VISITED_KEY = UNIQUE_KEY +".visited";
     public static final String IS_OWNER_KEY = UNIQUE_KEY +".isOwner";
