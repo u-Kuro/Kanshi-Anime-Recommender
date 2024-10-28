@@ -1,14 +1,23 @@
-import { getLSData } from "./database.js";
 import { get, readable, writable } from "svelte/store";
 import { isAndroid, isWebCrawler, isMobile } from "./utils/deviceUtils.js";
+
+const uniqueKey = readable("Kanshi.Media.Recommendations.AniList.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70")
+const isBackgroundUpdateKey = readable(get(uniqueKey) + ".isBackgroundUpdate")
+const visitedKey = readable(get(uniqueKey) + ".visited")
+const evictedKey = readable(get(uniqueKey) + ".evicted")
+let getLSData = (key) => {
+    try {
+        let data;
+        key = get(uniqueKey) + key;
+        let value = localStorage.getItem(key)
+        data = JSON.parse(value)
+        return data
+    } catch { }
+}
 
 const android = readable(isAndroid())
 const mobile = readable(isMobile())
 const webCrawler = readable(get(android) ? false : isWebCrawler())
-const uniqueKey = readable("Kanshi.Media.Recommendations.Anilist.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70")
-const isBackgroundUpdateKey = readable(get(uniqueKey) + ".isBackgroundUpdate")
-const visitedKey = readable(get(uniqueKey) + ".visited")
-const evictedKey = readable(get(uniqueKey) + ".evicted")
 
 const appID = writable(null)
 const inApp = writable(true)
@@ -229,8 +238,6 @@ const initList = writable(null)
 const gridFullView = writable(getLSData("gridFullView") ?? null)
 const showStatus = writable(getLSData("showStatus") ?? true)
 const showRateLimit = writable(getLSData("showRateLimit") ?? true)
-const extraInfo = writable(null)
-const currentExtraInfo = writable(null)
 const earlisetReleaseDate = writable(null)
 const shownAllInList = writable({})
 const shouldLoadAllList = writable(false)
@@ -255,6 +262,9 @@ const shouldUpdateList = writable(null)
 const updateRecommendationList = writable(null)
 const updateList = writable(null)
 const cancelTextCopy = writable(null)
+
+
+getLSData = undefined
 
 export {
     appID,
@@ -320,8 +330,6 @@ export {
     gridFullView,
     showStatus,
     showRateLimit,
-    extraInfo,
-    currentExtraInfo,
     earlisetReleaseDate,
     shownAllInList,
     shouldLoadAllList,

@@ -45,9 +45,9 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.webkit.WebViewAssetLoader;
 
-import java.io.BufferedWriter;
+import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -81,11 +81,11 @@ public class MainService extends Service {
     public boolean isAddingMediaReleaseNotification = false;
     public boolean shouldCallStopService = false;
     public boolean shouldRefreshList = false;
-    public boolean shouldProcessRecommendationList = false;
-    public boolean shouldLoadMedia = false;
+    public boolean shouldProcessRecommendedEntries = false;
+    public boolean shouldManageMedia = false;
     public long addedMediaCount = 0;
     public long updatedMediaCount = 0;
-    public BufferedWriter writer;
+    public BufferedOutputStream bufferedOutputStream;
 
     @Nullable
     @Override
@@ -294,9 +294,10 @@ public class MainService extends Service {
             webView.destroy();
         }
         try {
-            if (writer != null) {
-                writer.close();
-                writer = null;
+            if (bufferedOutputStream != null) {
+                bufferedOutputStream.flush();
+                bufferedOutputStream.close();
+                bufferedOutputStream = null;
             }
         } catch (Exception ignored) {}
         MediaNotificationManager.recentlyUpdatedMediaNotification(MainService.this, addedMediaCount, updatedMediaCount);
@@ -367,8 +368,8 @@ public class MainService extends Service {
             MainActivity mainActivity = MainActivity.getInstanceActivity();
             if (mainActivity != null) {
                 mainActivity.shouldRefreshList = shouldRefreshList;
-                mainActivity.shouldProcessRecommendationList = shouldProcessRecommendationList;
-                mainActivity.shouldLoadMedia = shouldLoadMedia;
+                mainActivity.shouldProcessRecommendedEntries = shouldProcessRecommendedEntries;
+                mainActivity.shouldManageMedia = shouldManageMedia;
             }
         }
     }
@@ -380,10 +381,6 @@ public class MainService extends Service {
 
     @SuppressWarnings("unused")
     class JSBridge {
-        @JavascriptInterface
-        public void pageVisited() {
-            prefsEdit.putBoolean("visited", true).apply();
-        }
         @JavascriptInterface
         public void notifyDataEviction() {
             if (ActivityCompat.checkSelfPermission(MainService.this.getApplicationContext(), android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
@@ -422,29 +419,29 @@ public class MainService extends Service {
             }
         }
         @JavascriptInterface
-        public void setShouldProcessRecommendation(boolean shouldProcess) {
+        public void setShouldProcessRecommendedEntries(boolean shouldProcess) {
             if (shouldProcess && !shouldRefreshList) {
-                shouldLoadMedia = shouldProcessRecommendationList = shouldRefreshList = true;
+                shouldManageMedia = shouldProcessRecommendedEntries = shouldRefreshList = true;
                 MainActivity mainActivity = MainActivity.getInstanceActivity();
                 if (mainActivity != null) {
                     mainActivity.shouldRefreshList = shouldRefreshList;
-                    mainActivity.shouldProcessRecommendationList = shouldProcessRecommendationList;
-                    mainActivity.shouldLoadMedia = shouldLoadMedia;
+                    mainActivity.shouldProcessRecommendedEntries = shouldProcessRecommendedEntries;
+                    mainActivity.shouldManageMedia = shouldManageMedia;
                 }
             } else {
-                shouldProcessRecommendationList = shouldProcess;
+                shouldProcessRecommendedEntries = shouldProcess;
                 MainActivity mainActivity = MainActivity.getInstanceActivity();
                 if (mainActivity != null) {
-                    mainActivity.shouldProcessRecommendationList = shouldProcessRecommendationList;
+                    mainActivity.shouldProcessRecommendedEntries = shouldProcessRecommendedEntries;
                 }
             }
         }
         @JavascriptInterface
-        public void setShouldLoadMedia(boolean shouldLoad) {
-            shouldLoadMedia = shouldLoad;
+        public void setShouldManageMedia(boolean shouldLoad) {
+            shouldManageMedia = shouldLoad;
             MainActivity mainActivity = MainActivity.getInstanceActivity();
             if (mainActivity != null) {
-                mainActivity.shouldLoadMedia = shouldLoadMedia;
+                mainActivity.shouldManageMedia = shouldManageMedia;
             }
         }
         @JavascriptInterface
@@ -460,12 +457,12 @@ public class MainService extends Service {
         public void sendBackgroundStatus(String text) {
             updateNotificationTitle(text);
         }
-        private ExecutorService exportJSONExecutor = Executors.newFixedThreadPool(1);
+        private ExecutorService exportUserDataExecutor = Executors.newFixedThreadPool(1);
         File tempExportFile;
         String exportDirectoryPath;
         @RequiresApi(api = Build.VERSION_CODES.R)
         @JavascriptInterface
-        public void exportJSON(String chunk, int status, String fileName) {
+        public void exportUserData(byte[] chunk, long chunkLength, int status, String fileName) {
             ReentrantLock fileLock = null;
             if (tempExportFile != null) {
                 fileLock = getLockForFile(tempExportFile);
@@ -474,16 +471,17 @@ public class MainService extends Service {
             try {
                 if (status == 0) {
                     try {
-                        if (exportJSONExecutor != null) {
-                            exportJSONExecutor.shutdownNow();
+                        if (exportUserDataExecutor != null) {
+                            exportUserDataExecutor.shutdownNow();
                         }
-                        exportJSONExecutor = Executors.newFixedThreadPool(1);
-                        if (writer != null) {
-                            writer.close();
-                            writer = null;
+                        exportUserDataExecutor = Executors.newFixedThreadPool(1);
+                        if (bufferedOutputStream != null) {
+                            bufferedOutputStream.flush();
+                            bufferedOutputStream.close();
+                            bufferedOutputStream = null;
                         }
                     } catch (Exception ignored) {}
-                    exportJSONExecutor.submit(() -> {
+                    exportUserDataExecutor.submit(() -> {
                         if (Environment.isExternalStorageManager()) {
                             File exportDirectory = new File(exportPath);
                             if (exportDirectory.isDirectory()) {
@@ -497,7 +495,7 @@ public class MainService extends Service {
                                 }
                                 if (directory.isDirectory() && dirIsCreated) {
                                     try {
-                                        tempExportFile = new File(exportDirectoryPath + "pb.tmp.json");
+                                        tempExportFile = new File(exportDirectoryPath + "pb.tmp");
                                         boolean tempFileIsDeleted;
                                         if (tempExportFile.exists()) {
                                             tempFileIsDeleted = tempExportFile.delete();
@@ -509,12 +507,13 @@ public class MainService extends Service {
                                             tempExportFile.createNewFile();
                                         }
                                         if (tempFileIsDeleted) {
-                                            writer = new BufferedWriter(new FileWriter(tempExportFile, true));
+                                            bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(tempExportFile, true));
                                         } else {
                                             try {
-                                                if (writer != null) {
-                                                    writer.close();
-                                                    writer = null;
+                                                if (bufferedOutputStream != null) {
+                                                    bufferedOutputStream.flush();
+                                                    bufferedOutputStream.close();
+                                                    bufferedOutputStream = null;
                                                 }
                                             } catch (Exception ignored) {}
                                             isExported(false);
@@ -522,12 +521,13 @@ public class MainService extends Service {
                                     } catch (Exception e) {
                                         isExported(false);
                                         try {
-                                            if (writer != null) {
-                                                writer.close();
-                                                writer = null;
+                                            if (bufferedOutputStream != null) {
+                                                bufferedOutputStream.flush();
+                                                bufferedOutputStream.close();
+                                                bufferedOutputStream = null;
                                             }
                                         } catch (Exception ignored) {}
-                                        Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportJSON Status 0");
+                                        Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportUserData Status 0");
                                         e.printStackTrace();
                                     }
                                 }
@@ -536,63 +536,58 @@ public class MainService extends Service {
                     });
                 } else if (
                     status == 1
-                    && writer != null
-                    && exportJSONExecutor != null
-                    && !exportJSONExecutor.isShutdown()
-                    && !exportJSONExecutor.isTerminated()
+                    && bufferedOutputStream != null
+                    && exportUserDataExecutor != null
+                    && !exportUserDataExecutor.isShutdown()
+                    && !exportUserDataExecutor.isTerminated()
                 ) {
-                    exportJSONExecutor.submit(()-> {
+                    exportUserDataExecutor.submit(()-> {
                         try {
-                            writer.write(chunk);
+                            bufferedOutputStream.write(chunk);
                         } catch (Exception e) {
                             isExported(false);
                             try {
-                                if (writer != null) {
-                                    writer.close();
-                                    writer = null;
+                                if (bufferedOutputStream != null) {
+                                    bufferedOutputStream.flush();
+                                    bufferedOutputStream.close();
+                                    bufferedOutputStream = null;
                                 }
                             } catch (Exception ignored) {}
-                            Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportJSON Status 1");
+                            Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportUserData Status 1");
                             e.printStackTrace();
                         }
                     });
                 } else if (
                     status == 2
-                    && writer != null
-                    && exportJSONExecutor != null
-                    && !exportJSONExecutor.isShutdown()
-                    && !exportJSONExecutor.isTerminated()
+                    && bufferedOutputStream != null
+                    && exportUserDataExecutor != null
+                    && !exportUserDataExecutor.isShutdown()
+                    && !exportUserDataExecutor.isTerminated()
                 ) {
-                    exportJSONExecutor.submit(() -> {
+                    exportUserDataExecutor.submit(() -> {
                         try {
-                            writer.write(chunk);
-                            writer.close();
-                            writer = null;
-                            int lastStringLen = Math.min(chunk.length(), 3);
-                            String lastNCharacters = new String(new char[lastStringLen]).replace("\0", "}");
-                            if (chunk.endsWith(lastNCharacters)) {
-                                File finalFile = new File(exportDirectoryPath + fileName);
-                                if (tempExportFile != null && tempExportFile.exists() && tempExportFile.isFile() && tempExportFile.length() > 0) {
-                                    ReentrantLock finalFileNameLock = getLockForFileName(finalFile.getName());
-                                    finalFileNameLock.lock();
-                                    try {
-                                        //noinspection ResultOfMethodCallIgnored
-                                        finalFile.createNewFile();
-                                        Path tempPath = tempExportFile.toPath();
-                                        Path backupPath = finalFile.toPath();
-                                        Files.copy(tempPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
-                                        isExported(true);
-                                        //noinspection ResultOfMethodCallIgnored
-                                        tempExportFile.delete();
-                                    } catch (Exception e) {
-                                        isExported(false);
-                                        Utils.handleUncaughtException(getApplicationContext(), e, "MainService exportJSON Status 2 0");
-                                        e.printStackTrace();
-                                    } finally {
-                                        finalFileNameLock.unlock();
-                                    }
-                                } else {
+                            bufferedOutputStream.flush();
+                            bufferedOutputStream.close();
+                            bufferedOutputStream = null;
+                            File finalFile = new File(exportDirectoryPath + fileName);
+                            if (tempExportFile != null && tempExportFile.exists() && tempExportFile.isFile() && tempExportFile.length() > 0) {
+                                ReentrantLock finalFileNameLock = getLockForFileName(finalFile.getName());
+                                finalFileNameLock.lock();
+                                try {
+                                    //noinspection ResultOfMethodCallIgnored
+                                    finalFile.createNewFile();
+                                    Path tempPath = tempExportFile.toPath();
+                                    Path backupPath = finalFile.toPath();
+                                    Files.copy(tempPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
+                                    isExported(true);
+                                    //noinspection ResultOfMethodCallIgnored
+                                    tempExportFile.delete();
+                                } catch (Exception e) {
                                     isExported(false);
+                                    Utils.handleUncaughtException(getApplicationContext(), e, "MainService exportUserData Status 2 0");
+                                    e.printStackTrace();
+                                } finally {
+                                    finalFileNameLock.unlock();
                                 }
                             } else {
                                 isExported(false);
@@ -600,18 +595,19 @@ public class MainService extends Service {
                         } catch (Exception e) {
                             isExported(false);
                             try {
-                                if (writer != null) {
-                                    writer.close();
-                                    writer = null;
+                                if (bufferedOutputStream != null) {
+                                    bufferedOutputStream.flush();
+                                    bufferedOutputStream.close();
+                                    bufferedOutputStream = null;
                                 }
                             } catch (Exception ignored) {}
-                            Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportJSON Status 2 1");
+                            Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportUserData Status 2 1");
                             e.printStackTrace();
                         }
                     });
                 }
             } catch (Exception e) {
-                Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportJSON Outer-Lock");
+                Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportUserData Outer-Lock");
                 e.printStackTrace();
             } finally {
                 if (fileLock != null) {

@@ -18,13 +18,11 @@
 		retrieveInitialData,
 		requestMediaEntries,
 		requestUserEntries,
-		processRecommendedMediaList,
+		processRecommendedMediaEntries,
 		mediaManager,
 		exportUserData,
-		getExtraInfo,
 		mediaLoader,
         updateTagInfo,
-        initMediaLoader
 	} from "./js/workerUtils.js";
 	import {
 		appID,
@@ -73,7 +71,6 @@
         loadingCategory,
         toast,
         initList,
-        webCrawler,
         loadNewMedia,
         shownAllInList,
         currentMediaSortBy,
@@ -92,7 +89,7 @@
 			if ($android) {
 				if (window[$visitedKey] === true) {
 					const isAlreadyVisited = await getIDBData("visited");
-					if (!isAlreadyVisited) {
+					if (isAlreadyVisited !== true) {
 						window[$evictedKey] = true;
 						try {
 							JSBridge.notifyDataEviction();
@@ -121,11 +118,7 @@
 					}))?.shouldReloadList
 					if ($initList === false) {
 						loadYoutube();
-						getExtraInfo();
 						loadAnalytics();
-					} else if ($webCrawler) {
-						loadYoutube();
-						await initMediaLoader()
 					}
 				} catch (ex) { console.error(ex) }
 			}
@@ -233,7 +226,7 @@
 					if (dataIsUpdated) {
 						try {
 							window.shouldUpdateNotifications = true
-							await processRecommendedMediaList({ initList: true })
+							await processRecommendedMediaEntries({ initList: true })
 							try {
 								JSBridge.setShouldProcessRecommendedEntries(false)
 							} catch (ex) { console.error(ex) }
@@ -293,14 +286,14 @@
 					}
 				}
 				if (!shouldProcessRecommendedEntries) {
-					shouldProcessRecommendedEntries = (await getIDBData("shouldProcessRecommendedEntries")) || (await hasIDBData(["recommendedMediaEntries"]));
+					shouldProcessRecommendedEntries = (await getIDBData("shouldProcessRecommendedEntries")) || !(await hasIDBData(["recommendedMediaEntries"]));
 				}
 
 				let shouldManageMedia
 				if (shouldProcessRecommendedEntries) {
 					$loadingCategory[""] = new Date()
 					window.shouldUpdateNotifications = true
-					await processRecommendedMediaList({ initList: true })
+					await processRecommendedMediaEntries({ initList: true })
 					shouldManageMedia = true
 				}
 
@@ -319,8 +312,6 @@
 						loadAnalytics();
 
 						checkAutoFunctions("first-visit");
-
-						getExtraInfo();
 					} else {
 						$loadingCategory[""] = new Date()
 						await mediaManager({ updateRecommendedMediaList: true })
@@ -634,7 +625,7 @@
 
 		$listUpdateAvailable = false;
 		try {
-			await processRecommendedMediaList()
+			await processRecommendedMediaEntries()
 		} catch (ex) {
 			console.error(ex)
 		}
@@ -645,7 +636,7 @@
 		if ($android && window[$isBackgroundUpdateKey] === true) return;
 
 		try {
-			await processRecommendedMediaList()
+			await processRecommendedMediaEntries()
 		} catch (ex) {
 			console.error(ex)
 		}
@@ -927,25 +918,17 @@
 
 	// PROGRESS INDICATOR
 	let shownProgress = 0,
-		progressChangeStart = performance.now(),
 		isChangingProgress;
 	progress.subscribe((val) => {
-		if (
-			val >= 100 ||
-			val <= 0 ||
-			performance.now() - progressChangeStart > 300
-		) {
-			if (shownProgress < 100 && shownProgress > 0) {
-				shownProgress = Math.max(val, shownProgress);
-			} else {
-				if (isChangingProgress) return;
-				isChangingProgress = true;
-				setTimeout(() => {
-					shownProgress = val;
-					isChangingProgress = false;
-				}, 17);
-			}
-			progressChangeStart = performance.now();
+		if (shownProgress < 100 && shownProgress > 0) {
+			shownProgress = Math.max(val, shownProgress);
+		} else {
+			if (isChangingProgress) return;
+			isChangingProgress = true;
+			setTimeout(() => {
+				shownProgress = val;
+				isChangingProgress = false;
+			}, 200);
 		}
 	});
 	resetProgress.subscribe(() => {
@@ -1111,7 +1094,7 @@
 		if (shouldProcessRecommendedEntries) {
 			try {
 				$loadingCategory[""] = new Date()
-				await processRecommendedMediaList()
+				await processRecommendedMediaEntries()
 				thisshouldManageMedia = true
 			} catch (ex) { console.error(ex) }
 		} else {

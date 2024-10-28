@@ -1,4 +1,4 @@
-const msToTime = (duration, limit) => {
+const msToTime = (duration, limit, showFullUnit) => {
     try {
         if (duration < 1e3) {
             return "0s";
@@ -91,16 +91,29 @@ const msToTime = (duration, limit) => {
             }
         }
         let time = [];
-        if (millenium > 0) time.push(`${millenium}mil`)
-        if (century > 0) time.push(`${century}cen`)
-        if (decades > 0) time.push(`${decades}dec`)
-        if (years > 0) time.push(`${years}y`)
-        if (months > 0) time.push(`${months}mon`)
-        if (weeks > 0) time.push(`${weeks}w`)
-        if (days > 0) time.push(`${days}d`)
-        if (hours > 0) time.push(`${hours}h`)
-        if (minutes > 0) time.push(`${minutes}m`)
-        if (seconds > 0) time.push(`${seconds}s`)
+        if (showFullUnit) {
+            if (millenium > 0) time.push(`${millenium} ${millenium > 1 ? "millennia" : "millennium"}`);
+            if (century > 0) time.push(`${century} centur${century > 1 ? "ies" : "y"}`);
+            if (decades > 0) time.push(`${decades} decade${millenium > 1 ? "s" : ""}`);
+            if (years > 0) time.push(`${years} year${years > 1 ? "s" : ""}`);
+            if (months > 0) time.push(`${months} month${months > 1 ? "s" : ""}`);
+            if (weeks > 0) time.push(`${weeks} week${weeks > 1 ? "s" : ""}`);
+            if (days > 0) time.push(`${days} day${days > 1 ? "s" : ""}`);
+            if (hours > 0) time.push(`${hours} hour${hours > 1 ? "s" : ""}`);
+            if (minutes > 0) time.push(`${minutes} minute${minutes > 1 ? "s" : ""}`);
+            if (seconds > 0) time.push(`${seconds} second${seconds > 1 ? "s" : ""}`);
+        } else {
+            if (millenium > 0) time.push(`${millenium}mil`)
+            if (century > 0) time.push(`${century}cen`)
+            if (decades > 0) time.push(`${decades}dec`)
+            if (years > 0) time.push(`${years}y`)
+            if (months > 0) time.push(`${months}mon`)
+            if (weeks > 0) time.push(`${weeks}w`)
+            if (days > 0) time.push(`${days}d`)
+            if (hours > 0) time.push(`${hours}h`)
+            if (minutes > 0) time.push(`${minutes}m`)
+            if (seconds > 0) time.push(`${seconds}s`)
+        }
         if (limit > 0) {
             time = time.slice(0, limit)
         }

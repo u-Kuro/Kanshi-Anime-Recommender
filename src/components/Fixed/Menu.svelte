@@ -66,7 +66,7 @@
     }
     window.importAndroidUserData = importData;
 
-    async function importJSONFile() {
+    async function importUserFile() {
         if ($android && window[$isBackgroundUpdateKey] === true) return;
         if (!(importFileInput instanceof Element)) {
             if ($android) {
@@ -949,7 +949,7 @@
     style:display="none"
     accept=".gzip"
     bind:this="{importFileInput}"
-    on:change="{importJSONFile}"
+    on:change="{importUserFile}"
 />
 
 {#if $menuVisible && menuIsGoingBack}

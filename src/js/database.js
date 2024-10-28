@@ -1,6 +1,6 @@
 import { get } from "svelte/store";
-import { android, isBackgroundUpdateKey, uniqueKey } from "./globalValues";
 import { isJsonObject } from "./utils/dataUtils.js";
+import { android, isBackgroundUpdateKey, uniqueKey } from "./globalValues";
 
 let db
 const IDBInit = () => {
@@ -8,7 +8,7 @@ const IDBInit = () => {
         try {
             const request = indexedDB.open(
                 get(uniqueKey),
-                2
+                1
             );
             request.onsuccess = ({ target }) => {
                 db = target.result;
@@ -19,7 +19,7 @@ const IDBInit = () => {
                     const { result, transaction } = target
                     const stores = [
                         // All Media
-                        "mediaEntries", "excludedMediaIds", "mediaUpdateAt",
+                        "mediaEntries", "mediaEntriesInfo", "excludedMediaIds", "mediaUpdateAt",
                         // Media Options
                         "mediaOptions", "orderedMediaOptions",
                         // Tag Category and Descriptions
@@ -248,6 +248,7 @@ const removeLSData = (key) => {
         localStorage.removeItem(get(uniqueKey) + key);
     } catch { }
 }
+
 export { 
     hasIDBData,
     getIDBData,

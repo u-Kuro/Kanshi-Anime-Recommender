@@ -16,7 +16,6 @@ const progressedFetch = (url, totalLength, status, getBlob) => {
             version = get(appID)
         }
 
-
         try {
             let response = await fetch(typeof version === "number" ? url : url + "?" + version)
 
@@ -57,6 +56,7 @@ const progressedFetch = (url, totalLength, status, getBlob) => {
 
                             clearTimeout(streamStatusTimeout)
                             dataStatus.set(null)
+                            progress.set(30)
                             progress.set(100)
                             controller.close()
                         }

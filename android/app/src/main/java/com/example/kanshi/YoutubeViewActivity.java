@@ -40,8 +40,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.browser.customtabs.CustomTabColorSchemeParams;
-import androidx.browser.customtabs.CustomTabsIntent;
 
 import java.io.File;
 import java.util.concurrent.locks.ReentrantLock;
@@ -51,6 +49,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
     private TextView siteName;
     private boolean webViewIsLoaded = false;
     private ValueCallback<Uri[]> mUploadMessage;
+    private final CustomTabsHelper customTabsIntent = CustomTabsHelper.getInstance();
     private boolean isFinished = false;
     private boolean isInitialYTVActivity = false;
     final ActivityResultLauncher<Intent> chooseImportFile =
@@ -253,6 +252,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
                 return true;
             }
         });
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             webView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
         }
@@ -352,33 +352,29 @@ public class YoutubeViewActivity extends AppCompatActivity {
                 ) {
                     try {
                         pauseWebView();
-                        CustomTabsIntent customTabsIntent;
                         if (url.startsWith("intent://")) {
                             try {
-                                customTabsIntent = new CustomTabsIntent.Builder()
-                                        .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
-                                        .setStartAnimations(YoutubeViewActivity.this, R.anim.fade_in, R.anim.remove)
-                                        .setExitAnimations(YoutubeViewActivity.this, R.anim.fade_out, R.anim.remove)
-                                        .setShowTitle(true)
-                                        .build();
-                                customTabsIntent.launchUrl(YoutubeViewActivity.this, Uri.parse("https://" + url.substring(9)));
+                                customTabsIntent.launchUrl(
+                                    YoutubeViewActivity.this,
+                                    Uri.parse("https://" + url.substring(9)),
+                                    Color.BLACK,
+                                    true
+                                );
                             } catch (Exception ignored) {
-                                customTabsIntent = new CustomTabsIntent.Builder()
-                                        .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
-                                        .setStartAnimations(YoutubeViewActivity.this, R.anim.fade_in, R.anim.remove)
-                                        .setExitAnimations(YoutubeViewActivity.this, R.anim.fade_out, R.anim.remove)
-                                        .setShowTitle(true)
-                                        .build();
-                                customTabsIntent.launchUrl(YoutubeViewActivity.this, request.getUrl());
+                                customTabsIntent.launchUrl(
+                                    YoutubeViewActivity.this,
+                                    request.getUrl(),
+                                    Color.BLACK,
+                                    true
+                                );
                             }
                         } else {
-                            customTabsIntent = new CustomTabsIntent.Builder()
-                                    .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
-                                    .setStartAnimations(YoutubeViewActivity.this, R.anim.fade_in, R.anim.remove)
-                                    .setExitAnimations(YoutubeViewActivity.this, R.anim.fade_out, R.anim.remove)
-                                    .setShowTitle(true)
-                                    .build();
-                            customTabsIntent.launchUrl(YoutubeViewActivity.this, request.getUrl());
+                            customTabsIntent.launchUrl(
+                                YoutubeViewActivity.this,
+                                request.getUrl(),
+                                Color.BLACK,
+                                true
+                            );
                         }
                         overridePendingTransition(R.anim.fade_in, R.anim.remove);
                     } catch (Exception ignored) {
@@ -422,12 +418,12 @@ public class YoutubeViewActivity extends AppCompatActivity {
                     if (urlToRedirect != null && !urlToRedirect.isEmpty()) {
                         try {
                             pauseWebView();
-                            Uri uri = Uri.parse(urlToRedirect);
-                            CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
-                                    .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder().setToolbarColor(Color.BLACK).build())
-                                    .setShowTitle(true)
-                                    .build();
-                            customTabsIntent.launchUrl(YoutubeViewActivity.this, uri);
+                            customTabsIntent.launchUrl(
+                                YoutubeViewActivity.this,
+                                Uri.parse(urlToRedirect),
+                                Color.BLACK,
+                                false
+                            );
                             overridePendingTransition(R.anim.fade_in, R.anim.remove);
                         } catch (Exception ignored) {
                             resumeWebView();

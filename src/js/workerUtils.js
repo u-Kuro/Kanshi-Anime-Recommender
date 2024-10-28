@@ -1,8 +1,8 @@
 import { get } from "svelte/store";
 import { progressedFetch } from "./fetch.js";
 import { isConnected } from "./utils/deviceUtils.js";
-import { setIDBData, removeLSData, setLSData } from "./database.js";
 import { isJsonObject, jsonIsEmpty } from "./utils/dataUtils.js";
+import { setIDBData, removeLSData, setLSData } from "./database.js";
 import { downloadLink, getUniqueId, showToast } from "./utils/appUtils.js";
 import {
     dataStatus,
@@ -15,11 +15,8 @@ import {
     userRequestIsRunning,
     progress,
     android,
-    extraInfo,
-    currentExtraInfo,
     isLoadingMedia,
     isProcessingList,
-    loadingDataStatus,
     isBackgroundUpdateKey,
     earlisetReleaseDate,
     loadedMediaLists,
@@ -69,57 +66,6 @@ earlisetReleaseDate.subscribe((val) => {
     }
 })
 
-let initMediaLoaderWorker
-const initMediaLoader = async () => {
-    try {
-        if (initMediaLoaderWorker === false) return;
-        initMediaLoaderWorker = new Worker(await progressedFetch("./webapi/worker/initalMediaLoader.js", 916291, "Checking Initial List"))
-        initMediaLoaderWorker.onmessage = async ({ data }) => {
-            if (hasOwnProp.call(data, "media")) {
-                const media = data.media
-                const isLast = data.isLast
-                if (media || isLast) {
-                    const categoryKey = data.selectedCategory
-                    get(loadNewMedia)?.[categoryKey]?.({
-                        idx: data.idx,
-                        media,
-                        isLast,
-                        isInit: true,
-                    })
-                    if (!isLast) {
-                        initMediaLoaderWorker.postMessage({
-                            loadNext: true,
-                            selectedCategory: categoryKey,
-                        })
-                    }
-                }
-            } else if (hasOwnProp.call(data, "categories")) {
-                categories.set(data.categories);
-                selectedCategory.set(data.selectedCategory);
-                loadedMediaLists.update((val) => {
-                    for (const categoryKey in data.categories) {
-                        if (!val[categoryKey]) {
-                            val[categoryKey] = {}
-                        }
-                        initMediaLoaderWorker.postMessage({
-                            loadNext: true,
-                            selectedCategory: categoryKey,
-                        })
-                    }
-                    return val
-                })
-            } else {
-                initMediaLoaderWorker?.terminate?.()
-                console.error("Something went unexpected");
-            }
-        }
-        initMediaLoaderWorker.postMessage(false)
-    } catch (ex) {
-        initMediaLoaderWorker?.terminate?.()
-        console.error(ex);
-    }
-}
-
 let mediaLoaderWorker, mediaLoaderPromises = {};
 
 const mediaLoader = (_data = {}) => {
@@ -131,7 +77,7 @@ const mediaLoader = (_data = {}) => {
         _data.postId = postId
         mediaLoaderPromises[postId] = { resolve, reject }
         try {
-            mediaLoaderWorker = mediaLoaderWorker || new Worker(await progressedFetch("./webapi/worker/mediaLoader.js", 22844, "Checking Existing List"))
+            mediaLoaderWorker = mediaLoaderWorker || new Worker(await progressedFetch("./web-worker/mediaLoader.js", 25777, "Checking Existing List"))
         } catch (ex) {
             mediaLoaderWorker?.terminate?.()
             mediaLoaderWorker = null
@@ -198,8 +144,7 @@ const mediaLoader = (_data = {}) => {
                         return val
                     })
                 }
-                mediaLoaderPromises[data?.postId]?.resolve?.()
-                delete mediaLoaderPromises[data?.postId]
+                mediaLoaderPromises[data.postId]?.resolve?.()
             } else if (hasOwnProp.call(data, "updatedCategories")) {
                 if (data.categories) {
                     categories.set(data.categories);
@@ -228,10 +173,6 @@ const mediaLoader = (_data = {}) => {
                 })
 
             } else if (hasOwnProp?.call?.(data, "loadAll")) {
-                if (initMediaLoaderWorker !== false && data?.shouldReloadList !== true) {
-                    initMediaLoaderWorker?.terminate?.()
-                    initMediaLoaderWorker = false
-                }
                 categories.set(data?.categories || get(categories));
                 hiddenMediaEntries.set(data?.hiddenMediaEntries || get(hiddenMediaEntries))
                 mediaCautions.set(data?.mediaCautions || get(mediaCautions))
@@ -269,8 +210,9 @@ const mediaLoader = (_data = {}) => {
                     selectedCategory.set(passedCategory)
                 }
 
-                mediaLoaderPromises[data?.postId]?.resolve?.(data)
-                delete mediaLoaderPromises[data?.postId]
+                mediaLoaderPromises[data.postId]?.resolve?.(data)
+            } else if (hasOwnProp.call(data, "updateNotifications")) {
+                mediaLoaderPromises[data.postId]?.resolve?.(data.mediaUpdates)
             } else if (hasOwnProp.call(data, "getEarlisetReleaseDate")) {
                 let currentEarliestDate = get(earlisetReleaseDate)
                 let airingAt = data.earliestReleaseDate
@@ -289,7 +231,6 @@ const mediaLoader = (_data = {}) => {
                 console.error(data.error)
 
                 mediaLoaderPromises[data?.postId]?.reject?.()
-                delete mediaLoaderPromises[data?.postId]
             }
 
             if (data?.updateDate >= get(loadingCategory)[""]) {
@@ -325,8 +266,9 @@ const mediaLoader = (_data = {}) => {
                     listReloadAvailable.set(false)
                 }
                 mediaLoaderPromises[data?.postId]?.resolve?.()
-                delete mediaLoaderPromises[data?.postId]
             }
+
+            delete mediaLoaderPromises[data?.postId]
         };
         mediaLoaderWorker.onerror = (error) => {
             mediaLoaderWorker?.terminate?.()
@@ -338,9 +280,6 @@ const mediaLoader = (_data = {}) => {
             alertError()
 
             console.error(error);
-
-            mediaLoaderPromises?.[postId]?.reject?.(error)
-            delete mediaLoaderPromises[postId]
         };
     })
 }
@@ -453,7 +392,7 @@ const mediaManager = (_data = {}) => {
         }
 
         progress.set(0)
-        progressedFetch("./webapi/worker/mediaManager.js", 54229, "Updating Categories and List")
+        progressedFetch("./web-worker/mediaManager.js", 54639, "Updating Categories and List")
             .then(url => {
                 mediaManagerWorker?.terminate?.()
                 isLoadingMedia.set(true)
@@ -564,7 +503,7 @@ const mediaManager = (_data = {}) => {
     })
 }
 
-let processRecommendedMediaListWorker;
+let processRecommendedMediaEntriesWorker;
 let mediaReleaseUpdateTimeout
 window.setMediaReleaseUpdateTimeout = (nearestMediaReleaseAiringAt) => {
     if (typeof nearestMediaReleaseAiringAt === "number" && !isNaN(nearestMediaReleaseAiringAt)) {
@@ -577,7 +516,7 @@ window.setMediaReleaseUpdateTimeout = (nearestMediaReleaseAiringAt) => {
 }
 
 let passedAlgorithmFilter, passedAlgorithmFilterId
-const processRecommendedMediaList = (_data = {}) => {
+const processRecommendedMediaEntries = (_data = {}) => {
     if (get(initList) !== false && !_data?.initList) {
         return
     }
@@ -588,7 +527,7 @@ const processRecommendedMediaList = (_data = {}) => {
             }
         }
 
-        processRecommendedMediaListWorker?.terminate?.();
+        processRecommendedMediaEntriesWorker?.terminate?.();
 
         if (_data?.algorithmFilters) {
             passedAlgorithmFilter = _data.algorithmFilters
@@ -599,15 +538,15 @@ const processRecommendedMediaList = (_data = {}) => {
         }
         
         progress.set(0)
-        progressedFetch("./webapi/worker/processRecommendedMediaList.js", 44130, "Updating Recommendation List")
+        progressedFetch("./web-worker/processRecommendedMediaEntries.js", 44101, "Updating Recommendation List")
             .then(url => {
-                processRecommendedMediaListWorker?.terminate?.();
+                processRecommendedMediaEntriesWorker?.terminate?.();
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
                 let nearestMediaReleaseAiringAt
                 isProcessingList.set(true)
-                processRecommendedMediaListWorker = new Worker(url);
-                processRecommendedMediaListWorker.postMessage(_data);
-                processRecommendedMediaListWorker.onmessage = ({ data }) => {
+                processRecommendedMediaEntriesWorker = new Worker(url);
+                processRecommendedMediaEntriesWorker.postMessage(_data);
+                processRecommendedMediaEntriesWorker.onmessage = ({ data }) => {
                     if (hasOwnProp?.call?.(data, "progress")) {
                         if (data?.progress >= 0 && data?.progress <= 100) {
                             progress.set(data.progress)
@@ -619,7 +558,7 @@ const processRecommendedMediaList = (_data = {}) => {
                         return
                     }
                     if (hasOwnProp?.call?.(data, "error")) {
-                        processRecommendedMediaListWorker?.terminate?.();
+                        processRecommendedMediaEntriesWorker?.terminate?.();
                         dataStatusPrio = false
                         isProcessingList.set(false)
                         dataStatus.set(null);
@@ -675,7 +614,7 @@ const processRecommendedMediaList = (_data = {}) => {
                     } else if (hasOwnProp?.call?.(data, "recommendationError")) {
                         window.updateRecommendationError?.(data?.recommendationError)
                     } else {
-                        processRecommendedMediaListWorker?.terminate?.();
+                        processRecommendedMediaEntriesWorker?.terminate?.();
                         setLSData("nearestMediaReleaseAiringAt", nearestMediaReleaseAiringAt)
                         .catch(() => removeLSData("nearestMediaReleaseAiringAt"))
                         .finally(() => setIDBData("nearestMediaReleaseAiringAt", nearestMediaReleaseAiringAt));
@@ -704,8 +643,8 @@ const processRecommendedMediaList = (_data = {}) => {
                         }
                     }
                 };
-                processRecommendedMediaListWorker.onerror = (error) => {
-                    processRecommendedMediaListWorker?.terminate?.();
+                processRecommendedMediaEntriesWorker.onerror = (error) => {
+                    processRecommendedMediaEntriesWorker?.terminate?.();
                     dataStatusPrio = false
                     isProcessingList.set(false)
                     dataStatus.set(null)
@@ -714,7 +653,7 @@ const processRecommendedMediaList = (_data = {}) => {
                     reject(error);
                 };
             }).catch((error) => {
-                processRecommendedMediaListWorker?.terminate?.();
+                processRecommendedMediaEntriesWorker?.terminate?.();
                 dataStatusPrio = false
                 isProcessingList.set(false)
                 dataStatus.set(null)
@@ -785,7 +724,7 @@ const requestMediaEntries = (_data = {}) => {
             }
         }
         progress.set(0)
-        progressedFetch("./webapi/worker/requestMediaEntries.js")
+        progressedFetch("./web-worker/requestMediaEntries.js")
             .then(url => {
                 requestMediaEntriesWorker?.terminate?.()
                 notifyUpdatedMediaNotification()
@@ -952,7 +891,7 @@ const requestUserEntries = (_data = {}) => {
         }
         userRequestIsRunning.set(true)
         progress.set(0)
-        progressedFetch("./webapi/worker/requestUserEntries.js")
+        progressedFetch("./web-worker/requestUserEntries.js")
             .then(url => {
                 requestUserEntriesWorker?.terminate?.()
                 requestUserEntriesWorker = new Worker(url)
@@ -1097,7 +1036,7 @@ const exportUserData = (_data) => {
         waitForExportApproval = null
         progress.set(0)
         resetProgress.update((e) => !e);
-        progressedFetch("./webapi/worker/exportUserData.js")
+        progressedFetch("./web-worker/exportUserData.js")
             .then(url => {
                 exportUserDataWorker?.terminate?.()
                 waitForExportApproval?.reject?.()
@@ -1108,7 +1047,7 @@ const exportUserData = (_data) => {
                 } else {
                     exportUserDataWorker.postMessage("browser")
                 }
-                exportUserDataWorker.onmessage = ({ data }) => {
+                exportUserDataWorker.onmessage = async ({ data }) => {
                     if (hasOwnProp?.call?.(data, "progress")) {
                         if (data?.progress >= 0 && data?.progress <= 100) {
                             progress.set(data.progress)
@@ -1154,12 +1093,12 @@ const exportUserData = (_data) => {
                             }
                             // 0 - start | 1 - ongoing | 2 - done
                             if (state === 0) {
-                                JSBridge.exportJSON("", 0, "")
-                            } else if (state === 1 && typeof chunk === "string") {
-                                JSBridge.exportJSON(chunk || "", 1, "")
-                            } else if (state === 2 && typeof chunk === "string") {
+                                JSBridge.exportUserData([], 0, 0, "")
+                            } else if (state === 1 && chunk instanceof Uint8Array) {
+                                JSBridge.exportUserData(chunk, chunk.length, 1, "")
+                            } else if (state === 2) {
                                 exportUserDataWorker?.terminate?.();
-                                JSBridge.exportJSON(chunk || "", 2, `Kanshi.${data.username?.toLowerCase?.() || "backup"}.gzip`)
+                                JSBridge.exportUserData([], 0, 2, `Kanshi.${data.username?.toLowerCase?.() || "backup"}.gzip`)
                                 dataStatusPrio = false
                                 isExporting.set(false)
                                 new Promise((resolve, reject) => {
@@ -1292,7 +1231,7 @@ const importUserData = (_data) => {
         }
         progress.set(0)
         resetProgress.update((e) => !e);
-        progressedFetch("./webapi/worker/importUserData.js")
+        progressedFetch("./web-worker/importUserData.js")
             .then(url => {
                 importUserDataWorker?.terminate?.()
                 importUserDataWorker = new Worker(url)
@@ -1317,7 +1256,7 @@ const importUserData = (_data) => {
                         window.confirmPromise?.({
                             isAlert: true,
                             title: "Import failed",
-                            text: "File was not imported, please ensure that file is in a supported format (e.g., .json).",
+                            text: "File was not imported, please ensure that file is in a supported format (e.g., .gzip).",
                         })
                         dataStatus.set(null)
                         progress.set(100)
@@ -1355,7 +1294,7 @@ const importUserData = (_data) => {
                             window.shouldUpdateNotifications = true
                         }
                         dataStatusPrio = false
-                        processRecommendedMediaList({ isImporting: true })
+                        processRecommendedMediaEntries({ isImporting: true })
                             .finally(() => {
                                 mediaManager({ 
                                     updateRecommendedMediaList: true,
@@ -1386,7 +1325,7 @@ const importUserData = (_data) => {
                     window.confirmPromise?.({
                         isAlert: true,
                         title: "Import failed",
-                        text: "File was not imported, please ensure that file is in a supported format (e.g., .json).",
+                        text: "File was not imported, please ensure that file is in a supported format (e.g., .gzip).",
                     })
                     updateList.update((e) => !e)
                     dataStatus.set(null)
@@ -1415,178 +1354,14 @@ const importUserData = (_data) => {
     })
 }
 
-let gotAround, nextInfoCheck = -1, getExtraInfoTimeout, getExtraInfoWorker
-const waitForExtraInfo = () => {
-    clearTimeout(getExtraInfoTimeout)
-    getExtraInfoTimeout = setTimeout(() => {
-        if (get(isLoadingMedia) || get(isProcessingList)) {
-            return waitForExtraInfo()
-        } else {
-            return getExtraInfo()
-        }
-    }, 1000 * 30)
-}
-const getExtraInfo = () => {
-    if (get(initList) !== false) return
-    return new Promise((resolve, reject) => {
-        getExtraInfoWorker?.terminate?.()
-        loadingDataStatus.set(true)
-        clearTimeout(getExtraInfoTimeout)
-        progressedFetch("./webapi/worker/getExtraInfo.js")
-            .then(url => {
-                getExtraInfoWorker?.terminate?.()
-                clearTimeout(getExtraInfoTimeout)
-                let thisExtraInfo, extraInfoIndex
-                if (!gotAround) {
-                    extraInfoIndex = parseInt(get(currentExtraInfo))
-                    if (isNaN(extraInfoIndex)) {
-                        extraInfoIndex = 0
-                    } else if (extraInfoIndex < 4) {
-                        ++extraInfoIndex
-                    } else {
-                        ++extraInfoIndex
-                        gotAround = true
-                    }
-                    currentExtraInfo.set(extraInfoIndex)
-                } else {
-                    if (typeof nextInfoCheck === "number" && nextInfoCheck < 5) {
-                        ++nextInfoCheck
-                    } else {
-                        nextInfoCheck = 0
-                    }
-                    extraInfoIndex = nextInfoCheck
-                    thisExtraInfo = get(extraInfo) || {}
-                    if (thisExtraInfo?.[extraInfoIndex]) {
-                        currentExtraInfo.set(extraInfoIndex)
-                    }
-                }
-                getExtraInfoWorker = new Worker(url)
-                getExtraInfoWorker.postMessage({ number: extraInfoIndex })
-                getExtraInfoWorker.onmessage = ({ data }) => {
-                    clearTimeout(getExtraInfoTimeout)
-                    if (typeof data?.message === "string" && data?.key != null) {
-                        getExtraInfoWorker?.terminate?.()
-                        thisExtraInfo = thisExtraInfo || get(extraInfo) || {}
-                        thisExtraInfo[data.key] = data?.message
-                        extraInfo.set(thisExtraInfo)
-                        currentExtraInfo.set(data.key)
-                        loadingDataStatus.set(false)
-                        dataStatus.set(null)
-                        waitForExtraInfo()
-                        resolve()
-                    } else {
-                        getExtraInfoWorker?.terminate?.()
-                        if (!gotAround) {
-                            getExtraInfo()
-                        } else {
-                            loadingDataStatus.set(false)
-                            waitForExtraInfo()
-                        }
-                    }
-                }
-                getExtraInfoWorker.onerror = (error) => {
-                    getExtraInfoWorker?.terminate?.()
-                    console.error(error)
-                    reject(error)
-                }
-            }).catch((error) => {
-                getExtraInfoWorker?.terminate?.()
-                alertError()
-                console.error(error)
-                reject(error)
-            })
-    })
-}
-
-// IndexedDB
-const getIDBdata = (name) => {
-    return new Promise((resolve, reject) => {
-        progressedFetch("./webapi/worker/getIDBdata.js", 3022, "Retrieving Some Data")
-            .then(url => {
-                let worker = new Worker(url)
-                worker.postMessage({ name })
-                worker.onmessage = ({ data }) => {
-                    worker?.terminate?.()
-                    if (hasOwnProp?.call?.(data || {}, "Failed to retrieve the data")) {
-                        console.error(data?.["Failed to retrieve the data"])
-                        reject(data?.["Failed to retrieve the data"] || "Failed to retrieve the data")
-                    } else {
-                        resolve(data)
-                    }
-                }
-                worker.onerror = (error) => {
-                    worker?.terminate?.()
-                    alertError()
-                    console.error(error)
-                    reject(error)
-                }
-            }).catch((error) => {
-                alertError()
-                console.error(error)
-                reject(error)
-            })
-    })
-}
-window.updateNotifications = async (aniIdsNotificationToBeUpdated = []) => {
-    if (!get(android)) return
-    new Promise((resolve, reject) => {
-        progressedFetch("./webapi/worker/getIDBdata.js", 3022, "Retrieving Some Data")
-            .then(url => {
-                let worker = new Worker(url)
-                worker.postMessage({ name: "aniIdsNotificationToBeUpdated", aniIdsNotificationToBeUpdated })
-                worker.onmessage = ({ data }) => {
-                    worker?.terminate?.()
-                    if (hasOwnProp?.call?.(data || {}, "Failed to retrieve the data")) {
-                        console.error(data?.["Failed to retrieve the data"])
-                        reject(data?.["Failed to retrieve the data"] || "Failed to retrieve the data")
-                    } else {
-                        resolve(data)
-                    }
-                }
-                worker.onerror = (error) => {
-                    worker?.terminate?.()
-                    console.error(error)
-                    reject(error)
-                }
-            }).catch((error) => {
-                alertError()
-                console.error(error)
-                reject(error)
-            })
-    }).then((updatedAniIdsNotification = {}) => {
-        try {
-            for (let mediaId in updatedAniIdsNotification) {
-                let media = updatedAniIdsNotification[mediaId]
-                mediaId = parseInt(mediaId)
-                if (typeof mediaId === "number" && !isNaN(mediaId) && isFinite(mediaId)
-                    && typeof media?.title === "string"
-                    && typeof media.maxEpisode === "number" && !isNaN(media.maxEpisode) && isFinite(media.maxEpisode)
-                    && typeof media.mediaUrl === "string"
-                    && typeof media.userStatus === "string"
-                    && typeof media.episodeProgress === "number" && !isNaN(media.episodeProgress) && isFinite(media.episodeProgress)
-                ) {
-                    JSBridge.updateNotifications(
-                        Math.floor(mediaId),
-                        media.title,
-                        Math.floor(media?.maxEpisode),
-                        media.mediaUrl,
-                        media.userStatus,
-                        Math.floor(media.episodeProgress)
-                    )
-                }
-            }
-        } catch (ex) { console.error(ex) }
-    })
-}
-
 // One Time Use
 const retrieveInitialData = (_data) => {
     return new Promise((resolve, reject) => {
         progress.set(0)
-        progressedFetch("./webapi/worker/retrieveInitialData.js", 282309, "Checking Anime, Manga, and Novel Entries")
+        progressedFetch("./web-worker/retrieveInitialData.js", 3264, "Checking Anime, Manga, and Novel Entries")
             .then(async workerUrl => {
                 const worker = new Worker(workerUrl)
-                worker.postMessage({ initialDataBlob: await progressedFetch("./data/initial-data.gzip", 174425636, "Getting Anime, Manga, and Novel Entries", true) })
+                worker.postMessage({ initialDataBlob: await progressedFetch("./data/initial-data.gzip", 28017313, "Getting Anime, Manga, and Novel Entries", true) })
                 worker.onmessage = ({ data }) => {
                     if (hasOwnProp?.call?.(data, "progress")) {
                         if (data?.progress >= 0 && data?.progress <= 100) {
@@ -1636,7 +1411,7 @@ let getOrderedFiltersWorker
 const getOrderedFilters = async () => {
     try {
         getOrderedFiltersWorker?.terminate?.()
-        const url = await progressedFetch("./webapi/worker/getOrderedFilters.js")
+        const url = await progressedFetch("./web-worker/getOrderedFilters.js")
         getOrderedFiltersWorker = new Worker(url)
         getOrderedFiltersWorker.postMessage(0)
         getOrderedFiltersWorker.onmessage = ({ data }) => {
@@ -1663,7 +1438,7 @@ const updateTagInfo = (_data = {}) => {
     return new Promise(async (resolve) => {
         try {
             updateTagInfoWorker?.terminate?.()
-            const url = await progressedFetch("./webapi/worker/updateTagInfo.js")
+            const url = await progressedFetch("./web-worker/updateTagInfo.js")
             updateTagInfoWorker = new Worker(url)
             let server
             if (!get(android) && window.location != null) {
@@ -1717,7 +1492,7 @@ function stopConflictingWorkers(blocker) {
         isRequestingNewUser = isReloadingUserEntries = false
     }
     userRequestIsRunning.set(false)
-    processRecommendedMediaListWorker?.terminate?.()
+    processRecommendedMediaEntriesWorker?.terminate?.()
     isProcessingList.set(false)
     importUserDataWorker?.terminate?.()
     isImporting.set(blocker?.isImporting ?? false)
@@ -1750,17 +1525,42 @@ function alertError() {
     }
 }
 
+window.updateNotifications = async (mediaIds = []) => {
+    if (!get(android)) return
+    try {
+        const mediaUpdates = await mediaLoader({ updateNotifications: true, mediaIds })
+        for (let mediaId in mediaUpdates) {
+            const media = mediaUpdates[mediaId]
+            mediaId = parseInt(mediaId)
+            if (typeof mediaId === "number" && !isNaN(mediaId) && isFinite(mediaId)
+                && typeof media?.title === "string"
+                && typeof media.maxEpisode === "number" && !isNaN(media.maxEpisode) && isFinite(media.maxEpisode)
+                && typeof media.mediaUrl === "string"
+                && typeof media.userStatus === "string"
+                && typeof media.episodeProgress === "number" && !isNaN(media.episodeProgress) && isFinite(media.episodeProgress)
+            ) {
+                JSBridge.updateNotifications(
+                    Math.floor(mediaId),
+                    media.title,
+                    Math.floor(media?.maxEpisode),
+                    media.mediaUrl,
+                    media.userStatus,
+                    Math.floor(media.episodeProgress)
+                )
+            }
+        }
+    } catch (ex) { console.error(ex) }
+
+}
+
 export {
-    getIDBdata,
     retrieveInitialData,
     updateTagInfo,
     requestMediaEntries,
     requestUserEntries,
     exportUserData,
     importUserData,
-    processRecommendedMediaList,
+    processRecommendedMediaEntries,
     mediaManager,
     mediaLoader,
-    initMediaLoader,
-    getExtraInfo
 }

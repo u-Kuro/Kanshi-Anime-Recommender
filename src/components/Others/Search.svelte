@@ -1,14 +1,13 @@
 <script>
     import { onMount, tick } from "svelte";
-    import { formatNumber } from "../../js/utils/formatUtils.js";
+    import { formatNumber, msToTime } from "../../js/utils/formatUtils.js";
     import { isJsonObject, jsonIsEmpty } from "../../js/utils/dataUtils.js";
     import { requestImmediate, showToast } from "../../js/utils/appUtils.js";
     import { addClass, removeClass, changeInputValue } from "../../js/utils/domUtils.js";
     import {
         mediaLoader,
         mediaManager,
-        getExtraInfo,
-        processRecommendedMediaList,
+        processRecommendedMediaEntries,
     } from "../../js/workerUtils.js";
     import {
         getIDBData,
@@ -25,13 +24,11 @@
         confirmPromise,
         gridFullView,
         hasWheel,
-        extraInfo,
         showFilterOptions,
         dropdownIsVisible,
         popupVisible,
         showStatus,
         isProcessingList,
-        currentExtraInfo,
         isBackgroundUpdateKey,
         menuVisible,
         tagInfo,
@@ -212,7 +209,7 @@
         } else if (name === "Algorithm Filter") {
             try {
                 $loadingCategory[""] = new Date()
-                await processRecMediaList(data);
+                await processRecMediaEntries(data);
                 $currentAlgorithmFilters = data.algorithmFilters
                 try {
                     await loadMedia({ updateRecommendedMediaList: true });
@@ -242,11 +239,11 @@
         await mediaManager(data)
     }
 
-    async function processRecMediaList(data) {
+    async function processRecMediaEntries(data) {
         if ($android && window[$isBackgroundUpdateKey] === true) {
             throw new Error("Something went wrong...");
         }
-        await processRecommendedMediaList(data)
+        await processRecommendedMediaEntries(data)
     }
 
     windowHeight.subscribe((val) => {
@@ -1709,6 +1706,36 @@
         }
     }
 
+    function getSeasonEnd() {
+        const currentDate = new Date
+        const currentYear = (currentDate).getFullYear()
+        const seasons = {
+            winter: new Date(parseInt(currentYear), 0, 1),  // January 1
+            spring: new Date(parseInt(currentYear), 3, 1),  // April 1
+            summer: new Date(parseInt(currentYear), 6, 1),  // July 1
+            fall: new Date(parseInt(currentYear), 9, 1),    // October 1
+        };
+        let dateEnd, dateEndTime, seasonName
+        if (currentDate >= seasons.winter && currentDate < seasons.spring) {
+            dateEndTime = seasons.spring.getTime() - 1
+            dateEnd = new Date(dateEndTime)
+            seasonName = "Winter"
+        } else if (currentDate >= seasons.spring && currentDate < seasons.summer) {
+            dateEndTime = seasons.summer.getTime() - 1
+            dateEnd = new Date(dateEndTime)
+            seasonName = "Spring"
+        } else if (currentDate >= seasons.summer && currentDate < seasons.fall) {
+            dateEndTime = seasons.fall.getTime() - 1
+            dateEnd = new Date(dateEndTime)
+            seasonName = "Summer"
+        } else {
+            dateEndTime = new Date(parseInt(currentYear + 1), 0, 1).getTime() - 1
+            dateEnd = new Date(dateEndTime)
+            seasonName = "Fall"
+        }
+        return `${msToTime(dateEnd.getTime() - (new Date).getTime(), 1, true)} until ${seasonName} Season Ends`
+    }
+
     onMount(async () => {
         selectedFilterCategoryName = selectedFilterCategoryName || "Media Filter"
 
@@ -2827,9 +2854,6 @@
     <div class="status-and-trivia-wrapper" aria-label="Status of Page and Extra Trivia">
         <span class="status-and-trivia">
             <h2
-                on:click="{() => {
-                    getExtraInfo();
-                }}"
                 on:keyup="{() => {}}"
                 class="{(!$dataStatus || !$showStatus) && $loadingDataStatus
                     ? " loading"
@@ -2845,7 +2869,7 @@
                 )}
                     {$dataStatus || "Please Wait"}
                 {:else}
-                    {$extraInfo?.[$currentExtraInfo] || "Please Wait"}
+                    {getSeasonEnd() || "Please Wait"}
                 {/if}
             </h2>
         </span>
