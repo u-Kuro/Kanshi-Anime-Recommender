@@ -290,20 +290,18 @@ public class Utils {
         if (!exportPath.isEmpty() && Environment.isExternalStorageManager()) {
             File exportDirectory = new File(exportPath);
             if (exportDirectory.isDirectory()) {
-                String directoryPath = exportPath + File.separator;
-                File directory = new File(directoryPath);
                 boolean dirIsCreated;
-                if (!directory.exists()) {
-                    dirIsCreated = directory.mkdirs();
+                if (!exportDirectory.exists()) {
+                    dirIsCreated = exportDirectory.mkdirs();
                 } else {
                     dirIsCreated = true;
                 }
-                if (directory.isDirectory() && dirIsCreated) {
+                if (exportDirectory.isDirectory() && dirIsCreated) {
                     if (!MediaNotificationManager.allMediaNotification.isEmpty()) {
                         FileOutputStream fileOut = null;
                         ObjectOutputStream objectOut = null;
                         final String filename = "Released Media.bin";
-                        File tempFile = new File(directory, filename + ".tmp");
+                        File tempFile = new File(exportDirectory, filename + ".tmp");
                         ReentrantLock fileLock = getLockForFile(tempFile);
                         fileLock.lock();
                         try {
@@ -312,7 +310,7 @@ public class Utils {
                             objectOut.writeObject(MediaNotificationManager.allMediaNotification);
                             fileOut.getFD().sync();
                             if (tempFile.exists() && tempFile.isFile() && tempFile.length() > 0) {
-                                File finalFile = new File(directory, filename);
+                                File finalFile = new File(exportDirectory, filename);
                                 ReentrantLock finalFileNameLock = getLockForFileName(finalFile.getName());
                                 finalFileNameLock.lock();
                                 try {
@@ -448,17 +446,15 @@ public class Utils {
         if (!exportPath.isEmpty() && Environment.isExternalStorageManager()) {
             File exportDirectory = new File(exportPath);
             if (exportDirectory.isDirectory()) {
-                String directoryPath = exportPath + File.separator;
-                File directory = new File(directoryPath);
                 boolean dirIsCreated;
-                if (!directory.exists()) {
-                    dirIsCreated = directory.mkdirs();
+                if (!exportDirectory.exists()) {
+                    dirIsCreated = exportDirectory.mkdirs();
                 } else {
                     dirIsCreated = true;
                 }
-                if (directory.isDirectory() && dirIsCreated) {
+                if (exportDirectory.isDirectory() && dirIsCreated) {
                     final String filename = "error_log.txt";
-                    File file = new File(directory, filename);
+                    File file = new File(exportDirectory, filename);
                     String threadType = isUIThread() ? "UI Thread" : "Non-UI Thread";
                     logErrorToFile(file, e, threadType, fileFrom);
                 }

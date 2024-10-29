@@ -88,6 +88,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -730,17 +731,16 @@ public class MainActivity extends AppCompatActivity {
         private final Handler exportUserDataUIhandler = new Handler(Looper.getMainLooper());
         private ExecutorService exportUserDataExecutor = Executors.newFixedThreadPool(1);
         File tempExportFile;
-        String exportDirectoryPath;
         @RequiresApi(api = Build.VERSION_CODES.R)
         @JavascriptInterface
-        public void exportUserData(byte[] chunk, long chunkLength, int status, String fileName) {
+        public void exportUserData(String base64ChunkOrFilName, int state) {
             ReentrantLock fileLock = null;
             if (tempExportFile != null) {
                 fileLock = getLockForFile(tempExportFile);
                 fileLock.lock(); // Lock before critical section
             }
             try {
-                if (status == 0) {
+                if (state == 0) {
                     try {
                         if (exportUserDataExecutor != null) {
                             exportUserDataExecutor.shutdownNow();
@@ -766,17 +766,15 @@ public class MainActivity extends AppCompatActivity {
                         } else {
                             File exportDirectory = new File(exportPath);
                             if (exportDirectory.isDirectory()) {
-                                exportDirectoryPath = exportPath + File.separator;
-                                File directory = new File(exportDirectoryPath);
                                 boolean dirIsCreated;
-                                if (!directory.exists()) {
-                                    dirIsCreated = directory.mkdirs();
+                                if (!exportDirectory.exists()) {
+                                    dirIsCreated = exportDirectory.mkdirs();
                                 } else {
                                     dirIsCreated = true;
                                 }
-                                if (directory.isDirectory() && dirIsCreated) {
+                                if (exportDirectory.isDirectory() && dirIsCreated) {
                                     try {
-                                        tempExportFile = new File(exportDirectoryPath + ".tmp");
+                                        tempExportFile = new File(exportPath, ".tmp");
                                         boolean tempFileIsDeleted;
                                         if (tempExportFile.exists()) {
                                             tempFileIsDeleted = tempExportFile.delete();
@@ -814,7 +812,7 @@ public class MainActivity extends AppCompatActivity {
                                                 bufferedOutputStream = null;
                                             }
                                         } catch (Exception ignored) {}
-                                        Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "exportUserData Status 0");
+                                        Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "exportUserData State 0");
                                         e.printStackTrace();
                                     }
                                 } else if (!dirIsCreated) {
@@ -822,9 +820,9 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             } else if (exportPath != null && !exportPath.isEmpty() && !exportDirectory.isDirectory()) {
                                 String[] tempExportPath = exportPath.split(Pattern.quote(File.separator));
-                                String tempPathName = tempExportPath.length > 1 ?
-                                        tempExportPath[tempExportPath.length - 2] + File.separator +
-                                                tempExportPath[tempExportPath.length - 1]
+                                String tempPathName =
+                                        tempExportPath.length > 1
+                                        ? tempExportPath[tempExportPath.length - 2] + File.separator + tempExportPath[tempExportPath.length - 1]
                                         : tempExportPath[tempExportPath.length - 1];
                                 exportUserDataUIhandler.post(() -> showDialog(new AlertDialog.Builder(MainActivity.this)
                                 .setTitle("Back-up Folder is Missing")
@@ -843,35 +841,19 @@ public class MainActivity extends AppCompatActivity {
                         }
                     });
                 } else if (
-                    status == 1
+                    state == 1
                     && bufferedOutputStream != null
                     && exportUserDataExecutor != null
                     && !exportUserDataExecutor.isShutdown()
                     && !exportUserDataExecutor.isTerminated()
                 ) {
                     exportUserDataExecutor.submit(()-> {
-                        if (chunk.length == chunkLength) {
-                            try {
-                                bufferedOutputStream.write(chunk);
-                            } catch (Exception e) {
-                                exportUserDataUIhandler.post(() -> {
-                                    isExported(false);
-                                    showToast(Toast.makeText(getApplicationContext(), "Exception occurred while writing into the temporary backup file", Toast.LENGTH_LONG));
-                                });
-                                try {
-                                    if (bufferedOutputStream != null) {
-                                        bufferedOutputStream.flush();
-                                        bufferedOutputStream.close();
-                                        bufferedOutputStream = null;
-                                    }
-                                } catch (Exception ignored) {}
-                                Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "exportUserData Status 1");
-                                e.printStackTrace();
-                            }
-                        } else {
+                        try {
+                            bufferedOutputStream.write(Base64.getDecoder().decode(base64ChunkOrFilName));
+                        } catch (Exception e) {
                             exportUserDataUIhandler.post(() -> {
                                 isExported(false);
-                                showToast(Toast.makeText(getApplicationContext(), "Passed bytes are not equal", Toast.LENGTH_LONG));
+                                showToast(Toast.makeText(getApplicationContext(), "Exception occurred while writing into the temporary backup file", Toast.LENGTH_LONG));
                             });
                             try {
                                 if (bufferedOutputStream != null) {
@@ -880,11 +862,12 @@ public class MainActivity extends AppCompatActivity {
                                     bufferedOutputStream = null;
                                 }
                             } catch (Exception ignored) {}
-                            Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), new Throwable("Passed bytes are not equal"), "exportUserData Status 1");
+                            Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "exportUserData State 1");
+                            e.printStackTrace();
                         }
                     });
                 } else if (
-                    status == 2
+                    state == 2
                     && bufferedOutputStream != null
                     && exportUserDataExecutor != null
                     && !exportUserDataExecutor.isShutdown()
@@ -895,7 +878,7 @@ public class MainActivity extends AppCompatActivity {
                             bufferedOutputStream.flush();
                             bufferedOutputStream.close();
                             bufferedOutputStream = null;
-                            File finalFile = new File(exportDirectoryPath + fileName);
+                            File finalFile = new File(exportPath, base64ChunkOrFilName);
                             if (tempExportFile != null && tempExportFile.exists() && tempExportFile.isFile() && tempExportFile.length() > 0) {
                                 ReentrantLock finalFileNameLock = getLockForFileName(finalFile.getName());
                                 finalFileNameLock.lock();
@@ -913,7 +896,7 @@ public class MainActivity extends AppCompatActivity {
                                         isExported(false);
                                         showToast(Toast.makeText(getApplicationContext(), "Failed to access the backup file", Toast.LENGTH_LONG));
                                     });
-                                    Utils.handleUncaughtException(getApplicationContext(), e, "MainActivity exportUserData Status 2 0");
+                                    Utils.handleUncaughtException(getApplicationContext(), e, "MainActivity exportUserData State 2 0");
                                     e.printStackTrace();
                                 } finally {
                                     finalFileNameLock.unlock();
@@ -936,7 +919,7 @@ public class MainActivity extends AppCompatActivity {
                                     bufferedOutputStream = null;
                                 }
                             } catch (Exception ignored) {}
-                            Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "MainActivity exportUserData Status 2 1");
+                            Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "MainActivity exportUserData State 2 1");
                             e.printStackTrace();
                         }
                     });

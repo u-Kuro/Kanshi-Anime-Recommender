@@ -40,6 +40,7 @@ public class CustomTabsHelper {
                 mCustomTabsClient = client;
                 mCustomTabsClient.warmup(0);
                 mCustomTabsSession = mCustomTabsClient.newSession(new CustomTabsCallback());
+                if (mCustomTabsSession == null) return;
                 // Add All Origin to be Opened
                 Uri originUri = Uri.parse("https://anilist.co/");
                 Uri origin = new Uri.Builder()

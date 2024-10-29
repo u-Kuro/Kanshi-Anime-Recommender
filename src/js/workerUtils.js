@@ -392,7 +392,7 @@ const mediaManager = (_data = {}) => {
         }
 
         progress.set(0)
-        progressedFetch("./web-worker/mediaManager.js", 54639, "Updating Categories and List")
+        progressedFetch("./web-worker/mediaManager.js", 54808, "Updating Categories and List")
             .then(url => {
                 mediaManagerWorker?.terminate?.()
                 isLoadingMedia.set(true)
@@ -538,7 +538,7 @@ const processRecommendedMediaEntries = (_data = {}) => {
         }
         
         progress.set(0)
-        progressedFetch("./web-worker/processRecommendedMediaEntries.js", 44101, "Updating Recommendation List")
+        progressedFetch("./web-worker/processRecommendedMediaEntries.js", 44122, "Updating Recommendation List")
             .then(url => {
                 processRecommendedMediaEntriesWorker?.terminate?.();
                 const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
@@ -1047,6 +1047,7 @@ const exportUserData = (_data) => {
                 } else {
                     exportUserDataWorker.postMessage("browser")
                 }
+                let textDecoder = new TextDecoder()
                 exportUserDataWorker.onmessage = async ({ data }) => {
                     if (hasOwnProp?.call?.(data, "progress")) {
                         if (data?.progress >= 0 && data?.progress <= 100) {
@@ -1093,12 +1094,15 @@ const exportUserData = (_data) => {
                             }
                             // 0 - start | 1 - ongoing | 2 - done
                             if (state === 0) {
-                                JSBridge.exportUserData([], 0, 0, "")
+                                textDecoder.decode()
+                                textDecoder = new TextDecoder()
+                                JSBridge.exportUserData(null, 0)
                             } else if (state === 1 && chunk instanceof Uint8Array) {
-                                JSBridge.exportUserData(chunk, chunk.length, 1, "")
+                                JSBridge.exportUserData(textDecoder.decode(chunk, { stream: true }), 1)
                             } else if (state === 2) {
                                 exportUserDataWorker?.terminate?.();
-                                JSBridge.exportUserData([], 0, 2, `Kanshi.${data.username?.toLowerCase?.() || "backup"}.gzip`)
+                                JSBridge.exportUserData(textDecoder.decode(), 1)
+                                JSBridge.exportUserData(`Kanshi.${data.username?.toLowerCase?.() || "backup"}.gzip`, 2)
                                 dataStatusPrio = false
                                 isExporting.set(false)
                                 new Promise((resolve, reject) => {
@@ -1160,7 +1164,7 @@ const exportUserData = (_data) => {
                             reject(ex)
                         }
                     } else if (typeof data?.url === "string" && data?.url !== "") {
-                        downloadLink(data.url, `Kanshi.${data?.username?.toLowerCase?.() || "backup"}.gzip`)
+                        downloadLink(data.url, `Kanshi.${data.username?.toLowerCase?.() || "backup"}.gzip`)
                         exportUserDataWorker?.terminate?.();
                         dataStatusPrio = false
                         dataStatus.set(null)

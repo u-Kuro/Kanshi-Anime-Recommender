@@ -53,6 +53,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -437,8 +438,8 @@ public class MainService extends Service {
             }
         }
         @JavascriptInterface
-        public void setShouldManageMedia(boolean shouldLoad) {
-            shouldManageMedia = shouldLoad;
+        public void setShouldManageMedia(boolean shouldManage) {
+            shouldManageMedia = shouldManage;
             MainActivity mainActivity = MainActivity.getInstanceActivity();
             if (mainActivity != null) {
                 mainActivity.shouldManageMedia = shouldManageMedia;
@@ -459,17 +460,16 @@ public class MainService extends Service {
         }
         private ExecutorService exportUserDataExecutor = Executors.newFixedThreadPool(1);
         File tempExportFile;
-        String exportDirectoryPath;
         @RequiresApi(api = Build.VERSION_CODES.R)
         @JavascriptInterface
-        public void exportUserData(byte[] chunk, long chunkLength, int status, String fileName) {
+        public void exportUserData(String base64ChunkOrFilName, int state) {
             ReentrantLock fileLock = null;
             if (tempExportFile != null) {
                 fileLock = getLockForFile(tempExportFile);
                 fileLock.lock(); // Lock before critical section
             }
             try {
-                if (status == 0) {
+                if (state == 0) {
                     try {
                         if (exportUserDataExecutor != null) {
                             exportUserDataExecutor.shutdownNow();
@@ -485,17 +485,15 @@ public class MainService extends Service {
                         if (Environment.isExternalStorageManager()) {
                             File exportDirectory = new File(exportPath);
                             if (exportDirectory.isDirectory()) {
-                                exportDirectoryPath = exportPath + File.separator;
-                                File directory = new File(exportDirectoryPath);
                                 boolean dirIsCreated;
-                                if (!directory.exists()) {
-                                    dirIsCreated = directory.mkdirs();
+                                if (!exportDirectory.exists()) {
+                                    dirIsCreated = exportDirectory.mkdirs();
                                 } else {
                                     dirIsCreated = true;
                                 }
-                                if (directory.isDirectory() && dirIsCreated) {
+                                if (exportDirectory.isDirectory() && dirIsCreated) {
                                     try {
-                                        tempExportFile = new File(exportDirectoryPath + "pb.tmp");
+                                        tempExportFile = new File(exportPath, "pb.tmp");
                                         boolean tempFileIsDeleted;
                                         if (tempExportFile.exists()) {
                                             tempFileIsDeleted = tempExportFile.delete();
@@ -527,7 +525,7 @@ public class MainService extends Service {
                                                 bufferedOutputStream = null;
                                             }
                                         } catch (Exception ignored) {}
-                                        Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportUserData Status 0");
+                                        Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportUserData State 0");
                                         e.printStackTrace();
                                     }
                                 }
@@ -535,7 +533,7 @@ public class MainService extends Service {
                         }
                     });
                 } else if (
-                    status == 1
+                    state == 1
                     && bufferedOutputStream != null
                     && exportUserDataExecutor != null
                     && !exportUserDataExecutor.isShutdown()
@@ -543,7 +541,7 @@ public class MainService extends Service {
                 ) {
                     exportUserDataExecutor.submit(()-> {
                         try {
-                            bufferedOutputStream.write(chunk);
+                            bufferedOutputStream.write(Base64.getDecoder().decode(base64ChunkOrFilName));
                         } catch (Exception e) {
                             isExported(false);
                             try {
@@ -553,12 +551,12 @@ public class MainService extends Service {
                                     bufferedOutputStream = null;
                                 }
                             } catch (Exception ignored) {}
-                            Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportUserData Status 1");
+                            Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportUserData State 1");
                             e.printStackTrace();
                         }
                     });
                 } else if (
-                    status == 2
+                    state == 2
                     && bufferedOutputStream != null
                     && exportUserDataExecutor != null
                     && !exportUserDataExecutor.isShutdown()
@@ -569,7 +567,7 @@ public class MainService extends Service {
                             bufferedOutputStream.flush();
                             bufferedOutputStream.close();
                             bufferedOutputStream = null;
-                            File finalFile = new File(exportDirectoryPath + fileName);
+                            File finalFile = new File(exportPath, base64ChunkOrFilName);
                             if (tempExportFile != null && tempExportFile.exists() && tempExportFile.isFile() && tempExportFile.length() > 0) {
                                 ReentrantLock finalFileNameLock = getLockForFileName(finalFile.getName());
                                 finalFileNameLock.lock();
@@ -584,7 +582,7 @@ public class MainService extends Service {
                                     tempExportFile.delete();
                                 } catch (Exception e) {
                                     isExported(false);
-                                    Utils.handleUncaughtException(getApplicationContext(), e, "MainService exportUserData Status 2 0");
+                                    Utils.handleUncaughtException(getApplicationContext(), e, "MainService exportUserData State 2 0");
                                     e.printStackTrace();
                                 } finally {
                                     finalFileNameLock.unlock();
@@ -601,7 +599,7 @@ public class MainService extends Service {
                                     bufferedOutputStream = null;
                                 }
                             } catch (Exception ignored) {}
-                            Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportUserData Status 2 1");
+                            Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportUserData State 2 1");
                             e.printStackTrace();
                         }
                     });

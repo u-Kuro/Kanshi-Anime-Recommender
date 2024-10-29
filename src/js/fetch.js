@@ -17,7 +17,7 @@ const progressedFetch = (url, totalLength, status, getBlob) => {
         }
 
         try {
-            let response = await fetch(typeof version === "number" ? url : url + "?" + version)
+            let response = await fetch(typeof version === "number" ? `${url}?v=${version}` : url)
 
             if (totalLength && status) {
                 try {
