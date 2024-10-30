@@ -1,6 +1,6 @@
 import { get } from "svelte/store";
 import { isJsonObject } from "./utils/dataUtils.js";
-import { android, isBackgroundUpdateKey, uniqueKey } from "./globalValues";
+import { android, isBackgroundUpdateKey, uniqueKey } from "./variables.js";
 
 let db
 const IDBInit = () => {

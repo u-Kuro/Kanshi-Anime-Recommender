@@ -3,7 +3,7 @@
     import { sineOut } from "svelte/easing";
     import { fade } from "svelte/transition";
     import { equalsIgnoreCase } from "../../../js/utils/dataUtils.js";
-    import { mediaLoader, mediaManager } from "../../../js/workerUtils.js";
+    import { mediaLoader, mediaManager } from "../../../js/worker.js";
     import { requestImmediate, showToast, getUniqueId } from "../../../js/utils/appUtils.js";
     import { getIDBData, setIDBData, setLSData, removeLSData } from "../../../js/database.js";
     import {
@@ -52,7 +52,7 @@
         webCrawler,
         shouldLoadAllList,
         listReloadAvailable,
-    } from "../../../js/globalValues.js";
+    } from "../../../js/variables.js";
 
     let mostVisiblePopupHeader,
         currentHeaderIdx,
@@ -939,31 +939,6 @@
             }
         }
     });
-
-    window.addEventListener("online", () => {
-        if (window[$isBackgroundUpdateKey] === true) return
-        if ($android) {
-            try {
-                JSBridge.isOnline(true);
-            } catch (ex) { console.error(ex) }
-        } else {
-            $toast = "Your internet has been restored"
-        }
-        document.querySelectorAll("script")?.forEach((script) => {
-            if (
-                script.src &&
-                script.src !== "https://www.youtube.com/iframe_api?v=16"
-            ) {
-                script.src = script.src;
-            }
-        });
-        document.querySelectorAll("img")?.forEach((image) => {
-            if (!image.naturalHeight) {
-                image.src = image.src;
-            }
-        });
-        reloadYoutube();
-    });
     function reloadYoutube() {
         loadYouTubeAPI().then(() => {
             $ytPlayers = $ytPlayers.filter((e) => {
@@ -991,13 +966,40 @@
     }
     window.playMostVisibleTrailer = playMostVisibleTrailer;
     window.reloadYoutube = reloadYoutube;
+    let isConnected = window.navigator?.onLine
+    window.addEventListener("online", () => {
+        if (window[$isBackgroundUpdateKey] === true) return
+        if ($android) {
+            try {
+                JSBridge.isOnline(true);
+            } catch (ex) { console.error(ex) }
+        } else if (isConnected === false) {
+            isConnected = true;
+            $toast = "Your internet has been restored"
+        }
+        document.querySelectorAll("script")?.forEach((script) => {
+            if (
+                script.src &&
+                script.src !== "https://www.youtube.com/iframe_api?v=16"
+            ) {
+                script.src = script.src;
+            }
+        });
+        document.querySelectorAll("img")?.forEach((image) => {
+            if (!image.naturalHeight) {
+                image.src = image.src;
+            }
+        });
+        reloadYoutube();
+    });
     window.addEventListener("offline", () => {
         if (window[$isBackgroundUpdateKey] === true) return
         if ($android) {
             try {
                 JSBridge.isOnline(false);
             } catch (ex) { console.error(ex) }
-        } else {
+        } else if (isConnected === true) {
+            isConnected = false;
             $toast = "You are currently offline"
         }
     });

@@ -17,7 +17,7 @@
         selectedMediaGridEl,
         documentScrollTop,
         toast,
-    } from "../../js/globalValues.js";
+    } from "../../js/variables.js";
 
     let categoriesNav;
     let showCategoriesNav = true;

@@ -1,6 +1,6 @@
 <script>
     import { onMount } from "svelte";
-    import { requestUserEntries } from "../../js/workerUtils.js";
+    import { requestUserEntries } from "../../js/worker.js";
     import { setLSData, removeLSData } from "../../js/database.js";
     import { addClass, removeClass } from "../../js/utils/domUtils.js";
     import { requestImmediate, showToast } from "../../js/utils/appUtils.js";
@@ -24,7 +24,7 @@
         listUpdateAvailable,
         toast,
         initList,
-    } from "../../js/globalValues.js";
+    } from "../../js/variables.js";
 
     let typedUsername = "";
     let popupContainer,

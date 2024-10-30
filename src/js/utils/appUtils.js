@@ -68,10 +68,12 @@ const showToast = (str, isLongDuration = true) => {
         }
     } catch (ex) { console.error(ex) }
 }
+const timeout = (duration = 5000) => new Promise((resolve) => setTimeout(resolve, duration))
 
 export {
     getUniqueId,
     requestImmediate,
     downloadLink,
     showToast,
+    timeout
 }
