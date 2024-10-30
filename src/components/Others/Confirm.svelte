@@ -1,7 +1,7 @@
 <script>
     import { sineOut } from "svelte/easing";
     import { fade } from "svelte/transition";
-    import { initData } from "../../js/globalValues.js";
+    import { initData } from "../../js/variables.js";
     import { requestImmediate } from "../../js/utils/appUtils.js";
     import { createEventDispatcher, afterUpdate, tick } from "svelte";
     import { addClass, removeClass } from "../../js/utils/domUtils.js";

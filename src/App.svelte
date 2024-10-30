@@ -23,7 +23,7 @@
 		exportUserData,
 		mediaLoader,
         updateTagInfo,
-	} from "./js/workerUtils.js";
+	} from "./js/worker.js";
 	import {
 		appID,
 		android,
@@ -76,7 +76,7 @@
         currentMediaSortBy,
         currentMediaFilters,
         evictedKey,
-	} from "./js/globalValues.js";
+	} from "./js/variables.js";
 
 	(async () => {
 		try {

@@ -2,7 +2,7 @@
     import { sineOut } from "svelte/easing";
     import { fade } from "svelte/transition";
     import { onDestroy, onMount } from "svelte";
-    import { mediaLoader } from "../../js/workerUtils.js";
+    import { mediaLoader } from "../../js/worker.js";
     import { addClass, removeClass } from "../../js/utils/domUtils.js";
     import { requestImmediate, showToast } from "../../js/utils/appUtils";
     import { isJsonObject, equalsIgnoreCase } from "../../js/utils/dataUtils.js";
@@ -34,7 +34,7 @@
         toast,
         shouldLoadAllList,
         listReloadAvailable,
-    } from "../../js/globalValues.js";
+    } from "../../js/variables.js";
     
 
     export let mainCategory;

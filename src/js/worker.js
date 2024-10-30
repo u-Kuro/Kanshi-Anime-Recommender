@@ -44,7 +44,7 @@ import {
     tagInfo,
     listReloadAvailable,
     evictedKey,
-} from "./globalValues.js";
+} from "./variables.js";
 
 const hasOwnProp = Object.prototype.hasOwnProperty
 let dataStatusPrio = false

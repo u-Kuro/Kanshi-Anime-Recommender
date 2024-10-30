@@ -1,7 +1,7 @@
 import "./css/global.css";
 import App from "./App.svelte";
 import { get } from "svelte/store";
-import { android } from "./js/globalValues";
+import { android } from "./js/variables";
 
 try {
 	if (!get(android)) {

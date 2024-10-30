@@ -1,7 +1,7 @@
 <script>
     import { sineOut } from "svelte/easing";
     import { fade } from "svelte/transition";
-    import { mediaManager } from "../../../js/workerUtils.js";
+    import { mediaManager } from "../../../js/worker.js";
     import { equalsIgnoreCase } from "../../../js/utils/dataUtils.js";
     import { requestImmediate, showToast } from "../../../js/utils/appUtils.js";
     import {
@@ -16,7 +16,7 @@
         selectedCategory,
         toast,
         initList,
-    } from "../../../js/globalValues.js";
+    } from "../../../js/variables.js";
     
 
     let shownTitle;

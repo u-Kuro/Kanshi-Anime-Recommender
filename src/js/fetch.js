@@ -1,6 +1,7 @@
 import { get } from "svelte/store";
+import { timeout } from "./utils/appUtils.js";
 import { isConnected } from "./utils/deviceUtils.js";
-import { android, appID, dataStatus, progress } from "./globalValues.js";
+import { android, appID, dataStatus, progress } from "./variables.js";
 
 let version, appIDNotChecked = true
 const loadedRequestUrlPromises = {}
@@ -63,7 +64,7 @@ const progressedFetch = (url, totalLength, status, getBlob) => {
                     }));
                 } catch (ex) {
                     console.error(ex)
-                    return await progressedFetch(url)
+                    return await progressedFetch(url, null, null, getBlob)
                 }
             }
 
@@ -73,12 +74,17 @@ const progressedFetch = (url, totalLength, status, getBlob) => {
                 return url
             }
         } catch (ex) {
-            delete loadedRequestUrlPromises[url]
-            if (get(android) || (await isConnected())) {
-                await new Promise((r) => setTimeout(r, 5000))
-                return await progressedFetch(url)
+            console.error(ex)
+            if (getBlob) {
+                if (get(android) || (await isConnected())) {
+                    await timeout(5000)
+                    return await progressedFetch(url, null, null, getBlob)
+                } else {
+                    delete loadedRequestUrlPromises[url]
+                    throw new Error("Server unreachable")
+                }
             } else {
-                throw new Error("Server unreachable")
+                return url
             }
         }
     })();

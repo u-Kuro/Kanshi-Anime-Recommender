@@ -8,7 +8,7 @@
         mediaLoader,
         mediaManager,
         processRecommendedMediaEntries,
-    } from "../../js/workerUtils.js";
+    } from "../../js/worker.js";
     import {
         getIDBData,
 		setIDBData,
@@ -59,7 +59,7 @@
         initList,
         listReloadAvailable,
         shouldLoadAllList,
-    } from "../../js/globalValues.js";
+    } from "../../js/variables.js";
 
     const COOs = {
         JP: "Japan",

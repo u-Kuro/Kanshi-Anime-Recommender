@@ -13,7 +13,7 @@
         exportUserData,
         requestMediaEntries,
         requestUserEntries
-    } from "../../js/workerUtils.js";
+    } from "../../js/worker.js";
     import {
         android,
         menuVisible,
@@ -38,7 +38,7 @@
         userRequestIsRunning,
         showRateLimit,
         dataStatus,
-    } from "../../js/globalValues.js";
+    } from "../../js/variables.js";
     
 
     let navContainerEl;
