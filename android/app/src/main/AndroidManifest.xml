@@ -16,6 +16,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <application
+        android:usesCleartextTraffic="true"
         android:allowBackup="true"
         android:keepScreenOn="true"
         android:hardwareAccelerated="false"
@@ -90,8 +91,8 @@
             android:hardwareAccelerated="true"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
             android:exported="true"
-            android:alwaysRetainTaskState="true"
-        />
+            android:alwaysRetainTaskState="true">
+        </activity>
     </application>
     <queries>
         <intent>

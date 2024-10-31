@@ -44,11 +44,11 @@ import {
     tagInfo,
     listReloadAvailable,
     evictedKey,
+    uniqueKey,
 } from "./variables.js";
 
 const hasOwnProp = Object.prototype.hasOwnProperty
 let dataStatusPrio = false
-let isGettingNewEntries = false;
 let isRequestingMediaEntries = false
 let wasRequestingMediaEntries = false
 
@@ -297,14 +297,13 @@ const mediaManager = (_data = {}) => {
         return
     }
     return new Promise((resolve, reject) => {
-
-        mediaManagerWorker?.terminate?.()
-
         if (get(isImporting)) {
             if (!_data?.isImporting) {
                 return reject("Process is interrupted, currently importing")
             }
         }
+
+        mediaManagerWorker?.terminate?.()
 
         mediaManagerWorkerPostId = getUniqueId()
 
@@ -712,13 +711,13 @@ const requestMediaEntries = (_data = {}) => {
             resolve()
             return
         }
+
         requestMediaEntriesWorker?.terminate?.()
+
         notifyUpdatedMediaNotification()
+
         if (!get(initData)) {
-            if (isGettingNewEntries
-                || get(isExporting)
-                || get(isImporting)
-            ) {
+            if (get(isExporting) || get(isImporting)) {
                 resolve()
                 return
             }
@@ -815,19 +814,6 @@ const requestMediaEntries = (_data = {}) => {
                             } catch (ex) { console.error(ex) }
                         }
                     } else {
-                        requestMediaEntriesWorker?.terminate?.();
-                        if (data?.noEntriesFound) {
-                            console.error("No entries found");
-                            alertError()
-                        } else if (data?.getEntries === true) {
-                            isGettingNewEntries = true
-                            stopConflictingWorkers({ isGettingNewEntries: true })
-                            retrieveInitialData()
-                                .finally(() => {
-                                    isGettingNewEntries = false
-                                    rerunImportantWork()
-                                })
-                        }
                         wasRequestingMediaEntries = isRequestingMediaEntries = false
                         notifyUpdatedMediaNotification()
                         dataStatus.set(null)
@@ -838,7 +824,6 @@ const requestMediaEntries = (_data = {}) => {
                 requestMediaEntriesWorker.onerror = (error) => {
                     requestMediaEntriesWorker?.terminate?.();
                     wasRequestingMediaEntries = isRequestingMediaEntries = false
-                    isGettingNewEntries = false
                     notifyUpdatedMediaNotification()
                     dataStatus.set(null)
                     progress.set(100)
@@ -848,7 +833,6 @@ const requestMediaEntries = (_data = {}) => {
             }).catch((error) => {
                 requestMediaEntriesWorker?.terminate?.();
                 wasRequestingMediaEntries = isRequestingMediaEntries = false
-                isGettingNewEntries = false
                 notifyUpdatedMediaNotification()
                 dataStatus.set(null)
                 progress.set(100)
@@ -880,10 +864,7 @@ const requestUserEntries = (_data = {}) => {
         }
         
         if (!get(initData)) {
-            if (get(isExporting)
-                || get(isImporting)
-                || isGettingNewEntries
-            ) {
+            if (get(isExporting) || get(isImporting)) {
                 isRequestingNewUser = isReloadingUserEntries = false
                 userRequestIsRunning.set(false)
                 return reject()
@@ -1009,14 +990,7 @@ const requestUserEntries = (_data = {}) => {
     })
 }
 
-let exportUserDataWorker, waitForExportApproval;
-window.isExported = (success = true) => {
-    if (success) {
-        waitForExportApproval?.resolve?.()
-    } else {
-        waitForExportApproval?.reject?.()
-    }
-}
+let exportUserDataWorker;
 const exportUserData = (_data) => {
     if (get(initList) !== false && !_data?.initList) {
         return
@@ -1028,26 +1002,23 @@ const exportUserData = (_data) => {
         }
         exportUserDataWorker?.terminate?.()
         if (!get(initData)) {
-            if (get(isImporting) || isGettingNewEntries) return
+            if (get(isImporting)) return
             isExporting.set(true)
             stopConflictingWorkers({ isExporting: true })
         }
-        waitForExportApproval?.reject?.()
-        waitForExportApproval = null
+        window[`${get(uniqueKey)}.exportPromise`] = window[`${get(uniqueKey)}.localServerUrlPromise`] = null
         progress.set(0)
         resetProgress.update((e) => !e);
         progressedFetch("./web-worker/exportUserData.js")
             .then(url => {
                 exportUserDataWorker?.terminate?.()
-                waitForExportApproval?.reject?.()
-                waitForExportApproval = null
+                window[`${get(uniqueKey)}.exportPromise`] = window[`${get(uniqueKey)}.localServerUrlPromise`] = null
                 exportUserDataWorker = new Worker(url)
                 if (get(android)) {
                     exportUserDataWorker.postMessage("android")
                 } else {
                     exportUserDataWorker.postMessage("browser")
                 }
-                let textDecoder = new TextDecoder()
                 exportUserDataWorker.onmessage = async ({ data }) => {
                     if (hasOwnProp?.call?.(data, "progress")) {
                         if (data?.progress >= 0 && data?.progress <= 100) {
@@ -1065,8 +1036,6 @@ const exportUserData = (_data) => {
                         dataStatus.set(null)
                         progress.set(100)
                         isExporting.set(false)
-                        waitForExportApproval?.reject?.(data.error)
-                        waitForExportApproval = null
                         if (data.missingData) {
                             window.confirmPromise?.({
                                 isAlert: true,
@@ -1084,85 +1053,50 @@ const exportUserData = (_data) => {
                         }
                         rerunImportantWork(_data?.isManual)
                         reject(data.error)
-                    } else if (get(android)) {
+                    } else if (data?.blob instanceof Blob && get(android)) {
+                        dataStatusPrio = false
+                        isExporting.set(false)
                         try {
-                            const { state, chunk, loaded } = data || {}
-                            // Show Backup Progress
-                            if (loaded > 0 && loaded < 100) {
-                                progress.set(loaded)
-                                dataStatus.set(`${loaded.toFixed(2)}% Exporting User Data`)
-                            }
-                            // 0 - start | 1 - ongoing | 2 - done
-                            if (state === 0) {
-                                textDecoder.decode()
-                                textDecoder = new TextDecoder()
-                                JSBridge.exportUserData(null, 0)
-                            } else if (state === 1 && chunk instanceof Uint8Array) {
-                                JSBridge.exportUserData(textDecoder.decode(chunk, { stream: true }), 1)
-                            } else if (state === 2) {
-                                exportUserDataWorker?.terminate?.();
-                                JSBridge.exportUserData(textDecoder.decode(), 1)
-                                JSBridge.exportUserData(`Kanshi.${data.username?.toLowerCase?.() || "backup"}.gzip`, 2)
-                                dataStatusPrio = false
-                                isExporting.set(false)
-                                new Promise((resolve, reject) => {
-                                    waitForExportApproval = { resolve, reject }
-                                }).then(() => {
-                                    if (_data?.isManual) {
-                                        showToast("Data has been exported")
+                            const exportPromise = new Promise((resolve, reject) => {
+                                window[`${get(uniqueKey)}.exportPromise`] = { resolve, reject }
+                            })
+                            const localServerUrl = await new Promise((resolve, reject) => {
+                                window[`${get(uniqueKey)}.localServerUrlPromise`] = { resolve, reject }
+                                try {
+                                    JSBridge.exportUserData()
+                                } catch {
+                                    reject()
+                                }
+                            })
+                            fetch(localServerUrl, {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/octet-stream",
+                                    "Content-Encoding": "gzip",
+                                    "filename": `Kanshi.${data.username?.toLowerCase?.() || "backup"}.gzip`
+                                },
+                                body: data.blob
+                            });
+                            await exportPromise
+                            if (_data?.isManual) showToast("Data has been exported")
+                        } catch {
+                            if (_data?.isManual) {
+                                (async () => {
+                                    if (await window.confirmPromise?.({
+                                        title: "Back up failed",
+                                        text: "Do you want to try again?",
+                                    })) {
+                                        exportUserData({ isManual: true });
                                     }
-                                }).catch((error) => {
-                                    if (_data?.isManual) {
-                                        (async () => {
-                                            if (await window.confirmPromise?.({
-                                                title: "Back up failed",
-                                                text: "Do you want to try again?",
-                                            })) {
-                                                exportUserData({ isManual: true });
-                                            }
-                                        })();
-                                    }
-                                    reject(error)
-                                }).finally(() => {
-                                    waitForExportApproval = null
-                                    dataStatus.set(null)
-                                    progress.set(100)
-                                    rerunImportantWork(_data?.isManual)
-                                    resolve()
-                                })
-                            } else {
-                                exportUserDataWorker?.terminate?.();
-                                dataStatusPrio = false
-                                isExporting.set(false)
-                                waitForExportApproval?.reject?.()
-                                waitForExportApproval = null
-                                window.confirmPromise?.({
-                                    isAlert: true,
-                                    title: "Back up failed",
-                                    text: "Something went wrong while processing your backup (B2).",
-                                })
-                                dataStatus.set(null)
-                                progress.set(100)
-                                rerunImportantWork(_data?.isManual)
+                                })();
                                 reject()
                             }
-                        } catch (ex) {
-                            exportUserDataWorker?.terminate?.();
-                            dataStatusPrio = false
-                            isExporting.set(false)
-                            waitForExportApproval?.reject?.(ex)
-                            waitForExportApproval = null
-                            window.confirmPromise?.({
-                                isAlert: true,
-                                title: "Back up failed",
-                                text: typeof ex === "string" && ex ? ex : "Something went wrong while processing your backup (B3).",
-                            })
-                            dataStatus.set(null)
-                            progress.set(100)
-                            rerunImportantWork(_data?.isManual)
-                            console.error(ex)
-                            reject(ex)
                         }
+                        exportUserDataWorker?.terminate?.();
+                        dataStatus.set(null)
+                        progress.set(100)
+                        rerunImportantWork(_data?.isManual)
+                        resolve()
                     } else if (typeof data?.url === "string" && data?.url !== "") {
                         downloadLink(data.url, `Kanshi.${data.username?.toLowerCase?.() || "backup"}.gzip`)
                         exportUserDataWorker?.terminate?.();
@@ -1178,7 +1112,7 @@ const exportUserData = (_data) => {
                         window.confirmPromise?.({
                             isAlert: true,
                             title: "Back up failed",
-                            text: "Something went wrong while processing your backup (B4).",
+                            text: "Something went wrong while processing your backup (B2).",
                         })
                         dataStatus.set(null)
                         progress.set(100)
@@ -1193,12 +1127,10 @@ const exportUserData = (_data) => {
                     dataStatus.set(null)
                     progress.set(100)
                     isExporting.set(false)
-                    waitForExportApproval?.reject?.(error)
-                    waitForExportApproval = null
                     window.confirmPromise?.({
                         isAlert: true,
                         title: "Back up failed",
-                        text: typeof error === "string" && error ? error : "Something went wrong while processing your backup (B5).",
+                        text: typeof error === "string" && error ? error : "Something went wrong while processing your backup (B3).",
                     })
                     rerunImportantWork(_data?.isManual)
                     console.error(error)
@@ -1210,8 +1142,6 @@ const exportUserData = (_data) => {
                 dataStatus.set(null)
                 progress.set(100)
                 isExporting.set(false)
-                waitForExportApproval?.reject?.(error)
-                waitForExportApproval = null
                 alertError()
                 rerunImportantWork(_data?.isManual)
                 console.error(error)
@@ -1226,11 +1156,10 @@ const importUserData = (_data) => {
     return new Promise((resolve, reject) => {
         importUserDataWorker?.terminate?.()
         if (!get(initData)) {
-            if (get(isExporting) || isGettingNewEntries) return
-            mediaManagerWorker?.terminate?.()
+            if (get(isExporting)) return
             isImporting.set(true)
+            mediaManagerWorker?.terminate?.()
             mediaManagerWorker = null
-            passedAlgorithmFilterId = passedAlgorithmFilter = undefined
             stopConflictingWorkers({ isImporting: true })
         }
         progress.set(0)
@@ -1275,15 +1204,19 @@ const importUserData = (_data) => {
                         }
                     } else if (hasOwnProp?.call?.(data, "hiddenMediaEntries")) {
                         if (isJsonObject(data?.hiddenMediaEntries)) {
+                            entriesToHide = {}
+                            entriesToShow = {}
                             hiddenMediaEntries.set(data?.hiddenMediaEntries)
                         }
                     } else if (hasOwnProp?.call?.(data, "mediaCautions")) {
                         if (data?.mediaCautions instanceof Array) {
+                            passedMediaCautions = undefined
                             mediaCautions.set(data?.mediaCautions)
                             currentMediaCautions.set(data?.mediaCautions)
                         }
                     } else if (hasOwnProp?.call?.(data, "algorithmFilters")) {
                         if (data?.algorithmFilters instanceof Array) {
+                            passedAlgorithmFilterId = passedAlgorithmFilter = undefined
                             algorithmFilters.set(data?.algorithmFilters)
                             currentAlgorithmFilters.set(data?.algorithmFilters)
                         }
@@ -1291,6 +1224,9 @@ const importUserData = (_data) => {
                         if (isJsonObject(data?.tagInfo)) {
                             tagInfo.set(data?.tagInfo)
                         }
+                    } else if (hasOwnProp?.call?.(data, "hasNewCategories")) {
+                        mediaFilters = {}
+                        categoriesToEdit = []
                     } else {
                         importUserDataWorker?.terminate?.();
                         window[get(evictedKey)] = false
@@ -1484,7 +1420,6 @@ function stopConflictingWorkers(blocker) {
     requestMediaEntriesWorker?.terminate?.()
     notifyUpdatedMediaNotification()
     isRequestingMediaEntries = false
-    isGettingNewEntries = blocker?.isGettingNewEntries ?? false
     requestUserEntriesWorker?.terminate?.()
     resetTypedUsername.update(e => !e)
     if (isRequestingNewUser || isReloadingUserEntries) {

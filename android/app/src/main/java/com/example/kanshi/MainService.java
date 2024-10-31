@@ -5,11 +5,10 @@ import static com.example.kanshi.BuildConfig.DEBUG;
 import static com.example.kanshi.Configs.DATA_EVICTION_CHANNEL;
 import static com.example.kanshi.Configs.NOTIFICATION_DATA_EVICTION;
 import static com.example.kanshi.Configs.IS_BACKGROUND_UPDATE_KEY;
+import static com.example.kanshi.Configs.UNIQUE_KEY;
 import static com.example.kanshi.Configs.VISITED_KEY;
 import static com.example.kanshi.Configs.getAssetLoader;
 import static com.example.kanshi.Utils.fetchWebConnection;
-import static com.example.kanshi.LocalPersistence.getLockForFile;
-import static com.example.kanshi.LocalPersistence.getLockForFileName;
 
 import android.annotation.SuppressLint;
 import android.app.Notification;
@@ -45,15 +44,9 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.webkit.WebViewAssetLoader;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.lang.ref.WeakReference;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +56,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
 @SuppressLint("SetJavaScriptEnabled")
 public class MainService extends Service {
@@ -86,7 +78,6 @@ public class MainService extends Service {
     public boolean shouldManageMedia = false;
     public long addedMediaCount = 0;
     public long updatedMediaCount = 0;
-    public BufferedOutputStream bufferedOutputStream;
 
     @Nullable
     @Override
@@ -294,13 +285,6 @@ public class MainService extends Service {
         if (webView!=null) {
             webView.destroy();
         }
-        try {
-            if (bufferedOutputStream != null) {
-                bufferedOutputStream.flush();
-                bufferedOutputStream.close();
-                bufferedOutputStream = null;
-            }
-        } catch (Exception ignored) {}
         MediaNotificationManager.recentlyUpdatedMediaNotification(MainService.this, addedMediaCount, updatedMediaCount);
         MainActivity mainActivity = MainActivity.getInstanceActivity();
         if (mainActivity != null) {
@@ -458,158 +442,30 @@ public class MainService extends Service {
         public void sendBackgroundStatus(String text) {
             updateNotificationTitle(text);
         }
-        private ExecutorService exportUserDataExecutor = Executors.newFixedThreadPool(1);
-        File tempExportFile;
+        private BackUpLocalServer backUpLocalServer;
         @RequiresApi(api = Build.VERSION_CODES.R)
         @JavascriptInterface
-        public void exportUserData(String base64ChunkOrFilName, int state) {
-            ReentrantLock fileLock = null;
-            if (tempExportFile != null) {
-                fileLock = getLockForFile(tempExportFile);
-                fileLock.lock(); // Lock before critical section
-            }
-            try {
-                if (state == 0) {
-                    try {
-                        if (exportUserDataExecutor != null) {
-                            exportUserDataExecutor.shutdownNow();
-                        }
-                        exportUserDataExecutor = Executors.newFixedThreadPool(1);
-                        if (bufferedOutputStream != null) {
-                            bufferedOutputStream.flush();
-                            bufferedOutputStream.close();
-                            bufferedOutputStream = null;
-                        }
-                    } catch (Exception ignored) {}
-                    exportUserDataExecutor.submit(() -> {
-                        if (Environment.isExternalStorageManager()) {
-                            File exportDirectory = new File(exportPath);
-                            if (exportDirectory.isDirectory()) {
-                                boolean dirIsCreated;
-                                if (!exportDirectory.exists()) {
-                                    dirIsCreated = exportDirectory.mkdirs();
-                                } else {
-                                    dirIsCreated = true;
-                                }
-                                if (exportDirectory.isDirectory() && dirIsCreated) {
-                                    try {
-                                        tempExportFile = new File(exportPath, "pb.tmp");
-                                        boolean tempFileIsDeleted;
-                                        if (tempExportFile.exists()) {
-                                            tempFileIsDeleted = tempExportFile.delete();
-                                            //noinspection ResultOfMethodCallIgnored
-                                            tempExportFile.createNewFile();
-                                        } else {
-                                            tempFileIsDeleted = true;
-                                            //noinspection ResultOfMethodCallIgnored
-                                            tempExportFile.createNewFile();
-                                        }
-                                        if (tempFileIsDeleted) {
-                                            bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(tempExportFile, true));
-                                        } else {
-                                            try {
-                                                if (bufferedOutputStream != null) {
-                                                    bufferedOutputStream.flush();
-                                                    bufferedOutputStream.close();
-                                                    bufferedOutputStream = null;
-                                                }
-                                            } catch (Exception ignored) {}
-                                            isExported(false);
-                                        }
-                                    } catch (Exception e) {
-                                        isExported(false);
-                                        try {
-                                            if (bufferedOutputStream != null) {
-                                                bufferedOutputStream.flush();
-                                                bufferedOutputStream.close();
-                                                bufferedOutputStream = null;
-                                            }
-                                        } catch (Exception ignored) {}
-                                        Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportUserData State 0");
-                                        e.printStackTrace();
-                                    }
-                                }
-                            }
-                        }
-                    });
-                } else if (
-                    state == 1
-                    && bufferedOutputStream != null
-                    && exportUserDataExecutor != null
-                    && !exportUserDataExecutor.isShutdown()
-                    && !exportUserDataExecutor.isTerminated()
-                ) {
-                    exportUserDataExecutor.submit(()-> {
-                        try {
-                            bufferedOutputStream.write(Base64.getDecoder().decode(base64ChunkOrFilName));
-                        } catch (Exception e) {
-                            isExported(false);
-                            try {
-                                if (bufferedOutputStream != null) {
-                                    bufferedOutputStream.flush();
-                                    bufferedOutputStream.close();
-                                    bufferedOutputStream = null;
-                                }
-                            } catch (Exception ignored) {}
-                            Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportUserData State 1");
-                            e.printStackTrace();
-                        }
-                    });
-                } else if (
-                    state == 2
-                    && bufferedOutputStream != null
-                    && exportUserDataExecutor != null
-                    && !exportUserDataExecutor.isShutdown()
-                    && !exportUserDataExecutor.isTerminated()
-                ) {
-                    exportUserDataExecutor.submit(() -> {
-                        try {
-                            bufferedOutputStream.flush();
-                            bufferedOutputStream.close();
-                            bufferedOutputStream = null;
-                            File finalFile = new File(exportPath, base64ChunkOrFilName);
-                            if (tempExportFile != null && tempExportFile.exists() && tempExportFile.isFile() && tempExportFile.length() > 0) {
-                                ReentrantLock finalFileNameLock = getLockForFileName(finalFile.getName());
-                                finalFileNameLock.lock();
-                                try {
-                                    //noinspection ResultOfMethodCallIgnored
-                                    finalFile.createNewFile();
-                                    Path tempPath = tempExportFile.toPath();
-                                    Path backupPath = finalFile.toPath();
-                                    Files.copy(tempPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
-                                    isExported(true);
-                                    //noinspection ResultOfMethodCallIgnored
-                                    tempExportFile.delete();
-                                } catch (Exception e) {
-                                    isExported(false);
-                                    Utils.handleUncaughtException(getApplicationContext(), e, "MainService exportUserData State 2 0");
-                                    e.printStackTrace();
-                                } finally {
-                                    finalFileNameLock.unlock();
-                                }
-                            } else {
-                                isExported(false);
-                            }
-                        } catch (Exception e) {
-                            isExported(false);
-                            try {
-                                if (bufferedOutputStream != null) {
-                                    bufferedOutputStream.flush();
-                                    bufferedOutputStream.close();
-                                    bufferedOutputStream = null;
-                                }
-                            } catch (Exception ignored) {}
-                            Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportUserData State 2 1");
-                            e.printStackTrace();
-                        }
-                    });
-                }
-            } catch (Exception e) {
-                Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService exportUserData Outer-Lock");
-                e.printStackTrace();
-            } finally {
-                if (fileLock != null) {
-                    fileLock.unlock();
+        public void exportUserData() {
+            if (Environment.isExternalStorageManager()) {
+                File exportDirectory = new File(exportPath);
+                if (exportDirectory.isDirectory()) {
+                    boolean dirIsCreated;
+                    if (!exportDirectory.exists()) {
+                        dirIsCreated = exportDirectory.mkdirs();
+                    } else {
+                        dirIsCreated = true;
+                    }
+                    if (exportDirectory.isDirectory() && dirIsCreated) {
+                        if (backUpLocalServer != null) backUpLocalServer.stopServer();
+                        final Handler exportUserDataUIhandler = new Handler(Looper.getMainLooper());
+                        backUpLocalServer = new BackUpLocalServer(
+                            new File(exportPath), false,
+                            url -> exportUserDataUIhandler.post(() -> webView.loadUrl("javascript:window?.['"+UNIQUE_KEY+".localServerUrlPromise']?.resolve?.('"+url+"')")),
+                            () -> exportUserDataUIhandler.post(() -> webView.loadUrl("javascript:window?.['"+UNIQUE_KEY+".exportPromise']?.resolve?.()")),
+                            promise -> exportUserDataUIhandler.post(() -> webView.loadUrl("javascript:window?.['"+UNIQUE_KEY+"."+promise+"']?.reject?.()"))
+                        );
+                        backUpLocalServer.startServer();
+                    }
                 }
             }
         }
@@ -719,24 +575,5 @@ public class MainService extends Service {
                 e.printStackTrace();
             }
         });
-    }
-    public void isExported(boolean success) {
-        try {
-            Handler handler = new Handler(Looper.getMainLooper());
-            handler.post(() -> {
-                if (success) {
-                    webView.loadUrl("javascript:window?.isExported?.(true)");
-                } else {
-                    webView.loadUrl("javascript:window?.isExported?.(false)");
-                }
-            });
-        } catch (Exception e) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService isExported");
-            }
-            e.printStackTrace();
-            MainService.this.stopForeground(true);
-            MainService.this.stopSelf();
-        }
     }
 }

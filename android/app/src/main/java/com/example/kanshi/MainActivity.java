@@ -8,13 +8,13 @@ import static com.example.kanshi.BuildConfig.VERSION_CODE;
 import static com.example.kanshi.Configs.DATA_EVICTION_CHANNEL;
 import static com.example.kanshi.Configs.NOTIFICATION_DATA_EVICTION;
 import static com.example.kanshi.Configs.TOKEN;
+import static com.example.kanshi.Configs.UNIQUE_KEY;
 import static com.example.kanshi.Configs.UPDATE_DATA_PENDING_INTENT;
 import static com.example.kanshi.Configs.getAssetLoader;
 import static com.example.kanshi.Configs.OWNER;
 import static com.example.kanshi.Configs.IS_OWNER_KEY;
 import static com.example.kanshi.Configs.VISITED_KEY;
 import static com.example.kanshi.Configs.getTOKEN;
-import static com.example.kanshi.LocalPersistence.getLockForFile;
 import static com.example.kanshi.LocalPersistence.getLockForFileName;
 import static com.example.kanshi.Utils.fetchWebVersion;
 import static com.example.kanshi.Utils.fetchWebConnection;
@@ -78,17 +78,11 @@ import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -131,7 +125,6 @@ public class MainActivity extends AppCompatActivity {
     public boolean shouldRefreshList = false;
     public boolean shouldProcessRecommendedEntries = false;
     public boolean shouldManageMedia = false;
-    public BufferedOutputStream bufferedOutputStream;
 
     // Activity Results
     final ActivityResultLauncher<Intent> allowApplicationUpdate =
@@ -305,6 +298,7 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setAllowFileAccessFromFileURLs(true);
         webSettings.setBlockNetworkLoads(false);
         webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+        webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         webSettings.setAllowUniversalAccessFromFileURLs(true);
         webSettings.setMediaPlaybackRequiresUserGesture(false);
         webSettings.setDefaultFontSize(16);
@@ -654,13 +648,6 @@ public class MainActivity extends AppCompatActivity {
         if (webView!=null) {
             webView.post(() -> webView.loadUrl("javascript:window?.notifyUpdatedMediaNotification?.()"));
         }
-        try {
-            if (bufferedOutputStream != null) {
-                bufferedOutputStream.flush();
-                bufferedOutputStream.close();
-                bufferedOutputStream = null;
-            }
-        } catch (Exception ignored) {}
         setBackgroundUpdates(false);
         super.onDestroy();
         if (wakeLock!=null) {
@@ -728,208 +715,60 @@ public class MainActivity extends AppCompatActivity {
             }
             changeKeepAppRunningInBackground(enable);
         }
-        private final Handler exportUserDataUIhandler = new Handler(Looper.getMainLooper());
-        private ExecutorService exportUserDataExecutor = Executors.newFixedThreadPool(1);
-        File tempExportFile;
+        private BackUpLocalServer backUpLocalServer;
         @RequiresApi(api = Build.VERSION_CODES.R)
         @JavascriptInterface
-        public void exportUserData(String base64ChunkOrFilName, int state) {
-            ReentrantLock fileLock = null;
-            if (tempExportFile != null) {
-                fileLock = getLockForFile(tempExportFile);
-                fileLock.lock(); // Lock before critical section
-            }
-            try {
-                if (state == 0) {
-                    try {
-                        if (exportUserDataExecutor != null) {
-                            exportUserDataExecutor.shutdownNow();
-                        }
-                        exportUserDataExecutor = Executors.newFixedThreadPool(1);
-                        exportUserDataUIhandler.removeCallbacksAndMessages(null);
-                        if (bufferedOutputStream != null) {
-                            bufferedOutputStream.flush();
-                            bufferedOutputStream.close();
-                            bufferedOutputStream = null;
-                        }
-                    } catch (Exception ignored) {}
-                    exportUserDataExecutor.submit(() -> {
-                        if (!Environment.isExternalStorageManager()) {
-                            exportUserDataUIhandler.post(() -> showDialog(new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("Folder Access for Back-up")
-                            .setMessage("Allow permission to access folders for backup.")
-                            .setPositiveButton("OK", (dialogInterface, i) -> {
-                                Intent intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.fromParts("package", getPackageName(), null));
-                                startActivity(intent);
-                            })
-                            .setNegativeButton("CANCEL", null), true));
-                        } else {
-                            File exportDirectory = new File(exportPath);
-                            if (exportDirectory.isDirectory()) {
-                                boolean dirIsCreated;
-                                if (!exportDirectory.exists()) {
-                                    dirIsCreated = exportDirectory.mkdirs();
-                                } else {
-                                    dirIsCreated = true;
-                                }
-                                if (exportDirectory.isDirectory() && dirIsCreated) {
-                                    try {
-                                        tempExportFile = new File(exportPath, ".tmp");
-                                        boolean tempFileIsDeleted;
-                                        if (tempExportFile.exists()) {
-                                            tempFileIsDeleted = tempExportFile.delete();
-                                            //noinspection ResultOfMethodCallIgnored
-                                            tempExportFile.createNewFile();
-                                        } else {
-                                            tempFileIsDeleted = true;
-                                            //noinspection ResultOfMethodCallIgnored
-                                            tempExportFile.createNewFile();
-                                        }
-                                        if (tempFileIsDeleted) {
-                                            bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(tempExportFile, true));
-                                        } else {
-                                            try {
-                                                if (bufferedOutputStream != null) {
-                                                    bufferedOutputStream.flush();
-                                                    bufferedOutputStream.close();
-                                                    bufferedOutputStream = null;
-                                                }
-                                            } catch (Exception ignored) {}
-                                            exportUserDataUIhandler.post(() -> {
-                                                isExported(false);
-                                                showToast(Toast.makeText(getApplicationContext(), "Temporary backup file can't be re-written, please delete .tmp in the selected folder", Toast.LENGTH_LONG));
-                                            });
-                                        }
-                                    } catch (Exception e) {
-                                        exportUserDataUIhandler.post(() -> {
-                                            isExported(false);
-                                            showToast(Toast.makeText(getApplicationContext(), "Exception occurred while initializing the temporary backup file", Toast.LENGTH_LONG));
-                                        });
-                                        try {
-                                            if (bufferedOutputStream != null) {
-                                                bufferedOutputStream.flush();
-                                                bufferedOutputStream.close();
-                                                bufferedOutputStream = null;
-                                            }
-                                        } catch (Exception ignored) {}
-                                        Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "exportUserData State 0");
-                                        e.printStackTrace();
-                                    }
-                                } else if (!dirIsCreated) {
-                                    exportUserDataUIhandler.post(() -> showToast(Toast.makeText(getApplicationContext(), "Can't find the folder for backup, please create it first", Toast.LENGTH_LONG)));
-                                }
-                            } else if (exportPath != null && !exportPath.isEmpty() && !exportDirectory.isDirectory()) {
-                                String[] tempExportPath = exportPath.split(Pattern.quote(File.separator));
-                                String tempPathName =
-                                        tempExportPath.length > 1
-                                        ? tempExportPath[tempExportPath.length - 2] + File.separator + tempExportPath[tempExportPath.length - 1]
-                                        : tempExportPath[tempExportPath.length - 1];
-                                exportUserDataUIhandler.post(() -> showDialog(new AlertDialog.Builder(MainActivity.this)
-                                .setTitle("Back-up Folder is Missing")
-                                .setMessage("Folder directory [" + tempPathName + "] is missing, please choose another folder for backup.")
-                                .setPositiveButton("OK", (dialogInterface, x) -> {
-                                    showToast(Toast.makeText(getApplicationContext(), "Select or create a folder for backup", Toast.LENGTH_LONG));
-                                    Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
-                                    chooseExportFile.launch(i);
-                                })
-                                .setNegativeButton("CANCEL", null), true));
-                            } else {
-                                Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
-                                chooseExportFile.launch(i);
-                                exportUserDataUIhandler.post(() -> showToast(Toast.makeText(getApplicationContext(), "Select or create a folder for backup", Toast.LENGTH_LONG)));
-                            }
-                        }
-                    });
-                } else if (
-                    state == 1
-                    && bufferedOutputStream != null
-                    && exportUserDataExecutor != null
-                    && !exportUserDataExecutor.isShutdown()
-                    && !exportUserDataExecutor.isTerminated()
-                ) {
-                    exportUserDataExecutor.submit(()-> {
-                        try {
-                            bufferedOutputStream.write(Base64.getDecoder().decode(base64ChunkOrFilName));
-                        } catch (Exception e) {
-                            exportUserDataUIhandler.post(() -> {
-                                isExported(false);
-                                showToast(Toast.makeText(getApplicationContext(), "Exception occurred while writing into the temporary backup file", Toast.LENGTH_LONG));
-                            });
-                            try {
-                                if (bufferedOutputStream != null) {
-                                    bufferedOutputStream.flush();
-                                    bufferedOutputStream.close();
-                                    bufferedOutputStream = null;
-                                }
-                            } catch (Exception ignored) {}
-                            Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "exportUserData State 1");
-                            e.printStackTrace();
-                        }
-                    });
-                } else if (
-                    state == 2
-                    && bufferedOutputStream != null
-                    && exportUserDataExecutor != null
-                    && !exportUserDataExecutor.isShutdown()
-                    && !exportUserDataExecutor.isTerminated()
-                ) {
-                    exportUserDataExecutor.submit(() -> {
-                        try {
-                            bufferedOutputStream.flush();
-                            bufferedOutputStream.close();
-                            bufferedOutputStream = null;
-                            File finalFile = new File(exportPath, base64ChunkOrFilName);
-                            if (tempExportFile != null && tempExportFile.exists() && tempExportFile.isFile() && tempExportFile.length() > 0) {
-                                ReentrantLock finalFileNameLock = getLockForFileName(finalFile.getName());
-                                finalFileNameLock.lock();
-                                try {
-                                    //noinspection ResultOfMethodCallIgnored
-                                    finalFile.createNewFile();
-                                    Path tempPath = tempExportFile.toPath();
-                                    Path backupPath = finalFile.toPath();
-                                    Files.copy(tempPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
-                                    exportUserDataUIhandler.post(() -> isExported(true));
-                                    //noinspection ResultOfMethodCallIgnored
-                                    tempExportFile.delete();
-                                } catch (Exception e) {
-                                    exportUserDataUIhandler.post(() -> {
-                                        isExported(false);
-                                        showToast(Toast.makeText(getApplicationContext(), "Failed to access the backup file", Toast.LENGTH_LONG));
-                                    });
-                                    Utils.handleUncaughtException(getApplicationContext(), e, "MainActivity exportUserData State 2 0");
-                                    e.printStackTrace();
-                                } finally {
-                                    finalFileNameLock.unlock();
-                                }
-                            } else {
-                                exportUserDataUIhandler.post(() -> {
-                                    isExported(false);
-                                    showToast(Toast.makeText(getApplicationContext(), "Failed to back up the file", Toast.LENGTH_LONG));
-                                });
-                            }
-                        } catch (Exception e) {
-                            exportUserDataUIhandler.post(() -> {
-                                isExported(false);
-                                showToast(Toast.makeText(getApplicationContext(), "Exception occurred in finalizing the backup file", Toast.LENGTH_LONG));
-                            });
-                            try {
-                                if (bufferedOutputStream != null) {
-                                    bufferedOutputStream.flush();
-                                    bufferedOutputStream.close();
-                                    bufferedOutputStream = null;
-                                }
-                            } catch (Exception ignored) {}
-                            Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "MainActivity exportUserData State 2 1");
-                            e.printStackTrace();
-                        }
-                    });
-                }
-            } catch (Exception e) {
-                Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "MainActivity exportUserData Outer-Lock");
-                e.printStackTrace();
-            } finally {
-                if (fileLock != null) {
-                    fileLock.unlock();
+        public void exportUserData() {
+            if (!Environment.isExternalStorageManager()) {
+                showDialog(new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Folder Access for Back-up")
+                    .setMessage("Allow permission to access folders for backup.")
+                    .setPositiveButton("OK", (dialogInterface, i) -> {
+                        Intent intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.fromParts("package", getPackageName(), null));
+                        startActivity(intent);
+                    })
+                    .setNegativeButton("CANCEL", null), true);
+            } else {
+                File exportDirectory = new File(exportPath);
+                if (exportDirectory.isDirectory()) {
+                    boolean dirIsCreated;
+                    if (!exportDirectory.exists()) {
+                        dirIsCreated = exportDirectory.mkdirs();
+                    } else {
+                        dirIsCreated = true;
+                    }
+                    if (exportDirectory.isDirectory() && dirIsCreated) {
+                        if (backUpLocalServer != null) backUpLocalServer.stopServer();
+                        final Handler exportUserDataUIhandler = new Handler(Looper.getMainLooper());
+                        backUpLocalServer = new BackUpLocalServer(
+                            new File(exportPath), true,
+                            url -> exportUserDataUIhandler.post(() -> webView.loadUrl("javascript:window?.['"+UNIQUE_KEY+".localServerUrlPromise']?.resolve?.('"+url+"')")),
+                            () -> exportUserDataUIhandler.post(() -> webView.loadUrl("javascript:window?.['"+UNIQUE_KEY+".exportPromise']?.resolve?.()")),
+                            promise -> exportUserDataUIhandler.post(() -> webView.loadUrl("javascript:window?.['"+UNIQUE_KEY+"."+promise+"']?.reject?.()"))
+                        );
+                        backUpLocalServer.startServer();
+                    } else if (!dirIsCreated) {
+                        showToast(Toast.makeText(getApplicationContext(), "Can't find the folder for backup, please create it first", Toast.LENGTH_LONG));
+                    }
+                } else if (exportPath != null && !exportPath.isEmpty() && !exportDirectory.isDirectory()) {
+                    String[] tempExportPath = exportPath.split(Pattern.quote(File.separator));
+                    String tempPathName =
+                            tempExportPath.length > 1
+                            ? tempExportPath[tempExportPath.length - 2] + File.separator + tempExportPath[tempExportPath.length - 1]
+                            : tempExportPath[tempExportPath.length - 1];
+                    showDialog(new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Back-up Folder is Missing")
+                        .setMessage("Folder directory [" + tempPathName + "] is missing, please choose another folder for backup.")
+                        .setPositiveButton("OK", (dialogInterface, x) -> {
+                            showToast(Toast.makeText(getApplicationContext(), "Select or create a folder for backup", Toast.LENGTH_LONG));
+                            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
+                            chooseExportFile.launch(i);
+                        })
+                        .setNegativeButton("CANCEL", null), true);
+                } else {
+                    Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
+                    chooseExportFile.launch(i);
+                    showToast(Toast.makeText(getApplicationContext(), "Select or create a folder for backup", Toast.LENGTH_LONG));
                 }
             }
         }
@@ -953,14 +792,14 @@ public class MainActivity extends AppCompatActivity {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 if (!Environment.isExternalStorageManager()) {
                     showDialog(new AlertDialog.Builder(MainActivity.this)
-                                    .setTitle("File Access for Back-up")
-                                    .setMessage("Allow permission to access folders for backup.")
-                                    .setPositiveButton("OK", (dialogInterface, i) -> {
-                                        Intent intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.fromParts("package", getPackageName(), null));
-                                        startActivity(intent);
-                                    })
-                                    .setNegativeButton("CANCEL", null),
-                            true);
+                        .setTitle("File Access for Back-up")
+                        .setMessage("Allow permission to access folders for backup.")
+                        .setPositiveButton("OK", (dialogInterface, i) -> {
+                            Intent intent = new Intent(ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.fromParts("package", getPackageName(), null));
+                            startActivity(intent);
+                        })
+                        .setNegativeButton("CANCEL", null),
+                true);
                 } else {
                     Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
                     chooseExportFile.launch(i);
@@ -1320,10 +1159,6 @@ public class MainActivity extends AppCompatActivity {
                         true);
             }
         });
-    }
-
-    public void isExported(boolean success) {
-        webView.post(() -> webView.loadUrl("javascript:window?.isExported?.("+(success?"true":"false")+")"));
     }
 
     public void checkEntries() {

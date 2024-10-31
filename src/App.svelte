@@ -127,11 +127,15 @@
 			await (async () => {
 				const hasInitialData = await hasIDBData([
 					"mediaEntries",
+					"mediaEntriesInfo",
+					"orderedMediaOptions",
 					"excludedMediaIds",
-					// "orderedMediaOptions",
 					"tagInfo",
 				])
-				if (!hasInitialData) await retrieveInitialData()
+				if (!hasInitialData) {
+					$initList = true
+					await retrieveInitialData()
+				}
 				if (!$android || window[$isBackgroundUpdateKey] !== true) {
 					const records = await getIDBRecords([
 						"username",
