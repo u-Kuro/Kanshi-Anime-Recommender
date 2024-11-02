@@ -44,6 +44,9 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.webkit.WebViewAssetLoader;
 
+import com.example.kanshi.LocalHTTPServer.LocalServer;
+import com.example.kanshi.LocalHTTPServer.LocalServerListener;
+
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -61,7 +64,6 @@ import java.util.concurrent.TimeUnit;
 public class MainService extends Service {
     public static WeakReference<MainService> weakActivity;
     WebView webView;
-    private String exportPath;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
     private boolean keepAppRunningInBackground = false;
@@ -101,7 +103,7 @@ public class MainService extends Service {
                     keepAppRunningInBackground = !keepAppRunningInBackground;
                     prefsEdit.putBoolean("keepAppRunningInBackground", keepAppRunningInBackground).apply();
                 }
-                updateNotificationTitle("");
+                updateMediaNotificationTitle("");
             }
         }
         return START_STICKY;
@@ -122,7 +124,6 @@ public class MainService extends Service {
         prefsEdit = prefs.edit();
         // Saved Data
         keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",true);
-        exportPath = prefs.getString("savedExportPath", "");
 
         // Create a notification channel
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -302,7 +303,7 @@ public class MainService extends Service {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
-    public void updateNotificationTitle(String title) {
+    public void updateMediaNotificationTitle(String title) {
         Context context = this.getApplicationContext();
         if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             return;
@@ -440,34 +441,41 @@ public class MainService extends Service {
         @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
         @JavascriptInterface
         public void sendBackgroundStatus(String text) {
-            updateNotificationTitle(text);
+            updateMediaNotificationTitle(text);
         }
-        private BackUpLocalServer backUpLocalServer;
+        private final LocalServer localServer = new LocalServer(
+            new LocalServerListener() {
+                @Override
+                public void onStart(String url) {
+                    webView.loadUrl("javascript:window?.['" + UNIQUE_KEY + localServer.LOCAL_SERVER_URL_PROMISE + "']?.resolve?.('" + url + "')");
+                }
+                @Override
+                public void onFinish(String promise) {
+                    webView.loadUrl("javascript:window?.['" + UNIQUE_KEY + promise + "']?.resolve?.()");
+                }
+                @Override
+                public void onError(String promise) {
+                    webView.loadUrl("javascript:window?.['" + UNIQUE_KEY + promise + "']?.reject?.()");
+                }
+            },
+            false
+        );
+        public void getLocalServerURL() { localServer.getLocalServerURL(); }
         @RequiresApi(api = Build.VERSION_CODES.R)
         @JavascriptInterface
-        public void exportUserData() {
+        public boolean backUpIsAvailable() {
             if (Environment.isExternalStorageManager()) {
-                File exportDirectory = new File(exportPath);
-                if (exportDirectory.isDirectory()) {
-                    boolean dirIsCreated;
-                    if (!exportDirectory.exists()) {
-                        dirIsCreated = exportDirectory.mkdirs();
-                    } else {
-                        dirIsCreated = true;
-                    }
-                    if (exportDirectory.isDirectory() && dirIsCreated) {
-                        if (backUpLocalServer != null) backUpLocalServer.stopServer();
-                        final Handler exportUserDataUIhandler = new Handler(Looper.getMainLooper());
-                        backUpLocalServer = new BackUpLocalServer(
-                            new File(exportPath), false,
-                            url -> exportUserDataUIhandler.post(() -> webView.loadUrl("javascript:window?.['"+UNIQUE_KEY+".localServerUrlPromise']?.resolve?.('"+url+"')")),
-                            () -> exportUserDataUIhandler.post(() -> webView.loadUrl("javascript:window?.['"+UNIQUE_KEY+".exportPromise']?.resolve?.()")),
-                            promise -> exportUserDataUIhandler.post(() -> webView.loadUrl("javascript:window?.['"+UNIQUE_KEY+"."+promise+"']?.reject?.()"))
-                        );
-                        backUpLocalServer.startServer();
+                final String exportPath = prefs.getString("savedExportPath", "");
+                if (!exportPath.isEmpty()) {
+                    File backupDirectory = new File(exportPath);
+                    backupDirectory.mkdirs();
+                    if (backupDirectory.isDirectory()) {
+                        localServer.setBackupDirectory(backupDirectory);
+                        return true;
                     }
                 }
             }
+            return false;
         }
         @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
@@ -477,23 +485,23 @@ public class MainService extends Service {
         }
         @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
-        public void callUpdateNotifications() {
+        public void callUpdateMediaNotifications() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 updateCurrentNotifications();
             }
         }
-        private final ExecutorService updateNotificationsExecutorService = Executors.newFixedThreadPool(1);
-        private final Map<String, Future<?>> updateNotificationsFutures = new ConcurrentHashMap<>();
+        private final ExecutorService updateMediaNotificationsExecutorService = Executors.newFixedThreadPool(1);
+        private final Map<String, Future<?>> updateMediaNotificationsFutures = new ConcurrentHashMap<>();
         @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
-        public void updateNotifications(long mediaId, String title, long maxEpisode, String mediaUrl, String userStatus, long episodeProgress) {
-            if (updateNotificationsFutures.containsKey(String.valueOf(mediaId))) {
-                Future<?> future = updateNotificationsFutures.get(String.valueOf(mediaId));
+        public void updateMediaNotifications(long mediaId, String title, long maxEpisode, String mediaUrl, String userStatus, long episodeProgress) {
+            if (updateMediaNotificationsFutures.containsKey(String.valueOf(mediaId))) {
+                Future<?> future = updateMediaNotificationsFutures.get(String.valueOf(mediaId));
                 if (future != null && !future.isDone()) {
                     future.cancel(true);
                 }
             }
-            Future<?> future = updateNotificationsExecutorService.submit(() -> {
+            Future<?> future = updateMediaNotificationsExecutorService.submit(() -> {
                 try {
                     if (MediaNotificationManager.allMediaNotification.isEmpty()) {
                         @SuppressWarnings("unchecked") ConcurrentHashMap<String, MediaNotification> $allMediaNotification = (ConcurrentHashMap<String, MediaNotification>) LocalPersistence.readObjectFromFile(MainService.this, "allMediaNotification");
@@ -507,16 +515,16 @@ public class MainService extends Service {
                     ConcurrentHashMap<String, MediaNotification> updatedMediaNotifications = new ConcurrentHashMap<>();
                     List<MediaNotification> allMediaNotificationValues = new ArrayList<>(MediaNotificationManager.allMediaNotification.values());
                     for (MediaNotification media : allMediaNotificationValues) {
-                        if (media.mediaId ==mediaId) {
+                        if (media.mediaId == mediaId) {
                             MediaNotification newMedia = new MediaNotification(media.mediaId, title, media.releaseEpisode, maxEpisode, media.releaseDateMillis, media.imageByte, mediaUrl, userStatus, episodeProgress);
                             updatedMediaNotifications.put(media.mediaId +"-"+media.releaseEpisode, newMedia);
                         }
                     }
                     MediaNotificationManager.allMediaNotification.putAll(updatedMediaNotifications);
                     MediaNotificationManager.writeMediaNotificationInFile(MainService.this, true);
-                    updateNotificationsFutures.remove(String.valueOf(mediaId));
+                    updateMediaNotificationsFutures.remove(String.valueOf(mediaId));
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                        if (updateNotificationsFutures.isEmpty()) {
+                        if (updateMediaNotificationsFutures.isEmpty()) {
                             SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
                             if (schedulesTabFragment!=null) {
                                 new Handler(Looper.getMainLooper()).post(()->schedulesTabFragment.updateScheduledMedia(false, false));
@@ -529,12 +537,12 @@ public class MainService extends Service {
                     }
                 } catch (Exception e) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "updateNotificationsExecutorService");
+                        Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "updateMediaNotificationsExecutorService");
                     }
                     e.printStackTrace();
                 }
             });
-            updateNotificationsFutures.put(String.valueOf(mediaId), future);
+            updateMediaNotificationsFutures.put(String.valueOf(mediaId), future);
         }
         @JavascriptInterface
         public void showNewUpdatedMediaNotification(long addedMediaCount, long updatedMediaCount) {
@@ -567,7 +575,7 @@ public class MainService extends Service {
                 }
                 String joinedMediaIds = String.join(",", mediaIdsToBeUpdated);
                 Handler handler = new Handler(Looper.getMainLooper());
-                handler.post(() -> webView.loadUrl("javascript:window?.updateNotifications?.([" + joinedMediaIds + "])"));
+                handler.post(() -> webView.loadUrl("javascript:window?.updateMediaNotifications?.([" + joinedMediaIds + "])"));
             } catch (Exception e) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService updateCurrentNotificationsExecutorService");

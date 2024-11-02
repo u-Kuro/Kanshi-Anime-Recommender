@@ -229,7 +229,7 @@
 					let recommendationListIsProcessed
 					if (dataIsUpdated) {
 						try {
-							window.shouldUpdateNotifications = true
+							window.shouldUpdateMediaNotifications = true
 							await processRecommendedMediaEntries({ initList: true })
 							try {
 								JSBridge.setShouldProcessRecommendedEntries(false)
@@ -296,7 +296,7 @@
 				let shouldManageMedia
 				if (shouldProcessRecommendedEntries) {
 					$loadingCategory[""] = new Date()
-					window.shouldUpdateNotifications = true
+					window.shouldUpdateMediaNotifications = true
 					await processRecommendedMediaEntries({ initList: true })
 					shouldManageMedia = true
 				}

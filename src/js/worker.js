@@ -46,6 +46,7 @@ import {
     evictedKey,
     uniqueKey,
 } from "./variables.js";
+import { getLocalServerURL } from "./utils/localHTTPServerUtils.js";
 
 const hasOwnProp = Object.prototype.hasOwnProperty
 let dataStatusPrio = false
@@ -211,8 +212,12 @@ const mediaLoader = (_data = {}) => {
                 }
 
                 mediaLoaderPromises[data.postId]?.resolve?.(data)
-            } else if (hasOwnProp.call(data, "updateNotifications")) {
-                mediaLoaderPromises[data.postId]?.resolve?.(data.mediaUpdates)
+            } else if (hasOwnProp.call(data, "updateMediaNotifications")) {
+                if (data.mediaUpdatesBlob instanceof Blob) {
+                    mediaLoaderPromises[data.postId]?.resolve?.(data.mediaUpdatesBlob)
+                } else {
+                    mediaLoaderPromises[data.postId]?.reject?.()
+                }
             } else if (hasOwnProp.call(data, "getEarlisetReleaseDate")) {
                 let currentEarliestDate = get(earlisetReleaseDate)
                 let airingAt = data.earliestReleaseDate
@@ -502,8 +507,7 @@ const mediaManager = (_data = {}) => {
     })
 }
 
-let processRecommendedMediaEntriesWorker;
-let mediaReleaseUpdateTimeout
+let scheduleMediaNotificationsWorker, mediaReleaseUpdateTimeout
 window.setMediaReleaseUpdateTimeout = (nearestMediaReleaseAiringAt) => {
     if (typeof nearestMediaReleaseAiringAt === "number" && !isNaN(nearestMediaReleaseAiringAt)) {
         clearTimeout(mediaReleaseUpdateTimeout)
@@ -513,8 +517,43 @@ window.setMediaReleaseUpdateTimeout = (nearestMediaReleaseAiringAt) => {
         }, Math.min(timeLeftBeforeMediaReleaseUpdate, 2000000000))
     }
 }
+const scheduleMediaNotifications = async () => {
+    try {
+        scheduleMediaNotificationsWorker?.terminate?.()
+        const url = await progressedFetch("./web-worker/addMediaNotifications.js")
+        scheduleMediaNotificationsWorker = new Worker(url)
+        scheduleMediaNotificationsWorker.postMessage(0)
+        scheduleMediaNotificationsWorker.onmessage = ({ data }) => {
+            if (hasOwnProp?.call?.(data, "error")) {
+                scheduleMediaNotificationsWorker?.terminate?.()
+                console.error(data.error)
+            } else if (
+                hasOwnProp?.call?.(data, "nearestMediaReleaseAiringAt")
+                || hasOwnProp?.call?.(data, "mediaReleaseNotificationsBlob")
+            ) {
+                if (data.mediaReleaseNotificationsBlob instanceof Blob) {
+                    fetch()
+                }
+                
+                if (isValidDateTime(data.nearestMediaReleaseAiringAt * 1000)) {
+                    setLSData("nearestMediaReleaseAiringAt", nearestMediaReleaseAiringAt)
+                    .catch(() => removeLSData("nearestMediaReleaseAiringAt"))
+                    .finally(() => setIDBData("nearestMediaReleaseAiringAt", nearestMediaReleaseAiringAt));
+                    window.setMediaReleaseUpdateTimeout?.(nearestMediaReleaseAiringAt)
+                }
+            } else {
+                scheduleMediaNotificationsWorker?.terminate?.()
+            }
+        }
+        scheduleMediaNotificationsWorker.onerror = () => {
+            scheduleMediaNotificationsWorker?.terminate?.()
+        }
+    } catch {
+        scheduleMediaNotificationsWorker?.terminate?.()
+    }
+}
 
-let passedAlgorithmFilter, passedAlgorithmFilterId
+let processRecommendedMediaEntriesWorker, passedAlgorithmFilter, passedAlgorithmFilterId
 const processRecommendedMediaEntries = (_data = {}) => {
     if (get(initList) !== false && !_data?.initList) {
         return
@@ -539,10 +578,9 @@ const processRecommendedMediaEntries = (_data = {}) => {
         progress.set(0)
         progressedFetch("./web-worker/processRecommendedMediaEntries.js", 44122, "Updating Recommendation List")
             .then(url => {
-                processRecommendedMediaEntriesWorker?.terminate?.();
-                const lastProcessRecommendationAiringAt = parseInt((new Date().getTime() / 1000))
-                let nearestMediaReleaseAiringAt
                 isProcessingList.set(true)
+                scheduleMediaNotificationsWorker?.terminate?.()
+                processRecommendedMediaEntriesWorker?.terminate?.();
                 processRecommendedMediaEntriesWorker = new Worker(url);
                 processRecommendedMediaEntriesWorker.postMessage(_data);
                 processRecommendedMediaEntriesWorker.onmessage = ({ data }) => {
@@ -565,44 +603,6 @@ const processRecommendedMediaEntries = (_data = {}) => {
                         alertError()
                         console.error(data.error)
                         reject(data.error);
-                    } else if (hasOwnProp?.call?.(data, "mediaReleaseNotification")) {
-                        if (get(android)) {
-                            try {
-                                let aniReleaseNotif = data?.mediaReleaseNotification
-                                if (
-                                    typeof aniReleaseNotif?.releaseEpisode === "number" && !isNaN(aniReleaseNotif.releaseEpisode) && isFinite(aniReleaseNotif.releaseEpisode)
-                                    && typeof aniReleaseNotif.releaseDateMillis === "number" && !isNaN(aniReleaseNotif.releaseDateMillis) && isFinite(aniReleaseNotif.releaseDateMillis)
-                                    && typeof aniReleaseNotif.maxEpisode === "number" && !isNaN(aniReleaseNotif.maxEpisode) && isFinite(aniReleaseNotif.maxEpisode)
-                                    && typeof aniReleaseNotif.title === "string"
-                                    && typeof aniReleaseNotif.id === "number" && !isNaN(aniReleaseNotif.id) && isFinite(aniReleaseNotif.id)
-                                    && typeof aniReleaseNotif.userStatus === "string"
-                                    && typeof aniReleaseNotif.imageURL === "string"
-                                    && typeof aniReleaseNotif.mediaUrl === "string"
-                                    && typeof aniReleaseNotif.episodeProgress === "number" && !isNaN(aniReleaseNotif.episodeProgress) && isFinite(aniReleaseNotif.episodeProgress)
-                                ) {
-                                    JSBridge.addMediaReleaseNotification(
-                                        Math.floor(aniReleaseNotif.id),
-                                        aniReleaseNotif.title,
-                                        Math.floor(aniReleaseNotif.releaseEpisode),
-                                        Math.floor(aniReleaseNotif.maxEpisode),
-                                        Math.floor(aniReleaseNotif.releaseDateMillis),
-                                        aniReleaseNotif.imageURL,
-                                        aniReleaseNotif.mediaUrl,
-                                        aniReleaseNotif.userStatus,
-                                        Math.floor(aniReleaseNotif.episodeProgress)
-                                    )
-                                }
-                            } catch (ex) { console.error(ex) }
-                        }
-                    } else if (hasOwnProp?.call?.(data, "mediaReleaseAiringAt")) {
-                        const mediaReleaseAiringAt = data?.mediaReleaseAiringAt
-                        if (mediaReleaseAiringAt > lastProcessRecommendationAiringAt && typeof mediaReleaseAiringAt === "number" && !isNaN(mediaReleaseAiringAt)) {
-                            if (
-                                nearestMediaReleaseAiringAt > mediaReleaseAiringAt || nearestMediaReleaseAiringAt == null
-                            ) {
-                                nearestMediaReleaseAiringAt = mediaReleaseAiringAt
-                            }
-                        }
                     } else if (
                         hasOwnProp?.call?.(data, "averageScoreMode")
                         || hasOwnProp?.call?.(data, "animePopularityMode")
@@ -614,28 +614,23 @@ const processRecommendedMediaEntries = (_data = {}) => {
                         window.updateRecommendationError?.(data?.recommendationError)
                     } else {
                         processRecommendedMediaEntriesWorker?.terminate?.();
-                        setLSData("nearestMediaReleaseAiringAt", nearestMediaReleaseAiringAt)
-                        .catch(() => removeLSData("nearestMediaReleaseAiringAt"))
-                        .finally(() => setIDBData("nearestMediaReleaseAiringAt", nearestMediaReleaseAiringAt));
-                        if (window.shouldUpdateNotifications === true && get(android)) {
-                            window.shouldUpdateNotifications = false
+                        if (window.shouldUpdateMediaNotifications === true && get(android)) {
+                            window.shouldUpdateMediaNotifications = false
                             try {
-                                JSBridge.callUpdateNotifications()
+                                JSBridge.callUpdateMediaNotifications()
                             } catch (ex) { console.error(ex) }
                         }
                         if (passedAlgorithmFilterId === data?.passedAlgorithmFilterId && passedAlgorithmFilterId != null) {
                             passedAlgorithmFilterId = passedAlgorithmFilter = undefined
                         }
                         if (data?.hasNewFilterOption) {
-                            getOrderedFilters()
+                            getOrderedMediaOptions()
                         }
+                        scheduleMediaNotifications()
                         dataStatusPrio = false
                         isProcessingList.set(false)
                         dataStatus.set(null)
                         progress.set(100)
-                        if (nearestMediaReleaseAiringAt) {
-                            window.setMediaReleaseUpdateTimeout?.(nearestMediaReleaseAiringAt)
-                        }
                         resolve()
                         if (get(isImporting)) {
                             mediaLoader({ loadAll: true, selectedCategory: get(selectedCategory) })
@@ -933,7 +928,7 @@ const requestUserEntries = (_data = {}) => {
                         reject(data.error)
                     } else if (hasOwnProp?.call?.(data, "updateRecommendationList")) {
                         if (get(android)) {
-                            window.KanshiBackgroundshouldProcessRecommendedEntries = window.shouldUpdateNotifications = true
+                            window.KanshiBackgroundshouldProcessRecommendedEntries = window.shouldUpdateMediaNotifications = true
                         }
                         updateRecommendationList.update(e => !e)
                     } else {
@@ -1057,28 +1052,19 @@ const exportUserData = (_data) => {
                         dataStatusPrio = false
                         isExporting.set(false)
                         try {
-                            const exportPromise = new Promise((resolve, reject) => {
-                                window[`${get(uniqueKey)}.exportPromise`] = { resolve, reject }
-                            })
-                            const localServerUrl = await new Promise((resolve, reject) => {
-                                window[`${get(uniqueKey)}.localServerUrlPromise`] = { resolve, reject }
-                                try {
-                                    JSBridge.exportUserData()
-                                } catch {
-                                    reject()
-                                }
-                            })
-                            fetch(localServerUrl, {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/octet-stream",
-                                    "Content-Encoding": "gzip",
-                                    "filename": `Kanshi.${data.username?.toLowerCase?.() || "backup"}.gzip`
-                                },
-                                body: data.blob
-                            });
-                            await exportPromise
-                            if (_data?.isManual) showToast("Data has been exported")
+                            if (JSBridge.backUpIsAvailable()) {
+                                await fetch(
+                                    `${await getLocalServerURL()}/backup-user-data`, {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/octet-stream",
+                                        "Content-Encoding": "gzip",
+                                        "filename": `Kanshi.${data.username?.toLowerCase?.() || "backup"}.gzip`
+                                    },
+                                    body: data.blob
+                                });
+                                if (_data?.isManual) showToast("Data has been exported")
+                            }
                         } catch {
                             if (_data?.isManual) {
                                 (async () => {
@@ -1231,7 +1217,7 @@ const importUserData = (_data) => {
                         importUserDataWorker?.terminate?.();
                         window[get(evictedKey)] = false
                         if (get(android)) {
-                            window.shouldUpdateNotifications = true
+                            window.shouldUpdateMediaNotifications = true
                         }
                         dataStatusPrio = false
                         processRecommendedMediaEntries({ isImporting: true })
@@ -1347,26 +1333,26 @@ const retrieveInitialData = (_data) => {
     })
 }
 
-let getOrderedFiltersWorker
-const getOrderedFilters = async () => {
+let getOrderedMediaOptionsWorker
+const getOrderedMediaOptions = async () => {
     try {
-        getOrderedFiltersWorker?.terminate?.()
-        const url = await progressedFetch("./web-worker/getOrderedFilters.js")
-        getOrderedFiltersWorker = new Worker(url)
-        getOrderedFiltersWorker.postMessage(0)
-        getOrderedFiltersWorker.onmessage = ({ data }) => {
-            getOrderedFiltersWorker?.terminate?.()
+        getOrderedMediaOptionsWorker?.terminate?.()
+        const url = await progressedFetch("./web-worker/getOrderedMediaOptions.js")
+        getOrderedMediaOptionsWorker = new Worker(url)
+        getOrderedMediaOptionsWorker.postMessage(0)
+        getOrderedMediaOptionsWorker.onmessage = ({ data }) => {
+            getOrderedMediaOptionsWorker?.terminate?.()
             if (hasOwnProp?.call?.(data, "error")) {
                 console.error(data.error)
             } else if (hasOwnProp?.call?.(data, "orderedMediaOptions") && isJsonObject(data.orderedMediaOptions) && !jsonIsEmpty(data.orderedMediaOptions)) {
                 orderedMediaOptions.set(data.orderedMediaOptions)
             }
         }
-        getOrderedFiltersWorker.onerror = () => {
-            getOrderedFiltersWorker?.terminate?.()
+        getOrderedMediaOptionsWorker.onerror = () => {
+            getOrderedMediaOptionsWorker?.terminate?.()
         }
     } catch {
-        getOrderedFiltersWorker?.terminate?.()
+        getOrderedMediaOptionsWorker?.terminate?.()
     }
 }
 
@@ -1464,30 +1450,41 @@ function alertError() {
     }
 }
 
-window.updateNotifications = async (mediaIds = []) => {
+window.updateMediaNotifications = async () => {
     if (!get(android)) return
     try {
-        const mediaUpdates = await mediaLoader({ updateNotifications: true, mediaIds })
-        for (let mediaId in mediaUpdates) {
-            const media = mediaUpdates[mediaId]
-            mediaId = parseInt(mediaId)
-            if (typeof mediaId === "number" && !isNaN(mediaId) && isFinite(mediaId)
-                && typeof media?.title === "string"
-                && typeof media.maxEpisode === "number" && !isNaN(media.maxEpisode) && isFinite(media.maxEpisode)
-                && typeof media.mediaUrl === "string"
-                && typeof media.userStatus === "string"
-                && typeof media.episodeProgress === "number" && !isNaN(media.episodeProgress) && isFinite(media.episodeProgress)
-            ) {
-                JSBridge.updateNotifications(
-                    Math.floor(mediaId),
-                    media.title,
-                    Math.floor(media?.maxEpisode),
-                    media.mediaUrl,
-                    media.userStatus,
-                    Math.floor(media.episodeProgress)
-                )
-            }
-        }
+        await fetch(
+            `${await getLocalServerURL()}/update-media-notifications`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/octet-stream",
+                "Content-Encoding": "gzip"
+            },
+            body: await mediaLoader({
+                updateMediaNotifications: true,
+                mediaIdsBlob: await (await fetch(`${await getLocalServerURL()}/get-current-media-notification-ids`)).blob()
+            })
+        });
+        // for (let mediaId in mediaUpdates) {
+        //     const media = mediaUpdates[mediaId]
+        //     mediaId = parseInt(mediaId)
+        //     if (typeof mediaId === "number" && !isNaN(mediaId) && isFinite(mediaId)
+        //         && typeof media?.title === "string"
+        //         && typeof media.maxEpisode === "number" && !isNaN(media.maxEpisode) && isFinite(media.maxEpisode)
+        //         && typeof media.mediaUrl === "string"
+        //         && typeof media.userStatus === "string"
+        //         && typeof media.episodeProgress === "number" && !isNaN(media.episodeProgress) && isFinite(media.episodeProgress)
+        //     ) {
+        //         JSBridge.updateMediaNotifications(
+        //             Math.floor(mediaId),
+        //             media.title,
+        //             Math.floor(media?.maxEpisode),
+        //             media.mediaUrl,
+        //             media.userStatus,
+        //             Math.floor(media.episodeProgress)
+        //         )
+        //     }
+        // }
     } catch (ex) { console.error(ex) }
 
 }

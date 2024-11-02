@@ -1,10 +1,13 @@
-package com.example.kanshi;
+package com.example.kanshi.LocalHTTPServer;
 
 import static com.example.kanshi.LocalPersistence.getLockForFile;
 import static com.example.kanshi.LocalPersistence.getLockForFileName;
 
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
 import java.io.BufferedInputStream;
@@ -24,46 +27,37 @@ import java.util.zip.GZIPOutputStream;
 
 import fi.iki.elonen.NanoHTTPD;
 
-public class BackUpLocalServer extends NanoHTTPD {
+public class UpdateMediaNotificationLocalServer extends NanoHTTPD {
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private final Handler UIHandler = new Handler(Looper.getMainLooper());
     private final File outputDirectory;
     private final boolean isMain;
-    public interface OnStartListener { void onStart(String port); }
-    public interface OnFinishListener { void onFinish(); }
-    public interface OnErrorListener { void onError(String promise); }
-    private final OnStartListener onStartListener;
-    private final OnFinishListener onFinishListener;
-    private final OnErrorListener onErrorListener;
-    private final String LOCAL_SERVER_URL_PROMISE = "localServerUrlPromise";
+    @NonNull
+    private final LocalServerListener localServerListener;
+    public final String LOCAL_SERVER_URL_PROMISE = "localServerUrlPromise";
     /** @noinspection FieldCanBeLocal*/
-    private final String EXPORT_PROMISE = "exportPromise";
+    public final String EXPORT_PROMISE = "exportPromise";
     private ReentrantLock tempOutputFileLock;
     private ReentrantLock outputFileLock;
 
-    public BackUpLocalServer(
-        File outputDirectory,
-        boolean isMain,
-        OnStartListener onStartListener,
-        OnFinishListener onFinishListener,
-        OnErrorListener onErrorListener
+    public UpdateMediaNotificationLocalServer(
+            File outputDirectory,
+            boolean isMain,
+            @NonNull LocalServerListener localServerListener
     ) {
         super(0);
         this.outputDirectory = outputDirectory;
         this.isMain = isMain;
-        this.onStartListener = onStartListener;
-        this.onFinishListener = onFinishListener;
-        this.onErrorListener = onErrorListener;
+        this.localServerListener = localServerListener;
     }
     public void startServer() {
         executorService.execute(() -> {
             try {
                 start(SOCKET_READ_TIMEOUT, false);
-                if (onStartListener != null) onStartListener.onStart("http://localhost:"+getListeningPort());
+                UIHandler.post(() -> localServerListener.onStart("http://localhost:"+getListeningPort()));
             } catch (IOException e) {
-                if (onErrorListener != null) {
-                    onErrorListener.onError(LOCAL_SERVER_URL_PROMISE);
-                    stopServer();
-                }
+                UIHandler.post(() -> localServerListener.onError(LOCAL_SERVER_URL_PROMISE));
+                stopServer();
             }
         });
     }
@@ -83,7 +77,7 @@ public class BackUpLocalServer extends NanoHTTPD {
 
         String filename = session.getHeaders().get("filename");
         if (filename == null || filename.isEmpty()) {
-            onErrorListener.onError(EXPORT_PROMISE);
+            UIHandler.post(() -> localServerListener.onError(EXPORT_PROMISE));
             return null;
         }
 
@@ -95,8 +89,8 @@ public class BackUpLocalServer extends NanoHTTPD {
         tempOutputFileLock = getLockForFile(tempOutputFile);
         tempOutputFileLock.lock();
         try (
-            GZIPInputStream gzipInputStream = new GZIPInputStream(new BufferedInputStream(session.getInputStream()));
-            GZIPOutputStream gzipOutputStream = new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(tempOutputFile, true)))
+                GZIPInputStream gzipInputStream = new GZIPInputStream(new BufferedInputStream(session.getInputStream()));
+                GZIPOutputStream gzipOutputStream = new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(tempOutputFile, true)))
         ) {
             byte[] buffer = new byte[8192];
             int bytesRead;
@@ -116,7 +110,7 @@ public class BackUpLocalServer extends NanoHTTPD {
                 Path tempPath = tempOutputFile.toPath();
                 Path backupPath = outputFile.toPath();
                 Files.copy(tempPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
-                if (onFinishListener != null) onFinishListener.onFinish();
+                UIHandler.post(localServerListener::onFinish);
                 if (tempOutputFile.exists() && tempOutputFile.isFile()) {
                     //noinspection ResultOfMethodCallIgnored
                     tempOutputFile.delete();
@@ -124,20 +118,20 @@ public class BackUpLocalServer extends NanoHTTPD {
                 stopServer();
             } finally {
                 if (
-                    outputFileLock != null
-                    && outputFileLock.isHeldByCurrentThread()
-                    && outputFileLock.isLocked()
+                        outputFileLock != null
+                                && outputFileLock.isHeldByCurrentThread()
+                                && outputFileLock.isLocked()
                 ) {
                     outputFileLock.unlock();
                 }
             }
         } catch (Exception e) {
-            if (onErrorListener != null) onErrorListener.onError(EXPORT_PROMISE);
+            UIHandler.post(() -> localServerListener.onError(EXPORT_PROMISE));
         } finally {
             if (
-                tempOutputFileLock != null
-                && tempOutputFileLock.isHeldByCurrentThread()
-                && tempOutputFileLock.isLocked()
+                    tempOutputFileLock != null
+                            && tempOutputFileLock.isHeldByCurrentThread()
+                            && tempOutputFileLock.isLocked()
             ) {
                 tempOutputFileLock.unlock();
             }
@@ -150,16 +144,16 @@ public class BackUpLocalServer extends NanoHTTPD {
             stop();
             executorService.shutdownNow();
             if (
-                tempOutputFileLock != null
-                && tempOutputFileLock.isHeldByCurrentThread()
-                && tempOutputFileLock.isLocked()
+                    tempOutputFileLock != null
+                            && tempOutputFileLock.isHeldByCurrentThread()
+                            && tempOutputFileLock.isLocked()
             ) {
                 tempOutputFileLock.unlock();
             }
             if (
-                outputFileLock != null
-                && outputFileLock.isHeldByCurrentThread()
-                && outputFileLock.isLocked()
+                    outputFileLock != null
+                            && outputFileLock.isHeldByCurrentThread()
+                            && outputFileLock.isLocked()
             ) {
                 outputFileLock.unlock();
             }

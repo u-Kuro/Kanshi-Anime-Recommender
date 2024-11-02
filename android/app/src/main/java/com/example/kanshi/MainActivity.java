@@ -103,13 +103,15 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 import androidx.webkit.WebViewAssetLoader;
 
+import com.example.kanshi.LocalHTTPServer.LocalServer;
+import com.example.kanshi.LocalHTTPServer.LocalServerListener;
+
 public class MainActivity extends AppCompatActivity {
     public boolean keepAppRunningInBackground = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
     private ValueCallback<Uri[]> mUploadMessage;
-    private String exportPath;
     public MediaWebView webView;
     private ProgressBar progressbar;
     private boolean pageLoaded = false;
@@ -178,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
             );
-    final ActivityResultLauncher<Intent> chooseExportFile =
+    final ActivityResultLauncher<Intent> chooseExportDirectory =
             registerForActivityResult(
                     new ActivityResultContracts.StartActivityForResult(),
                     new ActivityResultCallback<>() {
@@ -191,9 +193,8 @@ public class MainActivity extends AppCompatActivity {
                             }
                             Uri uri = intent.getData();
                             Uri docUri = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
-                            exportPath = getThisPath(docUri);
+                            prefsEdit.putString("savedExportPath", getThisPath(docUri)).apply();
                             showToast(Toast.makeText(getApplicationContext(), "Folder was selected, you can now back up your data", Toast.LENGTH_LONG));
-                            prefsEdit.putString("savedExportPath", exportPath).apply();
                             webView.post(()->webView.loadUrl("javascript:window?.setExportPathAvailability?.(true)"));
                         }
                     }
@@ -231,8 +232,7 @@ public class MainActivity extends AppCompatActivity {
         prefsEdit = prefs.edit();
         // Saved Data
         keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground", true);
-        exportPath = prefs.getString("savedExportPath", "");
-        if (OWNER) { TOKEN = getTOKEN(exportPath); }
+        if (OWNER) { TOKEN = getTOKEN(prefs.getString("savedExportPath", "")); }
         permissionIsAsked = prefs.getBoolean("permissionIsAsked", false);
         // Keep Awake on Lock Screen
         wakeLock = ((PowerManager) getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "KeepAwake:");
@@ -715,10 +715,27 @@ public class MainActivity extends AppCompatActivity {
             }
             changeKeepAppRunningInBackground(enable);
         }
-        private BackUpLocalServer backUpLocalServer;
+        private final LocalServer localServer = new LocalServer(
+            new LocalServerListener() {
+                @Override
+                public void onStart(String url) {
+                    webView.loadUrl("javascript:window?.['" + UNIQUE_KEY + localServer.LOCAL_SERVER_URL_PROMISE + "']?.resolve?.('" + url + "')");
+                }
+                @Override
+                public void onFinish(String promise) {
+                    webView.loadUrl("javascript:window?.['" + UNIQUE_KEY + promise + "']?.resolve?.()");
+                }
+                @Override
+                public void onError(String promise) {
+                    webView.loadUrl("javascript:window?.['" + UNIQUE_KEY + promise + "']?.reject?.()");
+                }
+            },
+            true
+        );
+        public void getLocalServerURL() { localServer.getLocalServerURL(); }
         @RequiresApi(api = Build.VERSION_CODES.R)
         @JavascriptInterface
-        public void exportUserData() {
+        public boolean backUpIsAvailable() {
             if (!Environment.isExternalStorageManager()) {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
                     .setTitle("Folder Access for Back-up")
@@ -729,48 +746,36 @@ public class MainActivity extends AppCompatActivity {
                     })
                     .setNegativeButton("CANCEL", null), true);
             } else {
-                File exportDirectory = new File(exportPath);
-                if (exportDirectory.isDirectory()) {
-                    boolean dirIsCreated;
-                    if (!exportDirectory.exists()) {
-                        dirIsCreated = exportDirectory.mkdirs();
+                final String exportPath = prefs.getString("savedExportPath", "");
+                if (exportPath.isEmpty()) {
+                    Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
+                    chooseExportDirectory.launch(i);
+                    showToast(Toast.makeText(getApplicationContext(), "Select or create a folder for backup", Toast.LENGTH_LONG));
+                } else {
+                    File backupDirectory = new File(exportPath);
+                    backupDirectory.mkdirs();
+                    if (backupDirectory.isDirectory()) {
+                        localServer.setBackupDirectory(backupDirectory);
+                        return true;
                     } else {
-                        dirIsCreated = true;
-                    }
-                    if (exportDirectory.isDirectory() && dirIsCreated) {
-                        if (backUpLocalServer != null) backUpLocalServer.stopServer();
-                        final Handler exportUserDataUIhandler = new Handler(Looper.getMainLooper());
-                        backUpLocalServer = new BackUpLocalServer(
-                            new File(exportPath), true,
-                            url -> exportUserDataUIhandler.post(() -> webView.loadUrl("javascript:window?.['"+UNIQUE_KEY+".localServerUrlPromise']?.resolve?.('"+url+"')")),
-                            () -> exportUserDataUIhandler.post(() -> webView.loadUrl("javascript:window?.['"+UNIQUE_KEY+".exportPromise']?.resolve?.()")),
-                            promise -> exportUserDataUIhandler.post(() -> webView.loadUrl("javascript:window?.['"+UNIQUE_KEY+"."+promise+"']?.reject?.()"))
-                        );
-                        backUpLocalServer.startServer();
-                    } else if (!dirIsCreated) {
-                        showToast(Toast.makeText(getApplicationContext(), "Can't find the folder for backup, please create it first", Toast.LENGTH_LONG));
-                    }
-                } else if (exportPath != null && !exportPath.isEmpty() && !exportDirectory.isDirectory()) {
-                    String[] tempExportPath = exportPath.split(Pattern.quote(File.separator));
-                    String tempPathName =
+                        String[] tempExportPath = exportPath.split(Pattern.quote(File.separator));
+                        String tempPathName =
                             tempExportPath.length > 1
                             ? tempExportPath[tempExportPath.length - 2] + File.separator + tempExportPath[tempExportPath.length - 1]
                             : tempExportPath[tempExportPath.length - 1];
-                    showDialog(new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Back-up Folder is Missing")
-                        .setMessage("Folder directory [" + tempPathName + "] is missing, please choose another folder for backup.")
-                        .setPositiveButton("OK", (dialogInterface, x) -> {
-                            showToast(Toast.makeText(getApplicationContext(), "Select or create a folder for backup", Toast.LENGTH_LONG));
-                            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
-                            chooseExportFile.launch(i);
-                        })
-                        .setNegativeButton("CANCEL", null), true);
-                } else {
-                    Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
-                    chooseExportFile.launch(i);
-                    showToast(Toast.makeText(getApplicationContext(), "Select or create a folder for backup", Toast.LENGTH_LONG));
+                        showDialog(new AlertDialog.Builder(MainActivity.this)
+                            .setTitle("Back-up Folder is Missing")
+                            .setMessage("Folder directory [" + tempPathName + "] is missing, please choose another folder for backup.")
+                            .setPositiveButton("OK", (dialogInterface, x) -> {
+                                showToast(Toast.makeText(getApplicationContext(), "Select or create a folder for backup", Toast.LENGTH_LONG));
+                                Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
+                                chooseExportDirectory.launch(i);
+                            })
+                            .setNegativeButton("CANCEL", null), true);
+                    }
                 }
             }
+            return false;
         }
         @JavascriptInterface
         public void copyToClipBoard(String text) {
@@ -788,7 +793,7 @@ public class MainActivity extends AppCompatActivity {
             MainActivity.this.shouldGoBack = shouldGoBack;
         }
         @JavascriptInterface
-        public void chooseExportFolder() {
+        public void chooseExportDirectory() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 if (!Environment.isExternalStorageManager()) {
                     showDialog(new AlertDialog.Builder(MainActivity.this)
@@ -802,7 +807,7 @@ public class MainActivity extends AppCompatActivity {
                 true);
                 } else {
                     Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
-                    chooseExportFile.launch(i);
+                    chooseExportDirectory.launch(i);
                     showToast(Toast.makeText(getApplicationContext(), "Select or create a folder", Toast.LENGTH_LONG));
                 }
             }
@@ -852,18 +857,18 @@ public class MainActivity extends AppCompatActivity {
                 updateCurrentNotifications();
             }
         }
-        private final ExecutorService updateNotificationsExecutorService = Executors.newFixedThreadPool(1);
-        private final Map<String, Future<?>> updateNotificationsFutures = new ConcurrentHashMap<>();
+        private final ExecutorService updateMediaNotificationsExecutorService = Executors.newFixedThreadPool(1);
+        private final Map<String, Future<?>> updateMediaNotificationsFutures = new ConcurrentHashMap<>();
         @RequiresApi(api = Build.VERSION_CODES.O)
         @JavascriptInterface
-        public void updateNotifications(long mediaId, String title, long maxEpisode, String mediaUrl, String userStatus, long episodeProgress) {
-            if (updateNotificationsFutures.containsKey(String.valueOf(mediaId))) {
-                Future<?> future = updateNotificationsFutures.get(String.valueOf(mediaId));
+        public void updateMediaNotifications(long mediaId, String title, long maxEpisode, String mediaUrl, String userStatus, long episodeProgress) {
+            if (updateMediaNotificationsFutures.containsKey(String.valueOf(mediaId))) {
+                Future<?> future = updateMediaNotificationsFutures.get(String.valueOf(mediaId));
                 if (future != null && !future.isDone()) {
                     future.cancel(true);
                 }
             }
-            Future<?> future = updateNotificationsExecutorService.submit(() -> {
+            Future<?> future = updateMediaNotificationsExecutorService.submit(() -> {
                 try {
                     if (MediaNotificationManager.allMediaNotification.isEmpty()) {
                         @SuppressWarnings("unchecked") ConcurrentHashMap<String, MediaNotification> $allMediaNotification = (ConcurrentHashMap<String, MediaNotification>) LocalPersistence.readObjectFromFile(MainActivity.this, "allMediaNotification");
@@ -884,9 +889,9 @@ public class MainActivity extends AppCompatActivity {
                     }
                     MediaNotificationManager.allMediaNotification.putAll(updatedMediaNotifications);
                     MediaNotificationManager.writeMediaNotificationInFile(MainActivity.this, true);
-                    updateNotificationsFutures.remove(String.valueOf(mediaId));
+                    updateMediaNotificationsFutures.remove(String.valueOf(mediaId));
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                        if (updateNotificationsFutures.isEmpty()) {
+                        if (updateMediaNotificationsFutures.isEmpty()) {
                             SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
                             if (schedulesTabFragment!=null) {
                                 new Handler(Looper.getMainLooper()).post(()->schedulesTabFragment.updateScheduledMedia(false, false));
@@ -899,12 +904,12 @@ public class MainActivity extends AppCompatActivity {
                     }
                 } catch (Exception e) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "updateNotificationsExecutorService");
+                        Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "updateMediaNotificationsExecutorService");
                     }
                     e.printStackTrace();
                 }
             });
-            updateNotificationsFutures.put(String.valueOf(mediaId), future);
+            updateMediaNotificationsFutures.put(String.valueOf(mediaId), future);
         }
         @RequiresApi(api = Build.VERSION_CODES.P)
         @JavascriptInterface
@@ -1054,39 +1059,10 @@ public class MainActivity extends AppCompatActivity {
         prefsEdit.putBoolean("keepAppRunningInBackground", keepAppRunningInBackground).apply();
         webView.post(()->webView.loadUrl("javascript:window?.setKeepAppRunningInBackground?.("+(keepAppRunningInBackground?"true":"false")+")"));
     }
-    private final ExecutorService updateCurrentNotificationsExecutorService = Executors.newFixedThreadPool(1);
-    private Future<?> updateCurrentNotificationsFuture;
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void updateCurrentNotifications() {
-        if (updateCurrentNotificationsFuture != null && !updateCurrentNotificationsFuture.isCancelled()) {
-            updateCurrentNotificationsFuture.cancel(true);
-        }
-        updateCurrentNotificationsFuture = updateCurrentNotificationsExecutorService.submit(() -> {
-            try {
-                if (MediaNotificationManager.allMediaNotification.isEmpty()) {
-                    @SuppressWarnings("unchecked") ConcurrentHashMap<String, MediaNotification> $allMediaNotification = (ConcurrentHashMap<String, MediaNotification>) LocalPersistence.readObjectFromFile(MainActivity.this, "allMediaNotification");
-                    if ($allMediaNotification != null && !$allMediaNotification.isEmpty()) {
-                        MediaNotificationManager.allMediaNotification.putAll($allMediaNotification);
-                    } else {
-                        return;
-                    }
-                }
-                Set<String> mediaIdsToBeUpdated = new HashSet<>();
-                List<MediaNotification> allMediaNotificationValues = new ArrayList<>(MediaNotificationManager.allMediaNotification.values());
-                for (MediaNotification media : allMediaNotificationValues) {
-                    mediaIdsToBeUpdated.add(String.valueOf(media.mediaId));
-                }
-                String joinedMediaIds = String.join(",", mediaIdsToBeUpdated);
-                webView.post(() -> webView.loadUrl("javascript:window?.updateNotifications?.([" + joinedMediaIds + "])"));
-            } catch (Exception e) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "updateCurrentNotificationsExecutorService");
-                }
-                e.printStackTrace();
-            }
-        });
+        webView.post(() -> webView.loadUrl("javascript:window?.updateMediaNotifications?.()"));
     }
-
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void showUpdateNotice() {
         showDialog(new AlertDialog.Builder(MainActivity.this)

@@ -10,9 +10,12 @@ const equalsIgnoreCase = (str1, str2) => {
         return str1.toLowerCase() === str2.toLowerCase();
     } catch { }
 }
-
+function isValidDateTime(dateTime) {
+    return typeof dateTime === "number" && !isNaN(new Date(dateTime))
+}
 export {
     isJsonObject,
     jsonIsEmpty,
-    equalsIgnoreCase
+    equalsIgnoreCase,
+    isValidDateTime
 }
