@@ -1,7 +1,19 @@
 const isAndroid = () => {
     try {
         // Android Interface
-        return typeof JSBridge.exportUserData === "function"
+        return JSBridge.isAndroid() === true
+    } catch { return false }
+}
+const isAndroidBackground = () => {
+    try {
+        // Android Interface
+        return JSBridge.isAndroidBackground() === true
+    } catch { return false }
+}
+const isVisited = () => {
+    try {
+        // Android Interface
+        return JSBridge.isVisited() === true
     } catch { return false }
 }
 const isMobile = () => {
@@ -67,6 +79,8 @@ const isConnected = async () => {
 }
 export { 
     isAndroid,
+    isAndroidBackground,
+    isVisited,
     isMobile,
     isWebCrawler,
     isConnected,

@@ -23,6 +23,7 @@
 		exportUserData,
 		mediaLoader,
         updateTagInfo,
+        scheduleMediaNotifications,
 	} from "./js/worker.js";
 	import {
 		appID,
@@ -53,8 +54,7 @@
 		hasWheel,
 		progress,
 		dropdownIsVisible,
-		isBackgroundUpdateKey,
-		visitedKey,
+		visited,
 		orderedMediaOptions,
 		algorithmFilters,
 		categories,
@@ -75,9 +75,9 @@
         shownAllInList,
         currentMediaSortBy,
         currentMediaFilters,
-        evictedKey,
+        androidBackground,
+        evicted,
 	} from "./js/variables.js";
-
 	(async () => {
 		try {
 			// Check App ID (Not for Android allow Fast Start on Slow Network)
@@ -87,18 +87,18 @@
 
 			// Check Data Loss
 			if ($android) {
-				if (window[$visitedKey] === true) {
+				if ($visited) {
 					const isAlreadyVisited = await getIDBData("visited");
 					if (isAlreadyVisited !== true) {
-						window[$evictedKey] = true;
+						$evicted = true;
 						try {
 							JSBridge.notifyDataEviction();
-							if (window[$isBackgroundUpdateKey] === true) {
+							if ($androidBackground) {
 								JSBridge.backgroundUpdateIsFinished(false);
 							}
 						} catch (ex) { console.error(ex) }
 					}
-				} else if (window[$visitedKey] === false) {
+				} else {
 					setIDBData("visited", true, true)
 					.then(() => {
 						try {
@@ -109,7 +109,7 @@
 				}
 			}
 
-			if (!$android || window[$isBackgroundUpdateKey] !== true) {
+			if (!$androidBackground) {
 				try {
 					$initList = (await mediaLoader({
 						loadAll: true, 
@@ -136,7 +136,7 @@
 					$initList = true
 					await retrieveInitialData()
 				}
-				if (!$android || window[$isBackgroundUpdateKey] !== true) {
+				if (!$androidBackground) {
 					const records = await getIDBRecords([
 						"username",
 						"orderedMediaOptions",
@@ -183,7 +183,7 @@
 
 			$initData = false;
 						
-			if ($android && window[$isBackgroundUpdateKey] === true) {
+			if ($androidBackground) {
 				try {
 					let sendBackgroundStatusIsRunning;
 					dataStatus.subscribe((val) => {
@@ -229,8 +229,9 @@
 					let recommendationListIsProcessed
 					if (dataIsUpdated) {
 						try {
-							window.shouldUpdateNotifications = true
+							window.shouldUpdateMediaNotifications = true
 							await processRecommendedMediaEntries({ initList: true })
+							await scheduleMediaNotifications({ initList: true })
 							try {
 								JSBridge.setShouldProcessRecommendedEntries(false)
 							} catch (ex) { console.error(ex) }
@@ -295,8 +296,8 @@
 
 				let shouldManageMedia
 				if (shouldProcessRecommendedEntries) {
-					$loadingCategory[""] = new Date()
-					window.shouldUpdateNotifications = true
+					$loadingCategory[""] = new Date().getTime()
+					window.shouldUpdateMediaNotifications = true
 					await processRecommendedMediaEntries({ initList: true })
 					shouldManageMedia = true
 				}
@@ -317,7 +318,7 @@
 
 						checkAutoFunctions("first-visit");
 					} else {
-						$loadingCategory[""] = new Date()
+						$loadingCategory[""] = new Date().getTime()
 						await mediaManager({ updateRecommendedMediaList: true })
 						checkAutoFunctions(true);
 					}
@@ -525,7 +526,7 @@
 		}
 
 		if ($listUpdateAvailable && !$popupVisible && $initList === false) {
-			if (!$initData && (!$android || window[$isBackgroundUpdateKey] !== true)) {
+			if (!$initData && !$androidBackground) {
 				$listUpdateAvailable = false;
 				mediaManager({ updateRecommendedMediaList: true });
 			}
@@ -544,8 +545,7 @@
 		initCheck = false,
 		visibilityChange = false,
 	) {
-		if ($initData || ($android && window[$isBackgroundUpdateKey] === true)) return;
-
+		if ($initData || $androidBackground) return;
 		if (initCheck) {
 			try {
 				await requestUserEntries({ visibilityChange });
@@ -582,7 +582,7 @@
 		}
 	}
 	async function checkAutoExportOnLoad(visibilityChange) {
-		if ($android && window[$isBackgroundUpdateKey] === true) return;
+		if ($androidBackground) return;
 		if ($autoExport && $android) {
 			if (await autoExportIsPastDate()) {
 				exportUserData({ visibilityChange });
@@ -607,7 +607,7 @@
 			if ($android && window.navigator?.onLine !== false) {
 				try {
 					$appID = await getWebVersion();
-					if (window[$isBackgroundUpdateKey] !== true && typeof $appID === "number" && !isNaN($appID) && isFinite($appID)) {
+					if (!$androidBackground && typeof $appID === "number" && !isNaN($appID) && isFinite($appID)) {
 						JSBridge.checkAppID(Math.floor($appID), false);
 					}
 				} catch (ex) {
@@ -618,14 +618,14 @@
 	});
 	shouldUpdateList.subscribe((val) => {
 		if (typeof val !== "boolean" || $initData || $initList !== false) return;
-		if ($android && window[$isBackgroundUpdateKey] === true) return;
+		if ($androidBackground) return;
 
 		$listUpdateAvailable = false;
 		mediaManager({ updateRecommendedMediaList: true });
 	});
 	shouldUpdateRecommendationList.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData || $initList !== false) return;
-		if ($android && window[$isBackgroundUpdateKey] === true) return;
+		if ($androidBackground) return;
 
 		$listUpdateAvailable = false;
 		try {
@@ -637,7 +637,7 @@
 	});
 	updateRecommendationList.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData || $initList !== false) return;
-		if ($android && window[$isBackgroundUpdateKey] === true) return;
+		if ($androidBackground) return;
 
 		try {
 			await processRecommendedMediaEntries()
@@ -654,7 +654,7 @@
 	}
 	updateList.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData) return;
-		if ($android && window[$isBackgroundUpdateKey] === true) return;
+		if ($androidBackground) return;
 		
 		if ($initList !== false || ($popupVisible && $loadedMediaLists?.[$selectedCategory]?.mediaList?.length)) {
 			$listUpdateAvailable = true;
@@ -664,7 +664,7 @@
 	});
 	runUpdate.subscribe(async (val) => {
 		if (typeof val !== "boolean" || $initData || window.navigator?.onLine === false) return;
-		if ($android && window[$isBackgroundUpdateKey] === true) return;
+		if ($androidBackground) return;
 		
 		if (!$userRequestIsRunning) {
 			try {
@@ -678,7 +678,7 @@
 
 	// CONFIG CHANGES
 	autoUpdate.subscribe(async (val) => {
-		if ($android && window[$isBackgroundUpdateKey] === true) return;
+		if ($androidBackground) return;
 		if (val === true) {
 			const hourINMS = 60 * 60 * 1000;
 			setLSData("autoUpdate", val)
@@ -718,7 +718,7 @@
 		}
 	});
 	autoExport.subscribe(async (val) => {
-		if ($android && window[$isBackgroundUpdateKey] === true) return;
+		if ($androidBackground) return;
 		if (val === true) {
 			const hourINMS = 60 * 60 * 1000;
 			setLSData("autoExport", val)
@@ -809,7 +809,7 @@
 	window.addHistory = () => {
 		appShouldExit = false;
 		if ($android) {
-			if (window[$isBackgroundUpdateKey] !== true) {
+			if (!$androidBackground) {
 				try {
 					JSBridge.setShouldGoBack(false);
 				} catch (ex) {
@@ -1092,12 +1092,12 @@
 		shouldManageMedia,
 	) => {
 		if ($initData || $initList !== false) return;
-		if ($android && window[$isBackgroundUpdateKey] === true) return;
+		if ($androidBackground) return;
 		
 		let thisshouldManageMedia
 		if (shouldProcessRecommendedEntries) {
 			try {
-				$loadingCategory[""] = new Date()
+				$loadingCategory[""] = new Date().getTime()
 				await processRecommendedMediaEntries()
 				thisshouldManageMedia = true
 			} catch (ex) { console.error(ex) }
@@ -1108,7 +1108,7 @@
 		let isAlreadyLoaded = !shouldManageMedia && !thisshouldManageMedia;
 		if (isAlreadyLoaded) {
 			try {
-				$loadingCategory[""] = new Date()
+				$loadingCategory[""] = new Date().getTime()
 				await mediaLoader({
 					updateRecommendedMediaList: true,
 					updateUserData: true,
@@ -1117,7 +1117,7 @@
 			window.checkEntries?.();
 		} else {
 			try {
-				$loadingCategory[""] = new Date()
+				$loadingCategory[""] = new Date().getTime()
 				await mediaManager({ updateRecommendedMediaList: true })
 			} catch (ex) { console.error(ex) }
 			window.checkEntries?.();

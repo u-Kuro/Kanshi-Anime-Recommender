@@ -25,7 +25,6 @@
         popupVisible,
         listUpdateAvailable,
         showStatus,
-        isBackgroundUpdateKey,
         mobile,
         keepAppRunningInBackground,
         resetProgress,
@@ -38,6 +37,7 @@
         userRequestIsRunning,
         showRateLimit,
         dataStatus,
+        androidBackground,
     } from "../../js/variables.js";
     
 
@@ -67,7 +67,7 @@
     window.importAndroidUserData = importData;
 
     async function importUserFile() {
-        if ($android && window[$isBackgroundUpdateKey] === true) return;
+        if ($androidBackground) return;
         if (!(importFileInput instanceof Element)) {
             if ($android) {
                 showToast("Failed to capture the backup file")
@@ -93,7 +93,7 @@
                     document.documentElement.style.overflow = "";
                     window.scrollTo?.({ top: -9999, behavior: "smooth" });
                 }
-                $loadingCategory[""] = new Date()
+                $loadingCategory[""] = new Date().getTime()
                 importUserData({
                     importedFile: importedFile,
                 })
@@ -116,9 +116,9 @@
         }
     }
     // Global Function For Android
-    function handleExportFolder() {
+    function handleExportDirectory() {
         try {
-            JSBridge.chooseExportFolder();
+            JSBridge.chooseExportDirectory();
         } catch (ex) { console.error(ex); }
     }
     window.setExportPathAvailability = async (val = true) => {
@@ -134,12 +134,12 @@
             if (
                 classList.contains("switch")
                 || target?.closest?.(".switch")
-                || classList.contains("change-folder")
-                || target?.closest?.(".change-folder")
+                || classList.contains("change-directory")
+                || target?.closest?.(".change-directory")
             ) {
                 return
             } else if (!$exportPathIsAvailable) {
-                return handleExportFolder();
+                return handleExportDirectory();
             }
         }
         if ($initList !== false) {
@@ -151,7 +151,7 @@
     }
 
     async function updateList(e) {
-        if ($android && window[$isBackgroundUpdateKey] === true) return;
+        if ($androidBackground) return;
         if (window.navigator?.onLine === false) {
             if ($android) {
                 showToast("You are currently offline")
@@ -205,7 +205,7 @@
     }
 
     async function showAllHiddenEntries() {
-        if ($android && window[$isBackgroundUpdateKey] === true) return;
+        if ($androidBackground) return;
         if ($initList !== false) {
             return pleaseWaitAlert()
         }
@@ -222,7 +222,7 @@
                 "Do you want to show all your hidden entries?",
             )
         ) {
-            $loadingCategory[""] = new Date()
+            $loadingCategory[""] = new Date().getTime()
             mediaManager({
                 showId: "all",
             });
@@ -547,7 +547,7 @@
             $keepAppRunningInBackground = window.keepAppRunningInBackground;
         }
         
-        // Get Export Folder for Android
+        // Get Export Directory for Android
         $autoUpdate = $autoUpdate ?? (await getIDBData("autoUpdate"));
         if ($autoUpdate == null) {
             setLSData("autoUpdate", $autoUpdate = true)
@@ -691,12 +691,12 @@
                     </svg>
                     <span class="option-label">Back Up Data</span>
                     {#if $android}
-                        <div class="change-folder">
+                        <div class="change-directory">
                             <svg 
                                 viewBox="0 0 576 512"
                                 tabindex="{$menuVisible ? "0" : "-1"}"
-                                on:click="{handleExportFolder}"
-                                on:keyup="{(e) => e.key === "Enter" && handleExportFolder(e)}"
+                                on:click="{handleExportDirectory}"
+                                on:keyup="{(e) => e.key === "Enter" && handleExportDirectory(e)}"
                             >
                                 <path d="M89 224 0 376V96c0-35 29-64 64-64h118c17 0 33 7 45 19l26 26c12 12 29 19 46 19h117c35 0 64 29 64 64v32H144c-23 0-44 12-55 32zm27 16c6-10 17-16 28-16h400c12 0 22 6 28 16s5 22 0 32L460 464c-6 10-17 16-28 16H32c-11 0-22-6-28-16s-5-22 0-32l112-192z"/>
                             </svg>
@@ -1048,20 +1048,20 @@
     }
 
     .option > svg,
-    .change-folder > svg {
+    .change-directory > svg {
         --width: 20px;
         width: var(--width);
         margin: auto;
     }
 
-    .change-folder {
+    .change-directory {
         width: 100%;
         height: 70%;
         display: grid;
         justify-content: center;
         align-items: center;
     }
-    .export-switchable .change-folder {
+    .export-switchable .change-directory {
         border-right: 1px solid var(--fg-color);
         padding-right: 20px;
     }

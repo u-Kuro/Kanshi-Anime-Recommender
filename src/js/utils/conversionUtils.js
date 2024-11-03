@@ -1,3 +1,9 @@
+async function decompressBlobToJSON(blob) {
+    return await new Response(
+        blob.stream().pipeThrough(new DecompressionStream("gzip"))
+    ).json()
+}
+
 // const arrayBufferToBase64 = (buffer) => {
 //     let binary = '';
 //     const bytes = new Uint8Array(buffer);
@@ -15,7 +21,8 @@
 //     return bytes.buffer;
 // }
 
-// export {
-//     arrayBufferToBase64,
-//     base64ToArrayBuffer
-// }
+export {
+    decompressBlobToJSON
+    // arrayBufferToBase64,
+    // base64ToArrayBuffer
+}

@@ -1,6 +1,6 @@
 import { get } from "svelte/store";
 import { isJsonObject } from "./utils/dataUtils.js";
-import { android, isBackgroundUpdateKey, uniqueKey } from "./variables.js";
+import { androidBackground, uniqueKey } from "./variables.js";
 
 let db
 const IDBInit = () => {
@@ -160,7 +160,7 @@ const getIDBRecords = (recordKeys) => {
     });
 }
 const setIDBData = (key, value, isImportant) => {
-    if (get(android) && window[get(isBackgroundUpdateKey)] === true && !isImportant) return
+    if (get(androidBackground) && !isImportant) return
     return new Promise(async (resolve, reject) => {
         if (!db) await IDBInit()
         try {
@@ -194,7 +194,7 @@ const setIDBData = (key, value, isImportant) => {
     });
 }
 // const setIDBRecords = (records, isImportant) => {
-//     if (get(android) && window[get(isBackgroundUpdateKey)] === true && !isImportant) return
+//     if (get(androidBackground) && !isImportant) return
 //     return new Promise(async (resolve, reject) => {
 //         if (!db) await IDBInit()
 //         try {

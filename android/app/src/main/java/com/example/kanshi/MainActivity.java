@@ -12,8 +12,6 @@ import static com.example.kanshi.Configs.UNIQUE_KEY;
 import static com.example.kanshi.Configs.UPDATE_DATA_PENDING_INTENT;
 import static com.example.kanshi.Configs.getAssetLoader;
 import static com.example.kanshi.Configs.OWNER;
-import static com.example.kanshi.Configs.IS_OWNER_KEY;
-import static com.example.kanshi.Configs.VISITED_KEY;
 import static com.example.kanshi.Configs.getTOKEN;
 import static com.example.kanshi.LocalPersistence.getLockForFileName;
 import static com.example.kanshi.Utils.fetchWebVersion;
@@ -82,13 +80,8 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -103,13 +96,15 @@ import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 import androidx.webkit.WebViewAssetLoader;
 
+import com.example.kanshi.localHTTPServer.LocalServer;
+import com.example.kanshi.localHTTPServer.LocalServerListener;
+
 public class MainActivity extends AppCompatActivity {
     public boolean keepAppRunningInBackground = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
     private ValueCallback<Uri[]> mUploadMessage;
-    private String exportPath;
     public MediaWebView webView;
     private ProgressBar progressbar;
     private boolean pageLoaded = false;
@@ -178,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
             );
-    final ActivityResultLauncher<Intent> chooseExportFile =
+    final ActivityResultLauncher<Intent> chooseExportDirectory =
             registerForActivityResult(
                     new ActivityResultContracts.StartActivityForResult(),
                     new ActivityResultCallback<>() {
@@ -191,9 +186,8 @@ public class MainActivity extends AppCompatActivity {
                             }
                             Uri uri = intent.getData();
                             Uri docUri = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
-                            exportPath = getThisPath(docUri);
+                            prefsEdit.putString("savedExportPath", getThisPath(docUri)).apply();
                             showToast(Toast.makeText(getApplicationContext(), "Folder was selected, you can now back up your data", Toast.LENGTH_LONG));
-                            prefsEdit.putString("savedExportPath", exportPath).apply();
                             webView.post(()->webView.loadUrl("javascript:window?.setExportPathAvailability?.(true)"));
                         }
                     }
@@ -231,8 +225,7 @@ public class MainActivity extends AppCompatActivity {
         prefsEdit = prefs.edit();
         // Saved Data
         keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground", true);
-        exportPath = prefs.getString("savedExportPath", "");
-        if (OWNER) { TOKEN = getTOKEN(exportPath); }
+        if (OWNER) { TOKEN = getTOKEN(prefs.getString("savedExportPath", "")); }
         permissionIsAsked = prefs.getBoolean("permissionIsAsked", false);
         // Keep Awake on Lock Screen
         wakeLock = ((PowerManager) getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "KeepAwake:");
@@ -346,15 +339,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 shouldRefreshList = shouldProcessRecommendedEntries = shouldManageMedia = false;
-                boolean visited = prefs.getBoolean("visited", false);
-                if (visited) {
-                    view.loadUrl("javascript:(()=>{window['" + VISITED_KEY + "']=true})();");
-                } else {
-                    view.loadUrl("javascript:(()=>{window['"+ VISITED_KEY +"']=false})();");
-                }
-                if (OWNER && TOKEN != null && !TOKEN.trim().isEmpty()) {
-                    view.loadUrl("javascript:(()=>{window['" + IS_OWNER_KEY + "']='" + TOKEN + "'})();");
-                }
                 if (!pageLoaded) {
                     pageLoaded = true;
                     view.loadUrl("javascript:(()=>{window.shouldUpdateNotifications=true})();");
@@ -366,17 +350,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-
                 shouldRefreshList = shouldProcessRecommendedEntries = shouldManageMedia = false;
-                boolean visited = prefs.getBoolean("visited", false);
-                if (visited) {
-                    view.loadUrl("javascript:(()=>{window['" + VISITED_KEY + "']=true})();");
-                } else {
-                    view.loadUrl("javascript:(()=>{window['"+ VISITED_KEY +"']=false})();");
-                }
-                if (OWNER && TOKEN != null && !TOKEN.trim().isEmpty()) {
-                    view.loadUrl("javascript:(()=>{window['" + IS_OWNER_KEY + "']='" + TOKEN + "'})();");
-                }
                 view.loadUrl("javascript:(()=>{window.shouldUpdateNotifications=true})();");
                 view.loadUrl("javascript:(()=>{window.keepAppRunningInBackground=" + (keepAppRunningInBackground ? "true" : "false") + "})();");
                 view.loadUrl("javascript:window?.setKeepAppRunningInBackground?.("+(keepAppRunningInBackground?"true":"false")+")");
@@ -668,6 +642,32 @@ public class MainActivity extends AppCompatActivity {
     // Native and Webview Connection
     @SuppressWarnings("unused")
     class JSBridge {
+        private final LocalServer localServer = new LocalServer(
+            new LocalServerListener() {
+                @Override
+                public void onStart(String url) {
+                    webView.loadUrl("javascript:window?.['" + UNIQUE_KEY + localServer.LOCAL_SERVER_URL_PROMISE + "']?.resolve?.('" + url + "')");
+                }
+                @Override
+                public void onError(String promise) {
+                    webView.loadUrl("javascript:window?.['" + UNIQUE_KEY + promise + "']?.reject?.()");
+                }
+            },
+            true
+        );
+        /** @noinspection SameReturnValue*/
+        @JavascriptInterface
+        public boolean isAndroid() { return true; }
+        @JavascriptInterface
+        public boolean isVisited() { return prefs.getBoolean("visited", false); }
+        @JavascriptInterface
+        public String getOwnerToken() {
+            if (OWNER && TOKEN != null && !TOKEN.trim().isEmpty()) {
+                return TOKEN;
+            } else {
+                return "";
+            }
+        }
         @JavascriptInterface
         public void pageVisited() {
             prefsEdit.putBoolean("visited", true).apply();
@@ -715,10 +715,11 @@ public class MainActivity extends AppCompatActivity {
             }
             changeKeepAppRunningInBackground(enable);
         }
-        private BackUpLocalServer backUpLocalServer;
+        @JavascriptInterface
+        public void getLocalServerURL() { localServer.getLocalServerURL(); }
         @RequiresApi(api = Build.VERSION_CODES.R)
         @JavascriptInterface
-        public void exportUserData() {
+        public boolean backUpIsAvailable() {
             if (!Environment.isExternalStorageManager()) {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
                     .setTitle("Folder Access for Back-up")
@@ -729,48 +730,37 @@ public class MainActivity extends AppCompatActivity {
                     })
                     .setNegativeButton("CANCEL", null), true);
             } else {
-                File exportDirectory = new File(exportPath);
-                if (exportDirectory.isDirectory()) {
-                    boolean dirIsCreated;
-                    if (!exportDirectory.exists()) {
-                        dirIsCreated = exportDirectory.mkdirs();
+                final String exportPath = prefs.getString("savedExportPath", "");
+                if (exportPath.isEmpty()) {
+                    Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
+                    chooseExportDirectory.launch(i);
+                    showToast(Toast.makeText(getApplicationContext(), "Select or create a folder for backup", Toast.LENGTH_LONG));
+                } else {
+                    File backupDirectory = new File(exportPath);
+                    //noinspection ResultOfMethodCallIgnored
+                    backupDirectory.mkdirs();
+                    if (backupDirectory.isDirectory()) {
+                        localServer.setBackupDirectory(backupDirectory);
+                        return true;
                     } else {
-                        dirIsCreated = true;
-                    }
-                    if (exportDirectory.isDirectory() && dirIsCreated) {
-                        if (backUpLocalServer != null) backUpLocalServer.stopServer();
-                        final Handler exportUserDataUIhandler = new Handler(Looper.getMainLooper());
-                        backUpLocalServer = new BackUpLocalServer(
-                            new File(exportPath), true,
-                            url -> exportUserDataUIhandler.post(() -> webView.loadUrl("javascript:window?.['"+UNIQUE_KEY+".localServerUrlPromise']?.resolve?.('"+url+"')")),
-                            () -> exportUserDataUIhandler.post(() -> webView.loadUrl("javascript:window?.['"+UNIQUE_KEY+".exportPromise']?.resolve?.()")),
-                            promise -> exportUserDataUIhandler.post(() -> webView.loadUrl("javascript:window?.['"+UNIQUE_KEY+"."+promise+"']?.reject?.()"))
-                        );
-                        backUpLocalServer.startServer();
-                    } else if (!dirIsCreated) {
-                        showToast(Toast.makeText(getApplicationContext(), "Can't find the folder for backup, please create it first", Toast.LENGTH_LONG));
-                    }
-                } else if (exportPath != null && !exportPath.isEmpty() && !exportDirectory.isDirectory()) {
-                    String[] tempExportPath = exportPath.split(Pattern.quote(File.separator));
-                    String tempPathName =
+                        String[] tempExportPath = exportPath.split(Pattern.quote(File.separator));
+                        String tempPathName =
                             tempExportPath.length > 1
                             ? tempExportPath[tempExportPath.length - 2] + File.separator + tempExportPath[tempExportPath.length - 1]
                             : tempExportPath[tempExportPath.length - 1];
-                    showDialog(new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Back-up Folder is Missing")
-                        .setMessage("Folder directory [" + tempPathName + "] is missing, please choose another folder for backup.")
-                        .setPositiveButton("OK", (dialogInterface, x) -> {
-                            showToast(Toast.makeText(getApplicationContext(), "Select or create a folder for backup", Toast.LENGTH_LONG));
-                            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
-                            chooseExportFile.launch(i);
-                        })
-                        .setNegativeButton("CANCEL", null), true);
-                } else {
-                    Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
-                    chooseExportFile.launch(i);
-                    showToast(Toast.makeText(getApplicationContext(), "Select or create a folder for backup", Toast.LENGTH_LONG));
+                        showDialog(new AlertDialog.Builder(MainActivity.this)
+                            .setTitle("Back-up Folder is Missing")
+                            .setMessage("Folder directory [" + tempPathName + "] is missing, please choose another folder for backup.")
+                            .setPositiveButton("OK", (dialogInterface, x) -> {
+                                showToast(Toast.makeText(getApplicationContext(), "Select or create a folder for backup", Toast.LENGTH_LONG));
+                                Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
+                                chooseExportDirectory.launch(i);
+                            })
+                            .setNegativeButton("CANCEL", null), true);
+                    }
                 }
             }
+            return false;
         }
         @JavascriptInterface
         public void copyToClipBoard(String text) {
@@ -788,7 +778,7 @@ public class MainActivity extends AppCompatActivity {
             MainActivity.this.shouldGoBack = shouldGoBack;
         }
         @JavascriptInterface
-        public void chooseExportFolder() {
+        public void chooseExportDirectory() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 if (!Environment.isExternalStorageManager()) {
                     showDialog(new AlertDialog.Builder(MainActivity.this)
@@ -802,7 +792,7 @@ public class MainActivity extends AppCompatActivity {
                 true);
                 } else {
                     Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).addCategory(Intent.CATEGORY_DEFAULT);
-                    chooseExportFile.launch(i);
+                    chooseExportDirectory.launch(i);
                     showToast(Toast.makeText(getApplicationContext(), "Select or create a folder", Toast.LENGTH_LONG));
                 }
             }
@@ -839,72 +829,6 @@ public class MainActivity extends AppCompatActivity {
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
             finish();
-        }
-        @RequiresApi(api = Build.VERSION_CODES.O)
-        @JavascriptInterface
-        public void addMediaReleaseNotification(long mediaId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, String mediaUrl, String userStatus, long episodeProgress) {
-            MediaNotificationManager.scheduleMediaNotification(MainActivity.this, mediaId, title, releaseEpisode, maxEpisode, releaseDateMillis, imageUrl, mediaUrl, userStatus, episodeProgress);
-        }
-        @RequiresApi(api = Build.VERSION_CODES.O)
-        @JavascriptInterface
-        public void callUpdateNotifications() {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                updateCurrentNotifications();
-            }
-        }
-        private final ExecutorService updateNotificationsExecutorService = Executors.newFixedThreadPool(1);
-        private final Map<String, Future<?>> updateNotificationsFutures = new ConcurrentHashMap<>();
-        @RequiresApi(api = Build.VERSION_CODES.O)
-        @JavascriptInterface
-        public void updateNotifications(long mediaId, String title, long maxEpisode, String mediaUrl, String userStatus, long episodeProgress) {
-            if (updateNotificationsFutures.containsKey(String.valueOf(mediaId))) {
-                Future<?> future = updateNotificationsFutures.get(String.valueOf(mediaId));
-                if (future != null && !future.isDone()) {
-                    future.cancel(true);
-                }
-            }
-            Future<?> future = updateNotificationsExecutorService.submit(() -> {
-                try {
-                    if (MediaNotificationManager.allMediaNotification.isEmpty()) {
-                        @SuppressWarnings("unchecked") ConcurrentHashMap<String, MediaNotification> $allMediaNotification = (ConcurrentHashMap<String, MediaNotification>) LocalPersistence.readObjectFromFile(MainActivity.this, "allMediaNotification");
-                        if ($allMediaNotification != null && !$allMediaNotification.isEmpty()) {
-                            MediaNotificationManager.allMediaNotification.putAll($allMediaNotification);
-                        }
-                        if (MediaNotificationManager.allMediaNotification.isEmpty()) {
-                            return;
-                        }
-                    }
-                    ConcurrentHashMap<String, MediaNotification> updatedMediaNotifications = new ConcurrentHashMap<>();
-                    List<MediaNotification> allMediaNotificationValues = new ArrayList<>(MediaNotificationManager.allMediaNotification.values());
-                    for (MediaNotification media : allMediaNotificationValues) {
-                        if (media.mediaId == mediaId) {
-                            MediaNotification newMedia = new MediaNotification(media.mediaId, title, media.releaseEpisode, maxEpisode, media.releaseDateMillis, media.imageByte, mediaUrl, userStatus, episodeProgress);
-                            updatedMediaNotifications.put(media.mediaId +"-"+media.releaseEpisode, newMedia);
-                        }
-                    }
-                    MediaNotificationManager.allMediaNotification.putAll(updatedMediaNotifications);
-                    MediaNotificationManager.writeMediaNotificationInFile(MainActivity.this, true);
-                    updateNotificationsFutures.remove(String.valueOf(mediaId));
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                        if (updateNotificationsFutures.isEmpty()) {
-                            SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
-                            if (schedulesTabFragment!=null) {
-                                new Handler(Looper.getMainLooper()).post(()->schedulesTabFragment.updateScheduledMedia(false, false));
-                            }
-                            ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
-                            if (releasedTabFragment!=null) {
-                                new Handler(Looper.getMainLooper()).post(()->releasedTabFragment.updateReleasedMedia(false, false));
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "updateNotificationsExecutorService");
-                    }
-                    e.printStackTrace();
-                }
-            });
-            updateNotificationsFutures.put(String.valueOf(mediaId), future);
         }
         @RequiresApi(api = Build.VERSION_CODES.P)
         @JavascriptInterface
@@ -1054,39 +978,10 @@ public class MainActivity extends AppCompatActivity {
         prefsEdit.putBoolean("keepAppRunningInBackground", keepAppRunningInBackground).apply();
         webView.post(()->webView.loadUrl("javascript:window?.setKeepAppRunningInBackground?.("+(keepAppRunningInBackground?"true":"false")+")"));
     }
-    private final ExecutorService updateCurrentNotificationsExecutorService = Executors.newFixedThreadPool(1);
-    private Future<?> updateCurrentNotificationsFuture;
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void updateCurrentNotifications() {
-        if (updateCurrentNotificationsFuture != null && !updateCurrentNotificationsFuture.isCancelled()) {
-            updateCurrentNotificationsFuture.cancel(true);
-        }
-        updateCurrentNotificationsFuture = updateCurrentNotificationsExecutorService.submit(() -> {
-            try {
-                if (MediaNotificationManager.allMediaNotification.isEmpty()) {
-                    @SuppressWarnings("unchecked") ConcurrentHashMap<String, MediaNotification> $allMediaNotification = (ConcurrentHashMap<String, MediaNotification>) LocalPersistence.readObjectFromFile(MainActivity.this, "allMediaNotification");
-                    if ($allMediaNotification != null && !$allMediaNotification.isEmpty()) {
-                        MediaNotificationManager.allMediaNotification.putAll($allMediaNotification);
-                    } else {
-                        return;
-                    }
-                }
-                Set<String> mediaIdsToBeUpdated = new HashSet<>();
-                List<MediaNotification> allMediaNotificationValues = new ArrayList<>(MediaNotificationManager.allMediaNotification.values());
-                for (MediaNotification media : allMediaNotificationValues) {
-                    mediaIdsToBeUpdated.add(String.valueOf(media.mediaId));
-                }
-                String joinedMediaIds = String.join(",", mediaIdsToBeUpdated);
-                webView.post(() -> webView.loadUrl("javascript:window?.updateNotifications?.([" + joinedMediaIds + "])"));
-            } catch (Exception e) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "updateCurrentNotificationsExecutorService");
-                }
-                e.printStackTrace();
-            }
-        });
+        webView.post(() -> webView.loadUrl("javascript:window?.updateMediaNotifications?.()"));
     }
-
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void showUpdateNotice() {
         showDialog(new AlertDialog.Builder(MainActivity.this)

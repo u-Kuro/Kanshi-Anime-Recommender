@@ -29,7 +29,6 @@
         popupVisible,
         showStatus,
         isProcessingList,
-        isBackgroundUpdateKey,
         menuVisible,
         tagInfo,
         mediaOptionsConfig,
@@ -59,6 +58,7 @@
         initList,
         listReloadAvailable,
         shouldLoadAllList,
+        androidBackground,
     } from "../../js/variables.js";
 
     const COOs = {
@@ -185,7 +185,7 @@
 
         const categoryToUpdate = data?.selectedCategory
         if (categoryToUpdate) {
-            $loadingCategory[categoryToUpdate] = new Date()
+            $loadingCategory[categoryToUpdate] = new Date().getTime()
         }
         resetProgress.update((e) => !e);
         if (name === "Media Filter") {
@@ -208,7 +208,7 @@
             }
         } else if (name === "Algorithm Filter") {
             try {
-                $loadingCategory[""] = new Date()
+                $loadingCategory[""] = new Date().getTime()
                 await processRecMediaEntries(data);
                 $currentAlgorithmFilters = data.algorithmFilters
                 try {
@@ -221,7 +221,7 @@
             }
         } else if (name === "Content Caution") {
             try {
-                $loadingCategory[""] = new Date()
+                $loadingCategory[""] = new Date().getTime()
                 await loadMedia(data);
                 $currentMediaCautions = data.mediaCautions
             } catch {
@@ -233,14 +233,14 @@
     }
 
     async function loadMedia(data) {
-        if ($android && window[$isBackgroundUpdateKey] === true) {
+        if ($androidBackground) {
             throw new Error("Something went wrong...");
         }
         await mediaManager(data)
     }
 
     async function processRecMediaEntries(data) {
-        if ($android && window[$isBackgroundUpdateKey] === true) {
+        if ($androidBackground) {
             throw new Error("Something went wrong...");
         }
         await processRecommendedMediaEntries(data)
@@ -1674,7 +1674,7 @@
     }
 
     async function updateList() {
-        if ($android && window[$isBackgroundUpdateKey] === true) return;
+        if ($androidBackground) return;
         if ($initList !== false) return pleaseWaitAlert();
         if ((await $confirmPromise({
                 title: "Reload List",
@@ -1688,7 +1688,7 @@
     }
 
     async function reloadList() {
-        if ($android && window[$isBackgroundUpdateKey] === true) return;
+        if ($androidBackground) return;
         if ($initList !== false) return pleaseWaitAlert();
         if ((await $confirmPromise({
                 title: "Reload List",
@@ -1707,8 +1707,8 @@
     }
 
     function getSeasonEnd() {
-        const currentDate = new Date
-        const currentYear = (currentDate).getFullYear()
+        const currentDate = new Date()
+        const currentYear = currentDate.getFullYear()
         const seasons = {
             winter: new Date(parseInt(currentYear), 0, 1),  // January 1
             spring: new Date(parseInt(currentYear), 3, 1),  // April 1
@@ -1733,7 +1733,7 @@
             dateEnd = new Date(dateEndTime)
             seasonName = "Fall"
         }
-        return `${msToTime(dateEnd.getTime() - (new Date).getTime(), 1, true)} until ${seasonName} Season Ends`
+        return `${msToTime(dateEnd.getTime() - new Date().getTime(), 1, true)} until ${seasonName} Season Ends`
     }
 
     onMount(async () => {

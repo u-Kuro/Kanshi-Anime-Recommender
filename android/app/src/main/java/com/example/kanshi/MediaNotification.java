@@ -4,11 +4,11 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 
-class MediaNotification extends GroupedListItem implements Serializable {
+public class MediaNotification extends GroupedListItem implements Serializable {
     private static final long serialVersionUID = 7899732545740810962L;
-    final long mediaId;
+    public final long mediaId;
     final public long releaseEpisode;
-    final byte[] imageByte;
+    public final byte[] imageByte;
     final public long releaseDateMillis;
 
     public final String title;
