@@ -15,7 +15,6 @@
         gridFullView,
         userRequestIsRunning,
         android,
-        isBackgroundUpdateKey,
         selectedMediaGridEl,
         resetTypedUsername,
         resetProgress,
@@ -24,6 +23,7 @@
         listUpdateAvailable,
         toast,
         initList,
+        androidBackground,
     } from "../../js/variables.js";
 
     let typedUsername = "";
@@ -61,7 +61,7 @@
         }
     })
     async function updateUsername(event, isReconfirm = false) {
-        if ($android && window[$isBackgroundUpdateKey] === true) return;
+        if ($androidBackground) return;
         if ($initData || $initList !== false) {
             if ($android) {
                 showToast("Please wait a moment")
@@ -114,7 +114,7 @@
                     $dataStatus = "Getting User Entries";
                     $userRequestIsRunning = true;
                     removeLSData("username");
-                    $loadingCategory[""] = new Date()
+                    $loadingCategory[""] = new Date().getTime()
                     requestUserEntries({
                         username: typedUsername,
                     })

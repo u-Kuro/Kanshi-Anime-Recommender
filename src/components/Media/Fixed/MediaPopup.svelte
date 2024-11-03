@@ -36,7 +36,6 @@
         popupIsGoingBack,
         earlisetReleaseDate,
         confirmIsVisible,
-        isBackgroundUpdateKey,
         menuVisible,
         selectedCategory,
         loadedMediaLists,
@@ -52,6 +51,7 @@
         webCrawler,
         shouldLoadAllList,
         listReloadAvailable,
+        androidBackground,
     } from "../../../js/variables.js";
 
     let mostVisiblePopupHeader,
@@ -714,7 +714,7 @@
     }
 
     async function updateList(skipConfirm) {
-        if ($android && window[$isBackgroundUpdateKey] === true) return;
+        if ($androidBackground) return;
         if ($initList !== false) {
             if (!skipConfirm) {
                 pleaseWaitAlert()
@@ -735,7 +735,7 @@
     }
 
     async function reloadList(skipConfirm) {
-        if ($android && window[$isBackgroundUpdateKey] === true) return;
+        if ($androidBackground) return;
         if ($initList !== false) {
             if (!skipConfirm) {
                 pleaseWaitAlert()
@@ -968,7 +968,7 @@
     window.reloadYoutube = reloadYoutube;
     let isConnected = window.navigator?.onLine
     window.addEventListener("online", () => {
-        if (window[$isBackgroundUpdateKey] === true) return
+        if ($androidBackground) return
         if ($android) {
             try {
                 JSBridge.isOnline(true);
@@ -993,7 +993,7 @@
         reloadYoutube();
     });
     window.addEventListener("offline", () => {
-        if (window[$isBackgroundUpdateKey] === true) return
+        if ($androidBackground) return
         if ($android) {
             try {
                 JSBridge.isOnline(false);

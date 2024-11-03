@@ -1,10 +1,7 @@
 import { get, readable, writable } from "svelte/store";
-import { isAndroid, isWebCrawler, isMobile } from "./utils/deviceUtils.js";
+import { isAndroid, isWebCrawler, isMobile, isAndroidBackground, isVisited } from "./utils/deviceUtils.js";
 
 const uniqueKey = readable("Kanshi.Media.Recommendations.AniList.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70")
-const isBackgroundUpdateKey = readable(get(uniqueKey) + ".isBackgroundUpdate")
-const visitedKey = readable(get(uniqueKey) + ".visited")
-const evictedKey = readable(get(uniqueKey) + ".evicted")
 let getLSData = (key) => {
     try {
         let data;
@@ -16,8 +13,11 @@ let getLSData = (key) => {
 }
 
 const android = readable(isAndroid())
+const androidBackground = readable(isAndroidBackground())
+const visited = readable(isVisited())
 const mobile = readable(isMobile())
 const webCrawler = readable(get(android) ? false : isWebCrawler())
+const evicted = writable(null)
 
 const appID = writable(null)
 const inApp = writable(true)
@@ -269,12 +269,12 @@ getLSData = undefined
 export {
     appID,
     android,
+    androidBackground,
+    visited,
     mobile,
     webCrawler,
+    evicted,
     uniqueKey,
-    isBackgroundUpdateKey,
-    visitedKey,
-    evictedKey,
     inApp,
     hasWheel,
     windowHeight,

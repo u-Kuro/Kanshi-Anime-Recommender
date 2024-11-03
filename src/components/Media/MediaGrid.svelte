@@ -88,7 +88,7 @@
         searchedWord.subscribe((val) => {
             if ($categories == null) return
             if ($initList === false) {
-                latestSearchDate = new Date()
+                latestSearchDate = new Date().getTime()
             } else if (val) {
                 if ($android) {
                     showToast("Please wait a moment")

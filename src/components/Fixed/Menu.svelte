@@ -25,7 +25,6 @@
         popupVisible,
         listUpdateAvailable,
         showStatus,
-        isBackgroundUpdateKey,
         mobile,
         keepAppRunningInBackground,
         resetProgress,
@@ -38,6 +37,7 @@
         userRequestIsRunning,
         showRateLimit,
         dataStatus,
+        androidBackground,
     } from "../../js/variables.js";
     
 
@@ -67,7 +67,7 @@
     window.importAndroidUserData = importData;
 
     async function importUserFile() {
-        if ($android && window[$isBackgroundUpdateKey] === true) return;
+        if ($androidBackground) return;
         if (!(importFileInput instanceof Element)) {
             if ($android) {
                 showToast("Failed to capture the backup file")
@@ -93,7 +93,7 @@
                     document.documentElement.style.overflow = "";
                     window.scrollTo?.({ top: -9999, behavior: "smooth" });
                 }
-                $loadingCategory[""] = new Date()
+                $loadingCategory[""] = new Date().getTime()
                 importUserData({
                     importedFile: importedFile,
                 })
@@ -151,7 +151,7 @@
     }
 
     async function updateList(e) {
-        if ($android && window[$isBackgroundUpdateKey] === true) return;
+        if ($androidBackground) return;
         if (window.navigator?.onLine === false) {
             if ($android) {
                 showToast("You are currently offline")
@@ -205,7 +205,7 @@
     }
 
     async function showAllHiddenEntries() {
-        if ($android && window[$isBackgroundUpdateKey] === true) return;
+        if ($androidBackground) return;
         if ($initList !== false) {
             return pleaseWaitAlert()
         }
@@ -222,7 +222,7 @@
                 "Do you want to show all your hidden entries?",
             )
         ) {
-            $loadingCategory[""] = new Date()
+            $loadingCategory[""] = new Date().getTime()
             mediaManager({
                 showId: "all",
             });

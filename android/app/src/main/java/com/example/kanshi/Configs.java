@@ -50,9 +50,6 @@ public class Configs {
         return null;
     }
     public static final String UNIQUE_KEY = "Kanshi.Media.Recommendations.AniList.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70";
-    public static final String IS_BACKGROUND_UPDATE_KEY = UNIQUE_KEY +".isBackgroundUpdate";
-    public static final String VISITED_KEY = UNIQUE_KEY +".visited";
-    public static final String IS_OWNER_KEY = UNIQUE_KEY +".isOwner";
     public static final int UPDATE_DATA_PENDING_INTENT = 994;
     public static final int NOTIFICATION_DATA_EVICTION = 993;
     public static final String DATA_EVICTION_CHANNEL = "data_eviction_channel";
