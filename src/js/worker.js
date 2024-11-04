@@ -1,6 +1,8 @@
 import { get } from "svelte/store";
 import { progressedFetch } from "./fetch.js";
 import { isConnected } from "./utils/deviceUtils.js";
+import { decompressBlobToJSON } from "./utils/conversionUtils.js";
+import { getLocalServerURL } from "./utils/localHTTPServerUtils.js";
 import { setIDBData, removeLSData, setLSData } from "./database.js";
 import { downloadLink, getUniqueId, showToast } from "./utils/appUtils.js";
 import { isJsonObject, isValidDateTime, jsonIsEmpty } from "./utils/dataUtils.js";
@@ -45,8 +47,6 @@ import {
     evicted,
     androidBackground,
 } from "./variables.js";
-import { getLocalServerURL } from "./utils/localHTTPServerUtils.js";
-import { decompressBlobToJSON } from "./utils/conversionUtils.js";
 
 const hasOwnProp = Object.prototype.hasOwnProperty
 let dataStatusPrio = false
@@ -79,7 +79,7 @@ const mediaLoader = ($data = {}) => {
         mediaLoaderPromises[postId] = { resolve, reject }
 
         try {
-            mediaLoaderWorker = mediaLoaderWorker || new Worker(await progressedFetch("./web-worker/mediaLoader.js", 26473, "Checking Existing List"))
+            mediaLoaderWorker = mediaLoaderWorker || new Worker(await progressedFetch("./web-worker/mediaLoader.js", 26678, "Checking Existing List"))
         } catch (ex) {
             mediaLoaderWorker?.terminate?.()
             mediaLoaderWorker = null
@@ -276,6 +276,13 @@ const mediaLoader = ($data = {}) => {
                     listReloadAvailable.set(false)
                 }
                 mediaLoaderPromises[data?.postId]?.resolve?.()
+            }
+
+            if (
+                hasOwnProp?.call?.(data, "shouldUpdateMediaNotifications")
+                && !get(androidBackground)
+            ) {
+                window.updateMediaNotifications()                
             }
 
             delete mediaLoaderPromises[data?.postId]
@@ -527,6 +534,40 @@ const mediaManager = ($data = {}) => {
     })
 }
 
+let getOrderedMediaOptionsWorker
+const getOrderedMediaOptions = (getData = true) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            getOrderedMediaOptionsWorker?.terminate?.()
+            const url = await progressedFetch("./web-worker/getOrderedMediaOptions.js")
+            getOrderedMediaOptionsWorker = new Worker(url)
+            getOrderedMediaOptionsWorker.postMessage(getData)
+            getOrderedMediaOptionsWorker.onmessage = async ({ data }) => {
+                getOrderedMediaOptionsWorker?.terminate?.()
+                if (hasOwnProp?.call?.(data, "error")) {
+                    console.error(data.error)
+                    reject()
+                } else {
+                    if (data instanceof Blob) {
+                        data = await decompressBlobToJSON(data)
+                        if (isJsonObject(data) && !jsonIsEmpty(data)) {
+                            orderedMediaOptions.set(data)
+                        }
+                    }
+                    resolve()
+                }
+            }
+            getOrderedMediaOptionsWorker.onerror = () => {
+                getOrderedMediaOptionsWorker?.terminate?.()
+                reject()
+            }
+        } catch {
+            getOrderedMediaOptionsWorker?.terminate?.()
+            reject()
+        }
+    })
+}
+
 let scheduleMediaNotificationsWorker, mediaReleaseUpdateTimeout
 window.setMediaReleaseUpdateTimeout = (nearestMediaReleaseAiringAt) => {
     if (typeof nearestMediaReleaseAiringAt === "number" && !isNaN(nearestMediaReleaseAiringAt)) {
@@ -537,10 +578,7 @@ window.setMediaReleaseUpdateTimeout = (nearestMediaReleaseAiringAt) => {
         }, Math.min(timeLeftBeforeMediaReleaseUpdate, 2000000000))
     }
 }
-const scheduleMediaNotifications = ($data) => {
-    if (get(initList) !== false && !$data?.initList) {
-        return
-    }
+const scheduleMediaNotifications = () => {
     return new Promise(async (resolve, reject) => {
         try {
             scheduleMediaNotificationsWorker?.terminate?.()
@@ -595,7 +633,10 @@ const scheduleMediaNotifications = ($data) => {
     })
 }
 
-let processRecommendedMediaEntriesWorker, passedAlgorithmFilter, passedAlgorithmFilterId
+let processRecommendedMediaEntriesWorker,
+    passedAlgorithmFilter,
+    passedAlgorithmFilterId,
+    processSubsequentWorkersTimeout
 const processRecommendedMediaEntries = ($data = {}) => {
     if (get(initList) !== false && !$data?.initList) {
         return
@@ -607,8 +648,7 @@ const processRecommendedMediaEntries = ($data = {}) => {
             }
         }
 
-        scheduleMediaNotificationsWorker?.terminate?.()
-        processRecommendedMediaEntriesWorker?.terminate?.();
+        processRecommendedMediaEntriesWorker?.terminate?.()
 
         if ($data?.algorithmFilters) {
             passedAlgorithmFilter = $data.algorithmFilters
@@ -619,9 +659,11 @@ const processRecommendedMediaEntries = ($data = {}) => {
         }
         
         progress.set(0)
-        progressedFetch("./web-worker/processRecommendedMediaEntries.js", 42243, "Updating Recommendation List")
+        progressedFetch("./web-worker/processRecommendedMediaEntries.js", 41859, "Updating Recommendation List")
             .then(url => {
                 isProcessingList.set(true)
+                clearTimeout(processSubsequentWorkersTimeout)
+                getOrderedMediaOptionsWorker?.terminate?.()
                 scheduleMediaNotificationsWorker?.terminate?.()
                 processRecommendedMediaEntriesWorker?.terminate?.();
                 processRecommendedMediaEntriesWorker = new Worker(url);
@@ -657,18 +699,14 @@ const processRecommendedMediaEntries = ($data = {}) => {
                         window.updateRecommendationError?.(data?.recommendationError)
                     } else {
                         processRecommendedMediaEntriesWorker?.terminate?.();
-                        if (window.shouldUpdateMediaNotifications === true && get(android)) {
-                            window.shouldUpdateMediaNotifications = false
-                            window.updateMediaNotifications()
-                        }
                         if (passedAlgorithmFilterId === data?.passedAlgorithmFilterId && passedAlgorithmFilterId != null) {
                             passedAlgorithmFilterId = passedAlgorithmFilter = undefined
                         }
-                        if (data?.hasNewFilterOption) {
-                            getOrderedMediaOptions()
-                        }
                         if (!get(androidBackground)) {
-                            scheduleMediaNotifications({ initList: $data?.initList })
+                            processSubsequentWorkersTimeout = setTimeout(async () => {
+                                await getOrderedMediaOptions()
+                                scheduleMediaNotifications()
+                            })
                         }
                         dataStatusPrio = false
                         isProcessingList.set(false)
@@ -970,9 +1008,7 @@ const requestUserEntries = ($data = {}) => {
                         console.error(data.error)
                         reject(data.error)
                     } else if (hasOwnProp?.call?.(data, "updateRecommendationList")) {
-                        if (get(android)) {
-                            window.KanshiBackgroundshouldProcessRecommendedEntries = window.shouldUpdateMediaNotifications = true
-                        }
+                        if (get(android)) { window.KanshiBackgroundshouldProcessRecommendedEntries = true }
                         updateRecommendationList.update(e => !e)
                     } else {
                         requestUserEntriesWorker?.terminate?.();
@@ -1267,9 +1303,6 @@ const importUserData = ($data) => {
                     } else {
                         importUserDataWorker?.terminate?.();
                         evicted.set(false)
-                        if (get(android)) {
-                            window.shouldUpdateMediaNotifications = true
-                        }
                         dataStatusPrio = false
                         processRecommendedMediaEntries({ isImporting: true })
                             .finally(() => {
@@ -1384,38 +1417,9 @@ const retrieveInitialData = () => {
     })
 }
 
-let getOrderedMediaOptionsWorker
-const getOrderedMediaOptions = async () => {
-    try {
-        getOrderedMediaOptionsWorker?.terminate?.()
-        const url = await progressedFetch("./web-worker/getOrderedMediaOptions.js")
-        getOrderedMediaOptionsWorker = new Worker(url)
-        getOrderedMediaOptionsWorker.postMessage(0)
-        getOrderedMediaOptionsWorker.onmessage = async ({ data }) => {
-            getOrderedMediaOptionsWorker?.terminate?.()
-            if (hasOwnProp?.call?.(data, "error")) {
-                console.error(data.error)
-            } else if (data instanceof Blob) {
-                data = await decompressBlobToJSON(data)
-                if (isJsonObject(data) && !jsonIsEmpty(data)) {
-                    orderedMediaOptions.set(data)
-                }
-            }
-        }
-        getOrderedMediaOptionsWorker.onerror = () => {
-            getOrderedMediaOptionsWorker?.terminate?.()
-        }
-    } catch {
-        getOrderedMediaOptionsWorker?.terminate?.()
-    }
-}
-
 let updateTagInfoWorker
-const updateTagInfo = ($data = {}) => {
-    if (get(initList) !== false && !$data?.initList) {
-        return
-    }
-    return new Promise(async (resolve) => {
+const updateTagInfo = (getData = true) => {
+    return new Promise(async (resolve, reject) => {
         try {
             updateTagInfoWorker?.terminate?.()
             const url = await progressedFetch("./web-worker/updateTagInfo.js")
@@ -1429,7 +1433,7 @@ const updateTagInfo = ($data = {}) => {
                     }
                 } catch {}
             }
-            updateTagInfoWorker.postMessage({ server, getTagInfo: $data.getTagInfo ?? true })
+            updateTagInfoWorker.postMessage({ server, getData })
             updateTagInfoWorker.onmessage = async ({ data }) => {
                 if (hasOwnProp.call(data, "getConnectionState")) {
                     (async () => {
@@ -1439,21 +1443,26 @@ const updateTagInfo = ($data = {}) => {
                 }
                 
                 updateTagInfoWorker?.terminate?.()
-                if (data instanceof Blob) {
-                    data = await decompressBlobToJSON(data)
-                    if (isJsonObject(data) && !jsonIsEmpty(data)) {
-                        tagInfo.set(data)
+                if (hasOwnProp?.call?.(data, "error")) {
+                    console.error(data.error)
+                    reject()
+                } else {
+                    if (data instanceof Blob) {
+                        data = await decompressBlobToJSON(data)
+                        if (isJsonObject(data) && !jsonIsEmpty(data)) {
+                            tagInfo.set(data)
+                        }
                     }
+                    resolve()
                 }
-                resolve()
             }
             updateTagInfoWorker.onerror = () => {
                 updateTagInfoWorker?.terminate?.()
-                resolve()
+                reject()
             }
         } catch {
             updateTagInfoWorker?.terminate?.()
-            resolve()
+            reject()
         }
     })
 }
@@ -1508,28 +1517,26 @@ function alertError() {
     }
 }
 
-window.updateMediaNotifications = async () => {
+window.updateMediaNotifications = async (initList = false) => {
     if (!get(android)) return
-    try {
-        await fetch(
-            `${await getLocalServerURL()}/update-media-notifications`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/octet-stream",
-                "Content-Encoding": "gzip"
-            },
-            body: await mediaLoader({
-                updateMediaNotifications: true,
-                mediaIdsBlob: await (
-                    await fetch(
-                        `${await getLocalServerURL()}/get-current-media-notification-ids`, {
-                        cache: "no-store",
-                    })
-                ).blob()
-            })
+    await fetch(
+        `${await getLocalServerURL()}/update-media-notifications`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/octet-stream",
+            "Content-Encoding": "gzip"
+        },
+        body: await mediaLoader({
+            updateMediaNotifications: true,
+            initList,
+            mediaIdsBlob: await (
+                await fetch(
+                    `${await getLocalServerURL()}/get-current-media-notification-ids`, {
+                    cache: "no-store",
+                })
+            ).blob()
         })
-    } catch (ex) { console.error(ex) }
-
+    })
 }
 
 export {
@@ -1540,6 +1547,7 @@ export {
     exportUserData,
     importUserData,
     processRecommendedMediaEntries,
+    getOrderedMediaOptions,
     scheduleMediaNotifications,
     mediaManager,
     mediaLoader,

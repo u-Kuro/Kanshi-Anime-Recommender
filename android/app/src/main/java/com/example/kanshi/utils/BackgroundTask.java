@@ -13,8 +13,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class BackgroundTask {
+    private final Logger logger = Logger.getLogger(BackgroundTask.class.getName());
     private final Context context;
     private final ExecutorService backgroundTaskExecutor;
     private final Deque<BackgroundTaskRunnable> queue;
@@ -76,7 +79,7 @@ public class BackgroundTask {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                                 Utils.handleUncaughtException(this.context.getApplicationContext(), e, "BackgroundTask "+taskId);
                             }
-                            e.printStackTrace();
+                            logger.log(Level.SEVERE, e.getMessage(), e);
                             throw e;
                         }
                     });
@@ -100,7 +103,7 @@ public class BackgroundTask {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     Utils.handleUncaughtException(this.context.getApplicationContext(), e, "backgroundTaskExecutor");
                 }
-                e.printStackTrace();
+                logger.log(Level.SEVERE, e.getMessage(), e);
             }
         });
     }

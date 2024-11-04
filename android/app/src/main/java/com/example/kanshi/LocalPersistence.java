@@ -15,9 +15,12 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @RequiresApi(api = Build.VERSION_CODES.O)
 public class LocalPersistence {
+    private static final Logger logger = Logger.getLogger(LocalPersistence.class.getName());
     private static final ConcurrentHashMap<String, ReentrantLock> fileLockMap = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, ReentrantLock> fileNameLockMap = new ConcurrentHashMap<>();
     public static ReentrantLock getLockForFile(File file) {
@@ -63,7 +66,7 @@ public class LocalPersistence {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                         Utils.handleUncaughtException(context.getApplicationContext(), e, "writeObjectToFile 0");
                     }
-                    e.printStackTrace(); // Log the exception
+                    logger.log(Level.SEVERE, e.getMessage(), e);
                 } finally {
                     finalFileNameLock.unlock();
                 }
@@ -72,7 +75,7 @@ public class LocalPersistence {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 Utils.handleUncaughtException(context.getApplicationContext(), e, "writeObjectToFile 1");
             }
-            e.printStackTrace(); // Log the exception
+            logger.log(Level.SEVERE, e.getMessage(), e);
         } finally {
             try {
                 if (objectOut != null) {
@@ -109,7 +112,7 @@ public class LocalPersistence {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 Utils.handleUncaughtException(context.getApplicationContext(), e, "readObjectFromFile");
             }
-            e.printStackTrace(); // Log the exception
+            logger.log(Level.SEVERE, e.getMessage(), e);
         } finally {
             try {
                 if (objectIn != null) {

@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 
+/** @noinspection unused*/
 public class DownloadUtils {
     private static DownloadManager downloadManager;
     private static long enqueueId;
