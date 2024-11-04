@@ -24,6 +24,7 @@
 		mediaLoader,
         updateTagInfo,
         scheduleMediaNotifications,
+        getOrderedMediaOptions,
 	} from "./js/worker.js";
 	import {
 		appID,
@@ -223,15 +224,16 @@
 					dataIsUpdated = dataIsUpdated || window.KanshiBackgroundshouldProcessRecommendedEntries;
 
 					try {
-						await updateTagInfo({ initList: true, getTagInfo: false });
+						await updateTagInfo(false);
 					} catch (ex) { console.error(ex) }
 
 					let recommendationListIsProcessed
 					if (dataIsUpdated) {
 						try {
-							window.shouldUpdateMediaNotifications = true
 							await processRecommendedMediaEntries({ initList: true })
-							await scheduleMediaNotifications({ initList: true })
+							await getOrderedMediaOptions(false)
+							await scheduleMediaNotifications()
+							await window.updateMediaNotifications(true)
 							try {
 								JSBridge.setShouldProcessRecommendedEntries(false)
 							} catch (ex) { console.error(ex) }
@@ -248,12 +250,12 @@
 							try {
 								await mediaManager({ updateRecommendedMediaList: true, initList: true })
 								try {
-									JSBridge.setshouldManageMedia(false);
+									JSBridge.setShouldManageMedia(false);
 								} catch (ex) { console.error(ex) }
 							} catch (ex) { console.error(ex) }
 						} else {
 							try {
-								JSBridge.setshouldManageMedia(false);
+								JSBridge.setShouldManageMedia(false);
 							} catch (ex) { console.error(ex) }
 						}
 					} catch (ex) { console.error(ex) }
@@ -297,7 +299,6 @@
 				let shouldManageMedia
 				if (shouldProcessRecommendedEntries) {
 					$loadingCategory[""] = new Date().getTime()
-					window.shouldUpdateMediaNotifications = true
 					await processRecommendedMediaEntries({ initList: true })
 					shouldManageMedia = true
 				}

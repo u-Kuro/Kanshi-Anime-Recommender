@@ -49,9 +49,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /** @noinspection CommentedOutCode*/
 public class Utils {
+    private static final Logger logger = Logger.getLogger(Utils.class.getName());
     public static String getPath(Context context, Uri uri) {
         // DocumentProvider
         if (DocumentsContract.isDocumentUri(context, uri)) {
@@ -321,14 +324,14 @@ public class Utils {
                                     Files.copy(tempFilePath, finalFilePath, StandardCopyOption.REPLACE_EXISTING);
                                 } catch (Exception e) {
                                     handleUncaughtException(context.getApplicationContext(), e, "exportReleasedMedia 0");
-                                    e.printStackTrace();
+                                    logger.log(Level.SEVERE, e.getMessage(), e);
                                 } finally {
                                     finalFileNameLock.unlock();
                                 }
                             }
                         } catch (Exception e) {
                             handleUncaughtException(context.getApplicationContext(), e, "exportReleasedMedia 1");
-                            e.printStackTrace();
+                            logger.log(Level.SEVERE, e.getMessage(), e);
                         } finally {
                             try {
                                 if (objectOut != null) {
@@ -460,7 +463,7 @@ public class Utils {
                 }
             }
         }
-        e.printStackTrace();
+        logger.log(Level.SEVERE, e.getMessage(), e);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
@@ -500,10 +503,10 @@ public class Utils {
                 writer.write(newLogEntry.toString());
                 writer.write(existingContent);
             } catch (Exception e1) {
-                e1.printStackTrace();
+                logger.log(Level.SEVERE, e1.getMessage(), e1);
             }
         } catch (Exception e2) {
-            e2.printStackTrace();
+            logger.log(Level.SEVERE, e2.getMessage(), e2);
         } finally {
             fileLock.unlock();
         }

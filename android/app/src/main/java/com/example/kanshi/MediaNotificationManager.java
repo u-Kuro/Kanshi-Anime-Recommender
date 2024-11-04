@@ -37,8 +37,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class MediaNotificationManager {
+    private static final Logger logger = Logger.getLogger(MediaNotificationManager.class.getName());
     public static final String MEDIA_RELEASES_CHANNEL = "media_releases";
     private static final String RECENTLY_UPDATED_MEDIA_CHANNEL = "recently_updated_media";
     public static final String MEDIA_RELEASE_NOTIFICATION_GROUP = "media_release_notification_group";
@@ -114,7 +117,7 @@ public class MediaNotificationManager {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                             Utils.handleUncaughtException(finalContext.getApplicationContext(), e, "notificationImageDownloaderExecutor");
                         }
-                        e.printStackTrace();
+                        logger.log(Level.SEVERE, e.getMessage(), e);
                     }
                 });
             }
@@ -195,7 +198,7 @@ public class MediaNotificationManager {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     Utils.handleUncaughtException(context.getApplicationContext(), e, "addNotificationFutureExecutor");
                 }
-                e.printStackTrace();
+                logger.log(Level.SEVERE, e.getMessage(), e);
             }
         }, 300, TimeUnit.MILLISECONDS);
     }

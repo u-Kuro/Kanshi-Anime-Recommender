@@ -50,10 +50,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 @RequiresApi(api = Build.VERSION_CODES.O)
 public class MediaReleaseActivity extends AppCompatActivity {
+    private final Logger logger = Logger.getLogger(MediaReleaseActivity.class.getName());
     public static WeakReference<MediaReleaseActivity> weakActivity;
     public static final AtomicBoolean showUnseenMedia = new AtomicBoolean(false);
     public static final AtomicReference<String> selectedMediaReleaseOption = new AtomicReference<>("Updates");
@@ -132,7 +135,7 @@ public class MediaReleaseActivity extends AppCompatActivity {
                                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                                         Utils.handleUncaughtException(MediaReleaseActivity.this.getApplicationContext(), e, "MediaReleaseActivity chooseImportFile");
                                     }
-                                    e.printStackTrace();
+                                    logger.log(Level.SEVERE, e.getMessage(), e);
                                 } finally {
                                     try {
                                         if (objectIn != null) {

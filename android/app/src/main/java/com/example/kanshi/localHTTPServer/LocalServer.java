@@ -29,6 +29,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -41,17 +42,19 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import fi.iki.elonen.NanoHTTPD;
 
 public class LocalServer extends NanoHTTPD {
+    private final Logger logger = Logger.getLogger(LocalServer.class.getName());
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private final Handler UIHandler = new Handler(Looper.getMainLooper());
     @NonNull private final LocalServerListener localServerListener;
     private final boolean isMain;
-
     public LocalServer(
         @NonNull LocalServerListener localServerListener,
         boolean isMain
@@ -60,11 +63,9 @@ public class LocalServer extends NanoHTTPD {
         this.isMain = isMain;
         this.localServerListener = localServerListener;
     }
-
     // METHODS TO START AND GET LOCAL SERVER URL
     public final String LOCAL_SERVER_URL_PROMISE = "LOCAL_SERVER_URL_PROMISE";
     private final AtomicReference<String> localServerURL = new AtomicReference<>();
-
     public void getLocalServerURL() {
         executorService.submit(() -> {
             try {
@@ -87,7 +88,6 @@ public class LocalServer extends NanoHTTPD {
             UIHandler.post(() -> localServerListener.onError(LOCAL_SERVER_URL_PROMISE));
         });
     }
-
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public Response serve(IHTTPSession session) {
@@ -109,24 +109,26 @@ public class LocalServer extends NanoHTTPD {
                 default: return newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "Not Found");
             }
         } catch (Exception e) {
-            logException(getApplicationContext(), e, "serve");
+            logException(getApplicationContext(), e, "serve ("+uri+"): "+getBodyText(session.getInputStream()));
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "Internal Server Error: " + e.getMessage());
         }
     }
-
     private void addCORSHeaders(Response response) {
         response.addHeader("Access-Control-Allow-Origin", "https://appassets.androidplatform.net");
         response.addHeader("Access-Control-Allow-Methods", "*");
         response.addHeader("Access-Control-Allow-Headers", "*");
         response.addHeader("Cache-Control", "no-store");
     }
-
     // METHODS FOR BACK UP
     public final AtomicReference<File> atomicBackupDirectory = new AtomicReference<>();
     public void setBackupDirectory(File backupDirectory) { this.atomicBackupDirectory.set(backupDirectory); }
     @RequiresApi(api = Build.VERSION_CODES.O)
     private Response backUpUserData(IHTTPSession session) {
         try {
+            if (session.getInputStream().available() == 0) {
+                return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain", "Input Stream is Empty");
+            }
+
             File backupDirectory = atomicBackupDirectory.get();
             if (backupDirectory == null || !backupDirectory.isDirectory()) {
                 return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain", "Backup Folder Not Found");
@@ -177,35 +179,26 @@ public class LocalServer extends NanoHTTPD {
                 tempBackupFileLock.unlock();
             }
         } catch (Exception e) {
-            logException(getApplicationContext(), e, "backUpUserData");
+            logException(getApplicationContext(), e, "backUpUserData: "+getBodyText(session.getInputStream()));
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "Error: " + e.getMessage());
         }
     }
-
     @RequiresApi(api = Build.VERSION_CODES.O)
     private Response scheduleMediaNotifications(IHTTPSession session) {
-        Context context = getApplicationContext();
-        if (context == null) {
-            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "Application Context Not Found");
-        }
-
+        Context context;
         try {
+            if ((context = getApplicationContext()) == null) {
+                return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "Application Context Not Found");
+            }
+
+            if (session.getInputStream().available() == 0) {
+                return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain", "Input Stream is Empty");
+            }
+
             Response response = newFixedLengthResponse(Response.Status.NO_CONTENT, null, null);
             addCORSHeaders(response);
 
-            String jsonData;
-            GZIPInputStream gzipInputStream = new GZIPInputStream(new BufferedInputStream(session.getInputStream()));
-            try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-                byte[] buffer = new byte[8192];
-                int bytesRead;
-                while ((bytesRead = gzipInputStream.read(buffer)) != -1) {
-                    byteArrayOutputStream.write(buffer, 0, bytesRead);
-                }
-                byteArrayOutputStream.flush();
-                jsonData = byteArrayOutputStream.toString("UTF-8");
-            }
-
-            JSONArray jsonArray = new JSONArray(jsonData);
+            JSONArray jsonArray = getJsonArray(session);
 
             MainService mainService = isMain ? null : MainService.getInstanceActivity();
             for (int i = 0; i < jsonArray.length(); i++) {
@@ -224,21 +217,24 @@ public class LocalServer extends NanoHTTPD {
                     jsonObject.getLong("episodeProgress")
                 );
             }
-
             return response;
         } catch (Exception e) {
-            logException(getApplicationContext(), e, "scheduleMediaNotifications");
+            logException(getApplicationContext(), e, "scheduleMediaNotifications: "+getBodyText(session.getInputStream()));
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "Error: " + e.getMessage());
         }
     }
-
     @RequiresApi(api = Build.VERSION_CODES.O)
     private Response updateMediaNotifications(IHTTPSession session) {
-        Context context = getApplicationContext();
-        if (context == null) {
-            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "Application Context Not Found");
-        }
+        Context context;
         try {
+            if ((context = getApplicationContext()) == null) {
+                return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "Application Context Not Found");
+            }
+
+            if (session.getInputStream().available() == 0) {
+                return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/plain", "Input Stream is Empty");
+            }
+
             Response response = newFixedLengthResponse(Response.Status.NO_CONTENT, null, null);
             addCORSHeaders(response);
 
@@ -246,7 +242,6 @@ public class LocalServer extends NanoHTTPD {
             if (MediaNotificationManager.allMediaNotification.isEmpty()) {
                 @SuppressWarnings("unchecked")
                 ConcurrentHashMap<String, MediaNotification> $allMediaNotification = (ConcurrentHashMap<String, MediaNotification>) LocalPersistence.readObjectFromFile(context, "allMediaNotification");
-
                 if ($allMediaNotification != null && !$allMediaNotification.isEmpty()) {
                     MediaNotificationManager.allMediaNotification.putAll($allMediaNotification);
                 } else {
@@ -254,19 +249,7 @@ public class LocalServer extends NanoHTTPD {
                 }
             }
 
-            String jsonData;
-            GZIPInputStream gzipInputStream = new GZIPInputStream(new BufferedInputStream(session.getInputStream()));
-            try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-                byte[] buffer = new byte[8192];
-                int bytesRead;
-                while ((bytesRead = gzipInputStream.read(buffer)) != -1) {
-                    byteArrayOutputStream.write(buffer, 0, bytesRead);
-                }
-                byteArrayOutputStream.flush();
-                jsonData = byteArrayOutputStream.toString("UTF-8");
-            }
-
-            JSONArray jsonArray = new JSONArray(jsonData);
+            JSONArray jsonArray = getJsonArray(session);
             ConcurrentHashMap<String, MediaNotification> updatedMediaNotifications = new ConcurrentHashMap<>();
             List<MediaNotification> allMediaNotificationValues = new ArrayList<>(MediaNotificationManager.allMediaNotification.values());
 
@@ -305,21 +288,21 @@ public class LocalServer extends NanoHTTPD {
                     UIHandler.post(() -> releasedTabFragment.updateReleasedMedia(false, false));
                 }
             }
+
             return response;
         } catch (Exception e) {
-            logException(getApplicationContext(), e, "updateMediaNotifications");
+            logException(getApplicationContext(), e, "updateMediaNotifications: "+getBodyText(session.getInputStream()));
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "Error: " + e.getMessage());
         }
     }
-
     @RequiresApi(api = Build.VERSION_CODES.O)
     private Response getCurrentMediaNotificationIds() {
-        Context context = getApplicationContext();
-        if (context == null) {
-            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "Application Context Not Found");
-        }
-
+        Context context;
         try {
+            if ((context = getApplicationContext()) == null) {
+                return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "Application Context Not Found");
+            }
+
             // Get Media Notification Entries
             if (MediaNotificationManager.allMediaNotification.isEmpty()) {
                 @SuppressWarnings("unchecked")
@@ -361,6 +344,22 @@ public class LocalServer extends NanoHTTPD {
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "Error: " + e.getMessage());
         }
     }
+    @NonNull
+    private static JSONArray getJsonArray(IHTTPSession session) throws Exception {
+        String jsonData;
+        GZIPInputStream gzipInputStream = new GZIPInputStream(new BufferedInputStream(session.getInputStream()));
+        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = gzipInputStream.read(buffer)) != -1) {
+                byteArrayOutputStream.write(buffer, 0, bytesRead);
+            }
+            byteArrayOutputStream.flush();
+            jsonData = byteArrayOutputStream.toString("UTF-8");
+        }
+
+        return new JSONArray(jsonData);
+    }
     private Context getApplicationContext() {
         Context context = null;
         try {
@@ -378,6 +377,21 @@ public class LocalServer extends NanoHTTPD {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && context != null) {
             Utils.handleUncaughtException(context.getApplicationContext(), e, fileFrom);
         }
-        e.printStackTrace();
+        logger.log(Level.SEVERE, e.getMessage(), e);
+    }
+    private String getBodyText(InputStream inputStream) {
+        try {
+            if (inputStream == null) return "InputStream is Null";
+            if (inputStream.available() == 0) return "InputStream is Not Available";
+            ByteArrayOutputStream result = new ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int length;
+            while ((length = inputStream.read(buffer)) != -1) {
+                result.write(buffer, 0, length);
+            }
+            return result.toString("UTF-8");
+        } catch (Exception ignored) {
+            return "Failed to Read Body As Text";
+        }
     }
 }

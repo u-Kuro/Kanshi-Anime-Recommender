@@ -53,7 +53,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.PowerManager;
 import android.provider.DocumentsContract;
 import android.provider.Settings;
 import android.util.Log;
@@ -87,6 +86,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 import androidx.core.app.ActivityCompat;
@@ -100,6 +101,7 @@ import com.example.kanshi.localHTTPServer.LocalServer;
 import com.example.kanshi.localHTTPServer.LocalServerListener;
 
 public class MainActivity extends AppCompatActivity {
+    private final Logger logger = Logger.getLogger(MainActivity.class.getName());
     public boolean keepAppRunningInBackground = false;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
@@ -110,7 +112,6 @@ public class MainActivity extends AppCompatActivity {
     private boolean pageLoaded = false;
     private boolean webViewIsLoaded = false;
     private final CustomTabsHelper customTabsIntent = CustomTabsHelper.getInstance();
-    private PowerManager.WakeLock wakeLock;
     public boolean shouldGoBack;
     public Toast persistentToast;
     public Toast currentToast;
@@ -227,9 +228,6 @@ public class MainActivity extends AppCompatActivity {
         keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground", true);
         if (OWNER) { TOKEN = getTOKEN(prefs.getString("savedExportPath", "")); }
         permissionIsAsked = prefs.getBoolean("permissionIsAsked", false);
-        // Keep Awake on Lock Screen
-        wakeLock = ((PowerManager) getSystemService(Context.POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "KeepAwake:");
-        wakeLock.acquire(10 * 60 * 1000L);
         // Others
         // Show status bar
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -624,9 +622,6 @@ public class MainActivity extends AppCompatActivity {
         }
         setBackgroundUpdates(false);
         super.onDestroy();
-        if (wakeLock!=null) {
-            wakeLock.release();
-        }
     }
 
     @Override
@@ -799,9 +794,9 @@ public class MainActivity extends AppCompatActivity {
         }
         @RequiresApi(api = Build.VERSION_CODES.N)
         @JavascriptInterface
-        public void isOnline(boolean isOnline) {
+        public void isOnline(boolean online) {
             try {
-                if (isOnline) {
+                if (online) {
                     isAppConnectionAvailable(isConnected -> webView.post(() -> {
                         if (isConnected) {
                             showToast(Toast.makeText(getApplicationContext(), "Your internet has been restored", Toast.LENGTH_LONG));
@@ -1154,7 +1149,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             return future.get(999999999, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, e.getMessage(), e);
             return false;
         }
     }

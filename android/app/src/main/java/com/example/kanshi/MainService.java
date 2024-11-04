@@ -33,6 +33,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
@@ -46,9 +47,12 @@ import com.example.kanshi.localHTTPServer.LocalServerListener;
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @SuppressLint("SetJavaScriptEnabled")
 public class MainService extends Service {
+    private final Logger logger = Logger.getLogger(MainService.class.getName());
     public static WeakReference<MainService> weakActivity;
     WebView webView;
     public SharedPreferences prefs;
@@ -114,13 +118,7 @@ public class MainService extends Service {
 
         // Create a notification channel
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = "Background Application";
-            String description = "Allow application in the background for updates, uses ram and power usage when update is running.";
-            int importance = NotificationManager.IMPORTANCE_MIN;
-            NotificationChannel channel = new NotificationChannel(APP_IN_BACKGROUND_CHANNEL, name, importance);
-            channel.setDescription(description);
-            channel.setShowBadge(false);
-            channel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
+            NotificationChannel channel = getNotificationChannel();
             channel.setSound(null, null);
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
@@ -241,12 +239,12 @@ public class MainService extends Service {
                 startForeground(SERVICE_NOTIFICATION_ID, notification, FOREGROUND_SERVICE_TYPE_DATA_SYNC);
             } catch (Exception e) {
                 Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService");
-                e.printStackTrace();
+                logger.log(Level.SEVERE, e.getMessage(), e);
                 try {
                     startForeground(SERVICE_NOTIFICATION_ID, notification);
                 } catch (Exception ex) {
                     Utils.handleUncaughtException(MainService.this.getApplicationContext(), ex, "MainService");
-                    ex.printStackTrace();
+                    logger.log(Level.SEVERE, ex.getMessage(), ex);
                     stopForeground(true);
                     stopSelf();
                     return;
@@ -259,6 +257,19 @@ public class MainService extends Service {
         webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
 
         weakActivity = new WeakReference<>(MainService.this);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @NonNull
+    private NotificationChannel getNotificationChannel() {
+        CharSequence name = "Background Application";
+        String description = "Allow application in the background for updates, uses ram and power usage when update is running.";
+        int importance = NotificationManager.IMPORTANCE_MIN;
+        NotificationChannel channel = new NotificationChannel(APP_IN_BACKGROUND_CHANNEL, name, importance);
+        channel.setDescription(description);
+        channel.setShowBadge(false);
+        channel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
+        return channel;
     }
 
     @Override

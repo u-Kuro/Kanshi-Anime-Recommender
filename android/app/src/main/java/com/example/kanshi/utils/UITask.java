@@ -17,8 +17,11 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class UITask {
+    private final Logger logger = Logger.getLogger(UITask.class.getName());
     private final Context context;
     private final ExecutorService UITaskExecutor;
     private final Deque<String> queue;
@@ -99,7 +102,7 @@ public class UITask {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     Utils.handleUncaughtException(this.context.getApplicationContext(), e, "UiTaskExecutor");
                 }
-                e.printStackTrace();
+                logger.log(Level.SEVERE, e.getMessage(), e);
             }
         });
     }
