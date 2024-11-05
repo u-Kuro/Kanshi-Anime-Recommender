@@ -79,7 +79,7 @@ const mediaLoader = ($data = {}) => {
         mediaLoaderPromises[postId] = { resolve, reject }
 
         try {
-            mediaLoaderWorker = mediaLoaderWorker || new Worker(await progressedFetch("./web-worker/mediaLoader.js", 26678, "Checking Existing List"))
+            mediaLoaderWorker = mediaLoaderWorker || new Worker(await progressedFetch({ url: "./web-worker/mediaLoader.js", totalLength: 26678, status: "Checking Existing List" }))
         } catch (ex) {
             mediaLoaderWorker?.terminate?.()
             mediaLoaderWorker = null
@@ -408,7 +408,7 @@ const mediaManager = ($data = {}) => {
         }
 
         progress.set(0)
-        progressedFetch("./web-worker/mediaManager.js", 55071, "Updating Categories and List")
+        progressedFetch({ url: "./web-worker/mediaManager.js", totalLength: 55071, status: "Updating Categories and List" })
             .then(url => {
                 mediaManagerWorker?.terminate?.()
                 isLoadingMedia.set(true)
@@ -539,7 +539,7 @@ const getOrderedMediaOptions = (getData = true) => {
     return new Promise(async (resolve, reject) => {
         try {
             getOrderedMediaOptionsWorker?.terminate?.()
-            const url = await progressedFetch("./web-worker/getOrderedMediaOptions.js")
+            const url = await progressedFetch({ url: "./web-worker/getOrderedMediaOptions.js" })
             getOrderedMediaOptionsWorker = new Worker(url)
             getOrderedMediaOptionsWorker.postMessage(getData)
             getOrderedMediaOptionsWorker.onmessage = async ({ data }) => {
@@ -582,7 +582,7 @@ const scheduleMediaNotifications = () => {
     return new Promise(async (resolve, reject) => {
         try {
             scheduleMediaNotificationsWorker?.terminate?.()
-            const url = await progressedFetch("./web-worker/scheduleMediaNotifications.js")
+            const url = await progressedFetch({ url: "./web-worker/scheduleMediaNotifications.js" })
             scheduleMediaNotificationsWorker = new Worker(url)
             scheduleMediaNotificationsWorker.postMessage(get(android) ? "android" : "browser")
             scheduleMediaNotificationsWorker.onmessage = async ({ data }) => {
@@ -659,7 +659,7 @@ const processRecommendedMediaEntries = ($data = {}) => {
         }
         
         progress.set(0)
-        progressedFetch("./web-worker/processRecommendedMediaEntries.js", 41859, "Updating Recommendation List")
+        progressedFetch({ url: "./web-worker/processRecommendedMediaEntries.js", totalLength: 41859, status: "Updating Recommendation List" })
             .then(url => {
                 isProcessingList.set(true)
                 clearTimeout(processSubsequentWorkersTimeout)
@@ -799,7 +799,7 @@ const requestMediaEntries = ($data = {}) => {
             }
         }
         progress.set(0)
-        progressedFetch("./web-worker/requestMediaEntries.js")
+        progressedFetch({ url: "./web-worker/requestMediaEntries.js" })
             .then(url => {
                 requestMediaEntriesWorker?.terminate?.()
                 notifyUpdatedMediaNotification()
@@ -948,7 +948,7 @@ const requestUserEntries = ($data = {}) => {
         }
         userRequestIsRunning.set(true)
         progress.set(0)
-        progressedFetch("./web-worker/requestUserEntries.js")
+        progressedFetch({ url: "./web-worker/requestUserEntries.js" })
             .then(url => {
                 requestUserEntriesWorker?.terminate?.()
                 requestUserEntriesWorker = new Worker(url)
@@ -1090,7 +1090,7 @@ const exportUserData = ($data) => {
         }
         progress.set(0)
         resetProgress.update((e) => !e);
-        progressedFetch("./web-worker/exportUserData.js")
+        progressedFetch({ url: "./web-worker/exportUserData.js" })
             .then(url => {
                 exportUserDataWorker?.terminate?.()
                 exportUserDataWorker = new Worker(url)
@@ -1232,7 +1232,7 @@ const importUserData = ($data) => {
         }
         progress.set(0)
         resetProgress.update((e) => !e);
-        progressedFetch("./web-worker/importUserData.js")
+        progressedFetch({ url: "./web-worker/importUserData.js" })
             .then(url => {
                 importUserDataWorker?.terminate?.()
                 importUserDataWorker = new Worker(url)
@@ -1368,10 +1368,10 @@ const importUserData = ($data) => {
 const retrieveInitialData = () => {
     return new Promise((resolve, reject) => {
         progress.set(0)
-        progressedFetch("./web-worker/retrieveInitialData.js", 3264, "Checking Anime, Manga, and Novel Entries")
+        progressedFetch({ url: "./web-worker/retrieveInitialData.js", totalLength: 3264, status: "Checking Anime, Manga, and Novel Entries" })
             .then(async workerUrl => {
                 const worker = new Worker(workerUrl)
-                worker.postMessage({ initialDataBlob: await progressedFetch("./data/initial-data.gzip", 28017313, "Getting Anime, Manga, and Novel Entries", true) })
+                worker.postMessage({ initialDataBlob: await progressedFetch({ url: "./data/initial-data.gzip", totalLength: 28017313, status: "Getting Anime, Manga, and Novel Entries", getBlob: true }) })
                 worker.onmessage = ({ data }) => {
                     if (hasOwnProp?.call?.(data, "progress")) {
                         if (data?.progress >= 0 && data?.progress <= 100) {
@@ -1422,7 +1422,7 @@ const updateTagInfo = (getData = true) => {
     return new Promise(async (resolve, reject) => {
         try {
             updateTagInfoWorker?.terminate?.()
-            const url = await progressedFetch("./web-worker/updateTagInfo.js")
+            const url = await progressedFetch({ url: "./web-worker/updateTagInfo.js" })
             updateTagInfoWorker = new Worker(url)
             let server
             if (!get(android) && window.location != null) {

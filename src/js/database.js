@@ -4,163 +4,163 @@ import { androidBackground, uniqueKey } from "./variables.js";
 
 let db
 const IDBInit = () => {
-    return new Promise((resolve, reject) => {
-        try {
-            const request = indexedDB.open(
-                get(uniqueKey),
-                1
-            );
-            request.onsuccess = ({ target }) => {
-                db = target.result;
-                resolve()
-            };
-            request.onupgradeneeded = ({ target }) => {
-                try {
-                    const { result, transaction } = target
-                    const stores = [
-                        // All Media
-                        "mediaEntries", "mediaEntriesInfo", "excludedMediaIds", "mediaUpdateAt",
-                        // Media Options
-                        "mediaOptions", "orderedMediaOptions",
-                        // Tag Category and Descriptions
-                        "tagInfo", "tagInfoUpdateAt",
-                        // User Data From AniList
-                        "username", "userMediaEntries", "userMediaUpdateAt",
-                        // All Recommended Media
-                        "recommendedMediaEntries",
-                        // User Data In App
-                        "algorithmFilters", "mediaCautions", "hiddenMediaEntries",
-                        "categories", "selectedCategory",
-                        // User Configs In App
-                        "autoPlay", "gridFullView", "showRateLimit", "showStatus",
-                        "autoUpdate", "autoExport",
-                        "runnedAutoUpdateAt", "runnedAutoExportAt",
-                        "exportPathIsAvailable",
-                        // User Configs In App
-                        "shouldManageMedia", "shouldProcessRecommendedEntries",
-                        // Other Info / Flags
-                        "nearestMediaReleaseAiringAt",
-                        "recommendationError",
-                        "visited",
-                    ]
-                    for (const store of stores) {
-                        result.createObjectStore(store);
-                    }
-                    transaction.oncomplete = () => {
-                        db = result;
-                        resolve();
-                    }
-                } catch (ex) {
-                    console.error(ex);
-                    reject(ex);
-                    transaction.abort();
+    const { promise, resolve, reject } = Promise.withResolvers()
+    try {
+        const request = indexedDB.open(
+            get(uniqueKey),
+            1
+        );
+        request.onsuccess = ({ target }) => {
+            db = target.result;
+            resolve()
+        };
+        request.onupgradeneeded = ({ target }) => {
+            try {
+                const { result, transaction } = target
+                const stores = [
+                    // All Media
+                    "mediaEntries", "mediaEntriesInfo", "excludedMediaIds", "mediaUpdateAt",
+                    // Media Options
+                    "mediaOptions", "orderedMediaOptions",
+                    // Tag Category and Descriptions
+                    "tagInfo", "tagInfoUpdateAt",
+                    // User Data From AniList
+                    "username", "userMediaEntries", "userMediaUpdateAt",
+                    // All Recommended Media
+                    "recommendedMediaEntries",
+                    // User Data In App
+                    "algorithmFilters", "mediaCautions", "hiddenMediaEntries",
+                    "categories", "selectedCategory",
+                    // User Configs In App
+                    "autoPlay", "gridFullView", "showRateLimit", "showStatus",
+                    "autoUpdate", "autoExport",
+                    "runnedAutoUpdateAt", "runnedAutoExportAt",
+                    "exportPathIsAvailable",
+                    // User Configs In App
+                    "shouldManageMedia", "shouldProcessRecommendedEntries",
+                    // Other Info / Flags
+                    "nearestMediaReleaseAiringAt",
+                    "recommendationError",
+                    "visited",
+                ]
+                for (const store of stores) {
+                    result.createObjectStore(store);
                 }
-            }
-            request.onerror = (ex) => {
+                transaction.oncomplete = () => {
+                    db = result;
+                    resolve();
+                }
+            } catch (ex) {
                 console.error(ex);
                 reject(ex);
-            };
-        } catch (ex) {
+                transaction.abort();
+            }
+        }
+        request.onerror = (ex) => {
             console.error(ex);
             reject(ex);
-        }
-    })
+        };
+    } catch (ex) {
+        console.error(ex);
+        reject(ex);
+    }
+    return promise
 }
-const hasIDBData = (recordKeys) => {
-    return new Promise(async (resolve) => {
-        try {
-            if (!db) await IDBInit()
-            const transaction = db.transaction(recordKeys, "readonly")
-            resolve((
-                await Promise.all(
-                    recordKeys.map((key) => {
-                        return new Promise((resolve) => {
-                            const getKey = transaction
-                                .objectStore(key)
-                                .getKey(key)
-                            getKey.onsuccess = async () => {
-                                resolve(getKey.result !== undefined);
-                            };
-                            getKey.onerror = (ex) => {
-                                console.error(ex);
-                                resolve(false);
-                            };
-                        })
+const hasIDBData = async (recordKeys) => {
+    const { promise, resolve } = Promise.withResolvers()
+    try {
+        if (!db) await IDBInit()
+        const transaction = db.transaction(recordKeys, "readonly")
+        resolve((
+            await Promise.all(
+                recordKeys.map((key) => {
+                    return new Promise((resolve) => {
+                        const getKey = transaction
+                            .objectStore(key)
+                            .getKey(key)
+                        getKey.onsuccess = async () => {
+                            resolve(getKey.result !== undefined);
+                        };
+                        getKey.onerror = (ex) => {
+                            console.error(ex);
+                            resolve(false);
+                        };
                     })
-            )).every(exists => exists))
-        } catch (ex) {
-            console.error(ex)
-            resolve(false)
-        }
-    })
+                })
+        )).every(exists => exists))
+    } catch (ex) {
+        console.error(ex)
+        resolve(false)
+    }
+    return await promise
 }
-const getIDBData = (key) => {
-    return new Promise(async (resolve) => {
-        try {
-            if (!db) await IDBInit()
-            const get = db.transaction(key, "readonly")
-                .objectStore(key)
-                .get(key)
-            get.onsuccess = async () => {
-                let value = get.result;
-                if (value instanceof Blob) {
-                    value = await new Response(
-                        value
-                        .stream()
-                        .pipeThrough(new DecompressionStream("gzip"))
-                    ).json()
-                }
-                resolve(value);
-            };
-            get.onerror = (ex) => {
-                console.error(ex);
-                resolve();
-            };
-        } catch (ex) {
+const getIDBData = async (key) => {
+    const { promise, resolve } = Promise.withResolvers()
+    try {
+        if (!db) await IDBInit()
+        const get = db.transaction(key, "readonly")
+            .objectStore(key)
+            .get(key)
+        get.onsuccess = async () => {
+            let value = get.result;
+            if (value instanceof Blob) {
+                value = await new Response(
+                    value
+                    .stream()
+                    .pipeThrough(new DecompressionStream("gzip"))
+                ).json()
+            }
+            resolve(value);
+        };
+        get.onerror = (ex) => {
             console.error(ex);
             resolve();
-        }
-    });
+        };
+    } catch (ex) {
+        console.error(ex);
+        resolve();
+    }
+    return await promise
 }
-const getIDBRecords = (recordKeys) => {
-    return new Promise(async (resolve) => {
-        try {
-            if (!db) await IDBInit()
-            const transaction = db.transaction(recordKeys, "readonly")
-            resolve(Object.fromEntries(
-                await Promise.all(
-                    recordKeys.map((key) => {
-                        return new Promise((resolve) => {
-                            const get = transaction
-                                .objectStore(key)
-                                .get(key)
-                            get.onsuccess = async () => {
-                                let value = get.result;
-                                if (value instanceof Blob) {
-                                    value = await new Response(
-                                        value
-                                        .stream()
-                                        .pipeThrough(new DecompressionStream("gzip"))
-                                    ).json()
-                                }
-                                resolve([key, value]);
-                            };
-                            get.onerror = (ex) => {
-                                console.error(ex);
-                                resolve([key]);
-                            };
-                        })
+const getIDBRecords = async (recordKeys) => {
+    const { promise, resolve } = Promise.withResolvers()
+    try {
+        if (!db) await IDBInit()
+        const transaction = db.transaction(recordKeys, "readonly")
+        resolve(Object.fromEntries(
+            await Promise.all(
+                recordKeys.map((key) => {
+                    return new Promise((resolve) => {
+                        const get = transaction
+                            .objectStore(key)
+                            .get(key)
+                        get.onsuccess = async () => {
+                            let value = get.result;
+                            if (value instanceof Blob) {
+                                value = await new Response(
+                                    value
+                                    .stream()
+                                    .pipeThrough(new DecompressionStream("gzip"))
+                                ).json()
+                            }
+                            resolve([key, value]);
+                        };
+                        get.onerror = (ex) => {
+                            console.error(ex);
+                            resolve([key]);
+                        };
                     })
-                )
-            ))
-        } catch (ex) {
-            console.error(ex);
-            resolve();
-        }
-    });
+                })
+            )
+        ))
+    } catch (ex) {
+        console.error(ex);
+        resolve();
+    }
+    return await promise
 }
-const setIDBData = (key, value, isImportant) => {
-    if (get(androidBackground) && !isImportant) return
+const setIDBData = (key, value, { important }) => {
+    if (get(androidBackground) && !important) return
     return new Promise(async (resolve, reject) => {
         if (!db) await IDBInit()
         try {
@@ -193,8 +193,8 @@ const setIDBData = (key, value, isImportant) => {
         }
     });
 }
-// const setIDBRecords = (records, isImportant) => {
-//     if (get(androidBackground) && !isImportant) return
+// const setIDBRecords = (records, { important }) => {
+//     if (get(androidBackground) && !important) return
 //     return new Promise(async (resolve, reject) => {
 //         if (!db) await IDBInit()
 //         try {

@@ -79,18 +79,13 @@
         androidBackground,
         evicted,
 	} from "./js/variables.js";
-	(async () => {
-		try {
-			// Check App ID (Not for Android allow Fast Start on Slow Network)
-			if (!$android) {
-				$appID = await getWebVersion();
-			}
 
-			// Check Data Loss
+	const init = async () => {
+		try {			
+			// Initialize Checks for Data Eviction/Loss
 			if ($android) {
 				if ($visited) {
-					const isAlreadyVisited = await getIDBData("visited");
-					if (isAlreadyVisited !== true) {
+					if ((await getIDBData("visited")) !== true) {
 						$evicted = true;
 						try {
 							JSBridge.notifyDataEviction();
@@ -100,7 +95,7 @@
 						} catch (ex) { console.error(ex) }
 					}
 				} else {
-					setIDBData("visited", true, true)
+					setIDBData("visited", true, { important: true })
 					.then(() => {
 						try {
 							JSBridge.pageVisited()
@@ -400,7 +395,8 @@
 			GAscript.defer = true;
 			document.head.appendChild(GAscript);
 		}
-	})();
+	}
+	init()
 	
 	let mediaListPagerEl, mediaListPagerPad
 		
