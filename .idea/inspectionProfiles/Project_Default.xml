@@ -68,11 +68,19 @@
       <scope name="JavaScript" level="WEAK WARNING" enabled="false" />
       <scope name="Svelte" level="WEAK WARNING" enabled="false" />
     </inspection_tool>
+    <inspection_tool class="JSUnusedAssignment" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="JavaScript" level="WARNING" enabled="false" />
+      <scope name="Svelte" level="WARNING" enabled="false" />
+    </inspection_tool>
     <inspection_tool class="JSValidateTypes" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <scope name="JavaScript" level="WEAK WARNING" enabled="false" />
       <scope name="Svelte" level="WEAK WARNING" enabled="false" />
     </inspection_tool>
     <inspection_tool class="JSVoidFunctionReturnValueUsed" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Svelte" level="WARNING" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="LoopStatementThatDoesntLoopJS" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="JavaScript" level="WARNING" enabled="false" />
       <scope name="Svelte" level="WARNING" enabled="false" />
     </inspection_tool>
   </profile>
