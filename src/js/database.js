@@ -181,7 +181,8 @@ const setIDBData = async (key, value, { important }) => {
                 .pipeThrough(new CompressionStream("gzip"))
             ).blob()
         }
-        const transaction = db.transaction(key, "readwrite"), put = transaction
+        const transaction = db.transaction(key, "readwrite")
+        const put = transaction
             .objectStore(key)
             .put(value, key);
         put.onerror = (ex) => {
