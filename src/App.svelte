@@ -2,9 +2,9 @@
 	import C from "./components/index.js";
 	import { onMount, tick } from "svelte";
 	import { fade } from "svelte/transition";
-	import { inject } from "@vercel/analytics";
 	import getWebVersion from "./js/version.js";
 	import { requestImmediate } from "./js/utils/appUtils.js";
+	import { loadAnalytics, loadYoutube, showErrorMessage } from "./js/utils/kanshiUtils.js";
 	import {
 		getIDBData,
 		setIDBData,
@@ -79,10 +79,11 @@
         androidBackground,
         evicted,
 	} from "./js/variables.js";
+    import { isValidDateTime } from "./js/utils/dataUtils.js";
 
 	const init = async () => {
 		try {			
-			// Initialize Checks for Data Eviction/Loss
+			// Init Checks for Data Eviction/Loss
 			if ($android) {
 				if ($visited) {
 					if ((await getIDBData("visited")) !== true) {
@@ -105,6 +106,7 @@
 				}
 			}
 
+			// Load Inital Media
 			if (!$androidBackground) {
 				try {
 					$initList = (await mediaLoader({
@@ -119,66 +121,19 @@
 				} catch (ex) { console.error(ex) }
 			}
 
-			// Get Initial Data
-			await (async () => {
-				const hasInitialData = await hasIDBData([
-					"mediaEntries",
-					"mediaEntriesInfo",
-					"orderedMediaOptions",
-					"excludedMediaIds",
-					"tagInfo",
-				])
-				if (!hasInitialData) {
-					$initList = true
-					await retrieveInitialData()
-				}
-				if (!$androidBackground) {
-					const records = await getIDBRecords([
-						"username",
-						"orderedMediaOptions",
-						"algorithmFilters",
-						"tagInfo"
-					])
-					if (records) {
-						const savedUsername = records.username;
-						if (savedUsername !== $username) {
-							$username = savedUsername
-							setLSData("username", savedUsername || "")
-							.catch(() => removeLSData("username"))
-						}
-						$orderedMediaOptions = records.orderedMediaOptions;
-						$algorithmFilters = records.algorithmFilters || [
-							{
-								filterType: "bool",
-								optionName: "Content Focused",
-								status: "none"
-							},
-							{
-								filterType: "bool",
-								optionName: "Inc. All Factors",
-								status: "none"
-							},
-							{
-								filterType: "bool",
-								optionName: "Inc. Average Score",
-								status: "none"
-							},
-							{
-								filterType: "bool",
-								optionName: "Exclude Year",
-								status: "none"
-							},
-						];
-						$tagInfo = records.tagInfo || {};
-						updateTagInfo();
-					} else {
-						throw new Error("Failed to load initial data")
-					}
-				}
-			})()
-
-			$initData = false;
+			// Load Initial Data
+			if (!await hasIDBData([
+				"mediaEntries",
+				"mediaEntriesInfo",
+				"orderedMediaOptions",
+				"excludedMediaIds",
+				"tagInfo",
+			])) {
+				$initList = true
+				await retrieveInitialData()
+			}
 						
+			// Get Initial Data
 			if ($androidBackground) {
 				try {
 					let sendBackgroundStatusIsRunning;
@@ -270,21 +225,40 @@
 					console.error(ex)
 				}
 			} else {
-				// Get/Show List
+				// Load Initial Data
+				const records = await getIDBRecords([
+					"username",
+					"orderedMediaOptions",
+					"algorithmFilters",
+					"tagInfo"
+				])
+				if (records) {
+					const savedUsername = records.username;
+					if (savedUsername !== $username) {
+						$username = savedUsername
+						setLSData("username", savedUsername || "")
+						.catch(() => removeLSData("username"))
+					}
+					$orderedMediaOptions = records.orderedMediaOptions;
+					$algorithmFilters = records.algorithmFilters || [{ filterType: "bool", optionName: "Content Focused", status: "none" }, { filterType: "bool", optionName: "Inc. All Factors", status: "none" }, { filterType: "bool", optionName: "Inc. Average Score", status: "none" }, { filterType: "bool", optionName: "Exclude Year", status: "none" }];
+					$tagInfo = records.tagInfo;
+					updateTagInfo();
+				} else {
+					throw new Error("Failed to Load Initial Data")
+				}
+				$initData = false;
+
+				// Check Reloads for Initial Data
 				let shouldProcessRecommendedEntries;
-				const nearestMediaReleaseAiringAt = getLSData("nearestMediaReleaseAiringAt") ?? (await getIDBData("nearestMediaReleaseAiringAt"));
-				if (
-					typeof nearestMediaReleaseAiringAt === "number" &&
-					!isNaN(nearestMediaReleaseAiringAt)
-				) {
-					const neareastMediaReleaseAiringDate = new Date(nearestMediaReleaseAiringAt * 1000);
-					if (
-						!isNaN(neareastMediaReleaseAiringDate) &&
-						neareastMediaReleaseAiringDate <= new Date()
-					) {
+				const nearestMediaReleaseAiringAt = getLSData("nearestMediaReleaseAiringAt") ?? (await getIDBData("nearestMediaReleaseAiringAt")),
+					nearestMediaReleaseAiringTime = nearestMediaReleaseAiringAt * 1000
+				// Reloads for Processing Recommended Entries and Reload Time
+				if (isValidDateTime(nearestMediaReleaseAiringTime)) {
+					const neareastMediaReleaseAiringDate = new Date(nearestMediaReleaseAiringTime);
+					if (neareastMediaReleaseAiringDate <= new Date()) {
 						shouldProcessRecommendedEntries = true;
 					} else {
-						window.setMediaReleaseUpdateTimeout?.(nearestMediaReleaseAiringAt);
+						window.setMediaReleaseUpdateTimeout(nearestMediaReleaseAiringAt);
 					}
 				}
 				if (!shouldProcessRecommendedEntries) {
@@ -298,6 +272,7 @@
 					shouldManageMedia = true
 				}
 
+				// Reloads for Updating Category Media
 				shouldManageMedia = shouldManageMedia || $initList !== false || (await getIDBData("shouldManageMedia"));
 				if (shouldManageMedia) {
 					if ($initList !== false) {
@@ -321,79 +296,20 @@
 				} else {
 					checkAutoFunctions(true);
 				}
-				
 			}
 		} catch (ex) {
-			if ($android) {
+			console.error(ex);
+			showErrorMessage()
+			if ($androidBackground) {
 				try {
 					JSBridge.backgroundUpdateIsFinished(false);
 				} catch (ex) { console.error(ex) }
-				$confirmPromise?.({
-					isAlert: true,
-					title: "Something went wrong",
-					text: "App may not be working properly, restart the app or clear your cache, if it still fails you may want to reinstall the app.",
-				});
 			} else {
-				$confirmPromise?.({
-					isAlert: true,
-					title: "Something went wrong",
-					text: "App may not be working properly, refresh the page or clear this website data, this also does not run in incognito.",
-				});
+				$initList = $initData = false;
+				loadYoutube();
+				checkAutoFunctions(true);
+				loadAnalytics();
 			}
-			if ($initData) {
-				$initData = false;
-			}
-			if ($initList !== false) {
-				$initList = false;
-			}
-			
-			loadYoutube();
-
-			$dataStatus = "Something went wrong";
-			checkAutoFunctions(true);
-			loadAnalytics();
-			console.error(ex);
-		}
-
-		function loadYoutube() {
-			// For Youtube API
-			window.onYouTubeIframeAPIReady = () => {
-				window.playMostVisibleTrailer?.();
-			};
-			const YTscript = document.createElement("script");
-			YTscript.onload = () => {
-				window.onYouTubeIframeAPIReady();
-			};
-			YTscript.src = "https://www.youtube.com/iframe_api?v=16";
-			YTscript.id = "www-widgetapi-script";
-			YTscript.defer = true;
-			document.head.appendChild(YTscript);
-		}
-
-		function loadAnalytics() {
-			const isVercel = window.location?.origin === "https://kanshi.vercel.app";
-			// Google Analytics
-			const GAscript = document.createElement("script");
-			GAscript.onload = () => {
-				window.dataLayer = window.dataLayer || [];
-				function gtag() {
-					dataLayer.push(arguments);
-				}
-				gtag("js", new Date());
-				if (isVercel) {
-					gtag("config", "G-F5E8XNQS20");
-				} else {
-					gtag("config", "G-PPMY92TJCE");
-				}
-			};
-			if (isVercel) {
-				inject?.(); // Vercel Analytics
-				GAscript.src = "https://www.googletagmanager.com/gtag/js?id=G-F5E8XNQS20";
-			} else {
-				GAscript.src = "https://www.googletagmanager.com/gtag/js?id=G-PPMY92TJCE";
-			}
-			GAscript.defer = true;
-			document.head.appendChild(GAscript);
 		}
 	}
 	init()
