@@ -266,7 +266,7 @@
             }
         }
         try {
-            JSBridge.showRecentReleases();
+            window.JSBridge.showRecentReleases();
         } catch (ex) { console.error(ex) }
     }
 
@@ -358,34 +358,34 @@
 
 <header
     id="nav-container"
-    bind:this="{navContainerEl}"
-    class="{"nav-container" +
+    bind:this={navContainerEl}
+    class={"nav-container" +
         (delayedMenuVis ? " menu-visible" : "") +
         (delayedMenuVis || delayedPopupVis ||
         (!navHasNoBackOption && ($popupVisible || $menuVisible))
             ? " delayed-full-screen-popup"
-            : "")}"
-    on:keyup="{(e) => e.key === "Enter" && handleMenuVisibility(e)}"
-    on:click="{handleMenuVisibility}"
+            : "")}
+    on:keyup={(e) => e.key === "Enter" && handleMenuVisibility(e)}
+    on:click={handleMenuVisibility}
 >
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
     <nav
         id="nav"
-        class="{"nav " +
+        class={"nav " +
             (delayedPopupVis ? " popup-visible" : "") +
             (inputUsernameEl === document?.activeElement
                 ? " input-focused"
-                : "")}"
-        bind:this="{navEl}"
+                : "")}
+        bind:this={navEl}
     >
-        <div class="go-back-container" on:click="{handleGoBack}">
+        <div class="go-back-container" on:click={handleGoBack}>
             <!-- x-close -->
             <svg
                 class="closing-x"
                 viewBox="0 0 24 24"
                 tabindex="0"
-                on:keyup="{(e) => e.key === "Enter" && handleGoBack(e)}"
+                on:keyup={(e) => e.key === "Enter" && handleGoBack(e)}
                 role="button"
                 aria-label="Close Fixed Popup Element"
             >
@@ -398,7 +398,7 @@
                 viewBox="0 0 500 500"
                 role="button"
                 aria-label="Cancel Username Search"
-                on:keyup="{(e) => e.key === "Enter" && handleGoBack(e)}"
+                on:keyup={(e) => e.key === "Enter" && handleGoBack(e)}
             >
                 <path
                     d="M 30.047 225.832 C 17.045 238.409 17.045 259.255 30.047 271.832 L 190.047 431.832 C 207.752 449.537 237.985 441.437 244.465 417.251 C 247.473 406.026 244.264 394.049 236.047 385.832 L 130.047 280.832 L 437.047 280.832 C 461.68 280.832 477.076 254.165 464.76 232.832 C 459.043 222.931 448.479 216.832 437.047 216.832 L 130.047 216.832 L 236.047 111.832 C 253.752 94.127 245.651 63.894 221.465 57.413 C 210.241 54.406 198.264 57.615 190.047 65.832 L 30.047 225.832 Z"
@@ -412,31 +412,31 @@
             <input
                 id="username-input"
                 type="search"
-                tabindex="{$popupVisible && $windowWidth > 750 ? "-1" : "0"}"
+                tabindex={$popupVisible && $windowWidth > 750 ? "-1" : "0"}
                 enterkeyhint="search"
                 autocomplete="off"
                 placeholder="Your Anilist Username"
-                class="{$android ? "android" : ""}"
-                on:keyup="{(e) => e.key === "Enter" && updateUsername(e)}"
-                on:focusin="{onfocusUsernameInput}"
-                on:focusout="{onfocusUsernameInput}"
-                bind:value="{typedUsername}"
-                bind:this="{inputUsernameEl}"
-                disabled="{$popupVisible}"
+                class={$android ? "android" : ""}
+                on:keyup={(e) => e.key === "Enter" && updateUsername(e)}
+                on:focusin={onfocusUsernameInput}
+                on:focusout={onfocusUsernameInput}
+                bind:value={typedUsername}
+                bind:this={inputUsernameEl}
+                disabled={$popupVisible}
             />
             <div
                 class="username-text"
-                on:click="{() => {
+                on:click={() => {
                     if (!$popupVisible) {
                         focusInputUsernameEl();
                     }
-                }}"
-                on:keyup="{(e) => {
+                }}
+                on:keyup={(e) => {
                     if (e.key !== "Enter") return;
                     if (!$popupVisible) {
                         focusInputUsernameEl();
                     }
-                }}"
+                }}
             >
                 {typedUsername || "Your Anilist Username"}
             </div>
@@ -444,23 +444,23 @@
         {#if $android}
             <div
                 class="media-release-icon-container"
-                on:click="{handleMediaRelease}"
-                on:pointerdown="{handleGoUp}"
-                on:pointerup="{cancelGoUp}"
-                on:pointercancel="{cancelGoUp}"
+                on:click={handleMediaRelease}
+                on:pointerdown={handleGoUp}
+                on:pointerup={cancelGoUp}
+                on:pointercancel={cancelGoUp}
             >
                 <svg
                     viewBox="0 0 512 512"
                     class="media-release-icon"
                     role="button"
                     aria-label="Media Releases"
-                    tabindex="{$popupVisible && $windowWidth > 750 ? "-1" : "0"}"
-                    on:keyup="{(e) => {
+                    tabindex={$popupVisible && $windowWidth > 750 ? "-1" : "0"}
+                    on:keyup={(e) => {
                         if (e.key === "Enter") {
                             e.stopPropagation();
                             handleMediaRelease();
                         }
-                    }}"
+                    }}
                 >
                     <path
                         d="M75 75 41 41C26 26 0 37 0 58v110c0 13 11 24 24 24h110c21 0 32-26 17-41l-31-31a191 191 0 0 1 328 136 192 192 0 0 1-302 158 32 32 0 0 0-36 52A256 256 0 1 0 75 75zm181 53c-13 0-24 11-24 24v104c0 6 3 13 7 17l72 72c9 9 25 9 34 0s9-25 0-34l-65-65v-94c0-13-11-24-24-24z"
@@ -470,9 +470,9 @@
         {:else}
             <div
                 class="logo-icon-container"
-                on:pointerdown="{handleGoUp}"
-                on:pointerup="{cancelGoUp}"
-                on:pointercancel="{cancelGoUp}"
+                on:pointerdown={handleGoUp}
+                on:pointerup={cancelGoUp}
+                on:pointercancel={cancelGoUp}
             >
                 <!-- Kanshi Logo -->
                 <svg
@@ -480,15 +480,15 @@
                     class="logo-icon"
                     role="button"
                     aria-label="Open Menu"
-                    tabindex="{$popupVisible && $windowWidth > 750 ? "-1" : "0"}"
-                    on:keyup="{(e) => {
+                    tabindex={$popupVisible && $windowWidth > 750 ? "-1" : "0"}
+                    on:keyup={(e) => {
                         if (e.key === "Enter") {
                             e.stopPropagation();
                             $menuVisible = !$menuVisible;
                         } else if (e.key !== "Escape") {
                             e.stopPropagation();
                         }
-                    }}"
+                    }}
                 >
                     <path
                         d="m144 7-2 2-1 1c-2 0-9 7-9 9l-2 2-1 1-1 2-3 5c-1 3-3 4-4 5l-1 3-1 1v1l-1 1-15 1-12 1c-11 1-12 1-18-4l-7-6-6-6-4-2s-2-1-2-3-3-2-3-2l-2-2-2-1-1-1-2-1-2-1-8-4c-3 0-7 5-6 6l-1 1v24a350 350 0 0 0 7 36c0 2-1 3-2 3v2l-1 1-3 7-1 2-3 9a61 61 0 0 0 4 30v2l2 3 3 7 1 1v1l1 2 1 1 1 1c0 1 0 2 2 3l2 4 2 2 2 2 6 7 5 7 1 1 1 1v3l4 10 1 14a75 75 0 0 0 2 19l1 4v2l2 3v2a205 205 0 0 0 15 29l1 1v1a128 128 0 0 1 11 22v1l1 1 1 1v3l1 2 2 5a480 480 0 0 1-2 93c0 1-4 6-6 6l-11 11-1 4c-2 3 0 7 8 14 1 1 2 2 1 3l1 3v1l1 2 1 2 3 3h3l1 1 4 1 2 1c0 1 16 2 19 1l2-1h2l7-5 1-1c2 0 11-10 12-13l1-2 1-1c-1-3 0-3 8-2l5 1 2 1-1 3-1 9 2 3 1 2 1 2 3 3 2 1 2 1 4 2 14 1a232 232 0 0 0 56-9l4-1 4-1h8l3 2h1l2 1a93 93 0 0 0 30-1l6-3 4-1 1-1 1-1h2l1-1 1-1 3-1 4-2h3l1-1h2l1-1h2l2-1h2l2-1h2l2-1 3-1h6c12-2 16-2 30-2a174 174 0 0 1 45 5l2 1h3l5 3 5 2 1 1 3 3 3 3 1 1 1 4c0 3-1 4-4 7l-4 3-1 1-8 4-5 2-8 2-5 2h-1l-2 1h-2l-3 1-1 1h-2l-3 1h-4l-10 2c-2 1-11 9-11 11-1 5 0 8 2 10l4 3 2 1 16 1 18-1 5-1 2-1h2l2-1h2l2-1h2l1-1h2l1-1 2-1h2l3-1 3-2h2l1-1 1-1c1 1 13-5 13-6h1l1-1 2-1 1-1h1l2-1 2-2 2-1 1-2c2 0 9-7 9-9l2-1 1-2v-1l1-1v-1l1-1v-1l1-2v-2c1-2 1-8-1-12v-1l-1-1-1-1c0-2-11-14-13-14l-2-2-2-2-2-1-5-3c-3-1-4-3-5-4l-3-1-1-1h-1l-1-1c0-1-4-3-5-2l-1-1h-1l-1-1-1-1-4-1-3-1-1-1h-1l-1-1h-2c-1 1-1 0-1-1h-2l-1-1-1-1h-2l-2-1h-2l-4-1-6-2-6-1-4-1-3-1-12-1a252 252 0 0 0-76 1v-2l1-3 1-5 1-2v-1l1-3 1-4 2-11 1-6c4-24 4-56 1-78l-1-5-1-3-1-7-1-2-1-3-1-5v-1l-1-1v-2l-1-1v-2l-1-2-1-3-1-2-1-3-1-1v-1l-1-1v-1l-1-1-2-4-3-5-1-1-1-2-1-1-1-2-1-1-1-3-2-1-9-11a68 68 0 0 0-15-12l-4-3-1-1-1-1-2-1-2-2-3-1-5-2-1-1h-1l-1-1-1-1-4-1-3-1-2-2h-3l-1-1h-2l-1-1h-2l-1-1h-2l-1-1-3-1h-3l-1-2-2-1-1-1-2-1h-1l-2-2-2-1-2-2c-1 0-10-9-10-11l-2-2-1-1-1-3a66 66 0 0 0-16-15l-1-1-2-1-1-1-3-1v-2l-1-1v-2l-1-1-1-2v-2l-2-3v-3l-1-1-1-1-4-9-2-2c-1-2-1-4 1-12a233 233 0 0 0 1-52v-2l-2-5c-2-3-3-3-6-3h-7z"
@@ -628,7 +628,7 @@
         opacity: 1;
         transition: opacity 0.1s ease-out;
     }
-    @media screen and (max-width: 425px) {
+    @media (max-width: 425px) {
         .go-back-container {
             min-width: 48px;
             min-height: 48px;
@@ -693,7 +693,7 @@
         }
     }
 
-    @media screen and (max-width: 750px) {
+    @media (max-width: 750px) {
         .username-text {
             animation: fade-in 0.1s ease-out;
             font-size: 15px;
@@ -786,7 +786,7 @@
         }
     }
 
-    @media screen and (max-width: 275px) {
+    @media (max-width: 275px) {
         .nav.input-focused #username-input {
             padding-left: 0 !important;
             padding-right: 0 !important;
@@ -798,14 +798,14 @@
         }
     }
 
-    @media screen and (max-width: 250px) {
+    @media (max-width: 250px) {
         .nav-container:not(.menu-visible) .nav:not(.nav.popup-visible):not(.input-focused) {
             grid-template-columns: calc(100% - 48px) 48px;
             gap: 0 !important;
         }
     }
 
-    @media screen and (max-width: 199px) {
+    @media (max-width: 199px) {
         #username-input::-webkit-search-cancel-button {
             display: none !important;
         }

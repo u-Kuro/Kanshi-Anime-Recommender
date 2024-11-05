@@ -223,8 +223,7 @@
                 ) {
                     return;
                 }
-                let element = event?.target;
-                let closestScrollableElement = element;
+                let closestScrollableElement = event?.target;
                 let isMainScrollableElement = true;
                 while (
                     closestScrollableElement &&
@@ -284,37 +283,37 @@
 
 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 <div
-    class="{"bottom-nav-container" +
+    class={"bottom-nav-container" +
         (categoriesNavVisible ? "" : " hide") +
         (immediateCustomFilNavChange ? " immediate" : "") +
-        ($android ? " android" : "")}"
+        ($android ? " android" : "")}
 >
     <nav
         id="categories-nav"
-        bind:this="{categoriesNav}"
-        class="{"nav" +
+        bind:this={categoriesNav}
+        class={"nav" +
             ($hasWheel ? " hasWheel" : "") +
-            (shouldScrollSnap && $android ? " android" : "")}"
-        on:wheel="{(e) => {
+            (shouldScrollSnap && $android ? " android" : "")}
+        on:wheel={(e) => {
             horizontalWheel(e, "nav");
-        }}"
+        }}
         aria-label="Select a category"
     >
         <div
             class="selected-category-indicator"
-            style:--width="{selectedElementIndicatorWidth + "px"}"
-            style:--translateY="{selectedElementIndicatorOffsetLeft + "px"}"
+            style:--width={selectedElementIndicatorWidth + "px"}
+            style:--translateY={selectedElementIndicatorOffsetLeft + "px"}
         ></div>
         {#each $categoriesKeys || [] as categoryName (categoryName || {})}
             <span
-                tabindex="{$menuVisible || $popupVisible ? "" : "0"}"
-                on:click="{selectCategory(categoryName)}"
-                on:keyup="{(e) => {
+                tabindex={$menuVisible || $popupVisible ? "" : "0"}
+                on:click={selectCategory(categoryName)}
+                on:keyup={(e) => {
                     e.key === "Enter" && selectCategory(categoryName);
-                }}"
-                data-category="{categoryName}"
-                class="{"category" +
-                    (categoryName === $selectedCategory ? " selected" : "")}"
+                }}
+                data-category={categoryName}
+                class={"category" +
+                    (categoryName === $selectedCategory ? " selected" : "")}
                 role="button"
                 aria-label="category"
                 >{categoryName.trim() || ""}
@@ -323,18 +322,18 @@
     </nav>
     <div
         class="prev-category"
-        on:click="{(e) => goToNextPrevCategory(e, false)}"
-        on:keyup="{(e) => {
+        on:click={(e) => goToNextPrevCategory(e, false)}
+        on:keyup={(e) => {
             e.key === "Enter" && goToNextPrevCategory(e, false);
-        }}"
+        }}
         aria-label="Select Previous Category"
     ></div>
     <div
         class="next-category"
-        on:click="{(e) => goToNextPrevCategory(e, true)}"
-        on:keyup="{(e) => {
+        on:click={(e) => goToNextPrevCategory(e, true)}
+        on:keyup={(e) => {
             e.key === "Enter" && goToNextPrevCategory(true);
-        }}"
+        }}
         aria-label="Select Next Category"
     ></div>
 </div>
@@ -350,7 +349,7 @@
     .bottom-nav-container {
         z-index: 991;
         position: fixed;
-        bottom: 0px;
+        bottom: 0;
         width: 100%;
         height: 65px;
         background-color: var(--bg-color);
@@ -383,7 +382,7 @@
     .nav.android {
         scroll-snap-type: none !important;
     }
-    @media screen and (hover: hover) and (pointer: fine) {
+    @media (hover: hover) and (pointer: fine) {
         .nav {
             scroll-snap-type: none !important;
         }
@@ -443,14 +442,14 @@
     .category.selected {
         color: var(--fg-color) !important;
     }
-    @media screen and (max-width: 750px) {
+    @media (max-width: 750px) {
         .nav {
             margin: 0 !important;
             padding: 0 !important;
             width: 100% !important;
         }
     }
-    @media screen and (min-width: 750px) {
+    @media (min-width: 750px) {
         .prev-category,
         .next-category {
             pointer-events: none !important;

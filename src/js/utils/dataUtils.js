@@ -2,6 +2,7 @@ const isJsonObject = (obj) => {
     return Object.prototype.toString.call(obj) === "[object Object]"
 }
 const jsonIsEmpty = (obj) => {
+    // noinspection LoopStatementThatDoesntLoopJS
     for (const key in obj) return false;
     return true;
 }

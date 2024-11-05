@@ -113,11 +113,11 @@
             if ($android) {
                 try {
                     if (typeof mediaCopyTitle==="string") {
-                        JSBridge.copyToClipBoard(mediaCopyTitle);
+                        window.JSBridge.copyToClipBoard(mediaCopyTitle);
                     }
                     requestImmediate(() => {
                         if (typeof shownTitle==="string") {
-                            JSBridge.copyToClipBoard(shownTitle);
+                            window.JSBridge.copyToClipBoard(shownTitle);
                         }
                     }, 1000);
                 } catch (ex) { console.error(ex) }
@@ -130,7 +130,7 @@
         } else if ($android) {
             try {
                 if (typeof shownTitle == "string") {
-                    JSBridge.copyToClipBoard(shownTitle);
+                    window.JSBridge.copyToClipBoard(shownTitle);
                 }
             } catch (ex) { console.error(ex) }
         } else {
@@ -233,12 +233,12 @@
     <div
         use:loadMediaOption
         class="fixed-media-options"
-        in:fade="{{ duration: 200, easing: sineOut }}"
-        out:fade="{{ duration: 200, easing: sineOut }}"
-        on:click="{handleMediaOptionVisibility}"
-        on:touchend|passive="{handleTouchMediaOptionVisibility}"
-        on:keydown="{(e) =>
-            e.key === "Enter" && handleMediaOptionVisibility(e)}"
+        in:fade={{ duration: 200, easing: sineOut }}
+        out:fade={{ duration: 200, easing: sineOut }}
+        on:click={handleMediaOptionVisibility}
+        on:touchend|passive={handleTouchMediaOptionVisibility}
+        on:keydown={(e) =>
+            e.key === "Enter" && handleMediaOptionVisibility(e)}
     >
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div
@@ -249,10 +249,10 @@
                 <svg
                     viewBox="0 0 24 24"
                     class="closing-x"
-                    tabindex="{$popupVisible ? "" : "0"}"
-                    on:click="{handleMediaOptionVisibility}"
-                    on:keydown="{(e) =>
-                        e.key === "Enter" && handleMediaOptionVisibility(e)}"
+                    tabindex={$popupVisible ? "" : "0"}
+                    on:click={handleMediaOptionVisibility}
+                    on:keydown={(e) =>
+                        e.key === "Enter" && handleMediaOptionVisibility(e)}
                     role="button"
                     aria-label="Close Media Options Popup"
                     ><path
@@ -262,49 +262,49 @@
                 >
             </div>
             <span
-                tabindex="{$popupVisible ? "" : "0"}"
+                tabindex={$popupVisible ? "" : "0"}
                 class="media-option"
-                on:click="{openMediaPopup}"
-                on:keydown="{(e) => e.key === "Enter" && openMediaPopup(e)}"
-                bind:this="{firstActionEl}"
+                on:click={openMediaPopup}
+                on:keydown={(e) => e.key === "Enter" && openMediaPopup(e)}
+                bind:this={firstActionEl}
                 role="button"
                 aria-label="Open Detailed Information for the Media"
                 ><h2 class="option-title">Information</h2></span
             >
             <span
-                tabindex="{$popupVisible ? "" : "0"}"
+                tabindex={$popupVisible ? "" : "0"}
                 class="media-option"
-                on:click="{openInAnilist}"
-                on:keydown="{(e) => e.key === "Enter" && openInAnilist(e)}"
+                on:click={openInAnilist}
+                on:keydown={(e) => e.key === "Enter" && openInAnilist(e)}
                 role="button"
                 aria-label="Open in AniList"
                 ><h2 class="option-title">Open in Anilist</h2></span
             >
             <span
-                tabindex="{$popupVisible ? "" : "0"}"
+                tabindex={$popupVisible ? "" : "0"}
                 class="media-option"
-                on:click="{openInYoutube}"
-                on:keydown="{(e) => e.key === "Enter" && openInYoutube(e)}"
+                on:click={openInYoutube}
+                on:keydown={(e) => e.key === "Enter" && openInYoutube(e)}
                 role="button"
                 aria-label="Open Related YouTube Videos"
                 ><h2 class="option-title">Open in YouTube</h2></span
             >
             {#if mediaCopyTitle}
                 <span
-                    tabindex="{$popupVisible ? "" : "0"}"
+                    tabindex={$popupVisible ? "" : "0"}
                     class="media-option"
-                    on:click="{copyTitle}"
-                    on:keydown="{(e) => e.key === "Enter" && copyTitle(e)}"
+                    on:click={copyTitle}
+                    on:keydown={(e) => e.key === "Enter" && copyTitle(e)}
                     role="button"
                     aria-label="Copy Title"
                     ><h2 class="option-title">Copy Title</h2></span
                 >
             {/if}
             <span
-                tabindex="{$popupVisible ? "" : "0"}"
+                tabindex={$popupVisible ? "" : "0"}
                 class="media-option"
-                on:click="{handleHideShow}"
-                on:keydown="{(e) => e.key === "Enter" && handleHideShow(e)}"
+                on:click={handleHideShow}
+                on:keydown={(e) => e.key === "Enter" && handleHideShow(e)}
                 role="button"
                 aria-label="Hide or Show Media"
                 ><h2 class="option-title">
@@ -312,8 +312,8 @@
                         ? "Please Wait..."
                         : ($hiddenMediaEntries[mediaID] ? "Show" : "Hide") +
                           " Entry"}
-                </h2></span
-            >
+                </h2>
+            </span>
         </div>
     </div>
 {/if}

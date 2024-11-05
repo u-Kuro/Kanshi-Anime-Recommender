@@ -126,11 +126,11 @@
     {@const text = shouldShowPleaseWait ? "Please wait a moment..." : confirmText}
     <div
         class="fixed-confirm-dialog"
-        on:click="{handleConfirmVisibility}"
-        on:touchend|passive="{handleConfirmVisibility}"
-        on:keydown="{(e) => e.key === "Enter" && handleConfirmVisibility(e)}"
-        in:fade="{{ duration: 200, easing: sineOut }}"
-        out:fade="{{ duration: 200, easing: sineOut }}"
+        on:click={handleConfirmVisibility}
+        on:touchend|passive={handleConfirmVisibility}
+        on:keydown={(e) => e.key === "Enter" && handleConfirmVisibility(e)}
+        in:fade={{ duration: 200, easing: sineOut }}
+        out:fade={{ duration: 200, easing: sineOut }}
         role="alertdialog" 
         aria-labelledby={title}
         aria-describedby={getTextFromHTML(text)}
@@ -154,18 +154,18 @@
                     {#if !isAlert && !shouldShowPleaseWait}
                         <button
                             class="button"
-                            on:click="{handleCancel}"
-                            on:keydown="{(e) =>
-                                e.key === "Enter" && handleCancel(e)}"
+                            on:click={handleCancel}
+                            on:keydown={(e) =>
+                                e.key === "Enter" && handleCancel(e)}
                             >{cancelLabel}</button
                         >
                     {/if}
                     <button
                         class="button"
-                        bind:this="{confirmButtonEl}"
-                        on:click="{handleConfirm}"
-                        on:keydown="{(e) =>
-                            e.key === "Enter" && handleConfirm(e)}"
+                        bind:this={confirmButtonEl}
+                        on:click={handleConfirm}
+                        on:keydown={(e) =>
+                            e.key === "Enter" && handleConfirm(e)}
                         >{confirmLabel}</button
                     >
                 </div>
@@ -297,7 +297,7 @@
         cursor: pointer;
     }
 
-    @media screen and (pointer: fine) {
+    @media (pointer: fine) {
         .button:hover,
         .button:focus {
             background-color: hsl(0, 0%, 6.4%);
@@ -305,7 +305,7 @@
         }
     }
 
-    @media screen and (min-width: 768px) {
+    @media (min-width: 768px) {
         .confirm-container {
             width: 400px;
             min-height: 164px;

@@ -20,11 +20,11 @@ export default async function getWebVersion() {
                 resolve(version)
             }
             webVersionPromise = null
-            return
+
         } catch {
             resolve(version)
             webVersionPromise = null
-            return
+
         }
     })
     return webVersionPromise

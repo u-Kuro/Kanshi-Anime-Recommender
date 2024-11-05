@@ -64,7 +64,7 @@ const showToast = (str, isLongDuration = true) => {
             && str.length > 0 
             && typeof isLongDuration === "boolean"
         ) {
-            JSBridge.openToast(str, isLongDuration)
+            window.JSBridge.openToast(str, isLongDuration)
         }
     } catch (ex) { console.error(ex) }
 }

@@ -64,12 +64,10 @@ const documentScrollTop = writable(window.document?.documentElement?.scrollTop |
 
 const isImporting = writable(false)
 const isExporting = writable(false)
-const isReloading = writable(false)
 
 const username = writable(getLSData("username") || "")
 const resetTypedUsername = writable(null)
 const loadedMediaLists = writable({})
-const aniLoaderWorker = writable(null)
 const loadNewMedia = writable({})
 const searchedWord = writable("")
 const categories = writable(null)
@@ -261,8 +259,6 @@ const shouldUpdateRecommendationList = writable(null)
 const shouldUpdateList = writable(null)
 const updateRecommendationList = writable(null)
 const updateList = writable(null)
-const cancelTextCopy = writable(null)
-
 
 getLSData = undefined
 
@@ -288,11 +284,9 @@ export {
     // anilistRedirectUri,
     isImporting,
     isExporting,
-    isReloading,
     username,
     resetTypedUsername,
     loadedMediaLists,
-    aniLoaderWorker,
     loadNewMedia,
     searchedWord,
     categories,
@@ -353,5 +347,4 @@ export {
     shouldUpdateRecommendationList,
     updateRecommendationList,
     updateList,
-    cancelTextCopy
 }

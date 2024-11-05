@@ -284,9 +284,9 @@
             return `(${episodes})`;
         } else if (typeof nextEpisode === "number") {
             if (timeDifMS > 0 && nextEpisode > 1) {
-                return `(${nextEpisode - 1}")`;
+                return `(${nextEpisode - 1})`;
             } else if (timeDifMS <= 0) {
-                return `(${nextEpisode}")`;
+                return `(${nextEpisode})`;
             }
         }
         return "";
@@ -390,7 +390,6 @@
             waitForOnVeryLeft = false;
             isOnVeryLeftOfMediaGrid = false;
         }
-        if (!$gridFullView) return;
     }
 
     onMount(() => {
@@ -454,18 +453,18 @@
 </script>
 
 <div
-    data-category="{mainCategory}"
-    class="{"category-list" + (mainCategory === $selectedCategory || mainCategory === ""
+    data-category={mainCategory}
+    class={"category-list" + (mainCategory === $selectedCategory || mainCategory === ""
         ? " viewed"
-        : "") + ($gridFullView ? " full-view" : "")}"
-    style:--media-grid-height="{($mobile && !$android
+        : "") + ($gridFullView ? " full-view" : "")}
+    style:--media-grid-height={($mobile && !$android
         ? $trueWindowHeight
-        : $windowHeight) + "px"}"
+        : $windowHeight) + "px"}
 >
     {#if true}
         {@const mediaList = $loadedMediaLists?.[mainCategory]?.mediaList}
         <section
-            class="{"image-grid " +
+            class={"image-grid " +
                 ($gridFullView ? " full-view" : "") +
                 (mediaList?.length === 0 && !$initData ? " empty-grid" : "") +
                 ($listReloadAvailable
@@ -475,32 +474,28 @@
                 || $initList !== false
                     ? " semi-loading"
                     : "")
-            }"
-            data-category="{mainCategory}"
-            bind:this="{mediaGridEl}"
-            on:wheel="{(e) => {
+            }
+            data-category={mainCategory}
+            bind:this={mediaGridEl}
+            on:wheel={(e) => {
                 if (
                     $gridFullView &&
                     mediaGridEl.scrollWidth > mediaGridEl.clientWidth &&
                     Math.abs(e?.deltaY) > Math.abs(e?.deltaX)
                 ) {
-                    // If its not scrolled at the very bottom of the screen and see next
+                    // If it's not scrolled at the very bottom of the screen and see next
                     if (!isWholeGridSeen && e?.deltaY > 0) return;
-                    // If its scrolled to very left and see previous
+                    // If it's scrolled to very left and see previous
                     if (isOnVeryLeftOfMediaGrid && e?.deltaY < 0) return;
                     horizontalWheel(e, "image-grid");
                 }
-            }}"
-            on:scroll="{(e) => {
+            }}
+            on:scroll={(e) => {
                 let element = e?.target;
                 lastLeftScroll = currentLeftScroll;
                 currentLeftScroll = element?.scrollLeft;
-                if (currentLeftScroll > 500) {
-                    afterFullGrid = true;
-                } else {
-                    afterFullGrid = false;
-                }
-            }}"
+                afterFullGrid=currentLeftScroll > 500;
+            }}
             aria-label="List of Media Per Category"
         >
             {#if mediaList?.length > 0}
@@ -510,24 +505,24 @@
                     {@const isNovel = format === "Novel"}
                     <div
                         class="image-card"
-                        bind:this="{media.gridElement}"
-                        title="{(media?.shownTitle ? media?.shownTitle+"\n\n" : "") + (media?.briefInfo || "")}"
+                        bind:this={media.gridElement}
+                        title={(media?.shownTitle ? media?.shownTitle+"\n\n" : "") + (media?.briefInfo || "")}
                     >
                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                         <div
                             class="shimmer"
-                            tabindex="{$menuVisible || $popupVisible
+                            tabindex={$menuVisible || $popupVisible
                                 ? ""
-                                : "0"}"
-                            on:click="{handleOpenPopup(mediaIndex)}"
-                            on:pointerdown="{(e) => {
+                                : "0"}
+                            on:click={handleOpenPopup(mediaIndex)}
+                            on:pointerdown={(e) => {
                                 handleOpenOption(e, mediaIndex)
-                            }}"
-                            on:pointerup="{cancelOpenOption}"
-                            on:pointercancel="{cancelOpenOption}"
-                            on:keyup="{(e) =>
+                            }}
+                            on:pointerup={cancelOpenOption}
+                            on:pointercancel={cancelOpenOption}
+                            on:keyup={(e) =>
                                 e.key === "Enter" &&
-                                handleOpenPopup(mediaIndex)}"
+                                handleOpenPopup(mediaIndex)}
                             role="button"
                             aria-label="Open Detailed Information for the Media"
                         >
@@ -535,45 +530,45 @@
                                 {#key media.coverImageUrl || media.bannerImageUrl || media.trailerThumbnailUrl}
                                     <img
                                         src={media.coverImageUrl || media.bannerImageUrl || media.trailerThumbnailUrl}
-                                        fetchpriority="{mediaIndex > numberOfPageLoadedGrid ? "" : "high"}"
-                                        loading="{mediaIndex > numberOfPageLoadedGrid ? "lazy" : "eager"}"
+                                        fetchpriority={mediaIndex > numberOfPageLoadedGrid ? "" : "high"}
+                                        loading={mediaIndex > numberOfPageLoadedGrid ? "lazy" : "eager"}
                                         class="image-card-thumb"
-                                        alt="{(media?.shownTitle || "") + " Cover"}"
+                                        alt={(media?.shownTitle || "") + " Cover"}
                                         width="180px"
                                         height="254.531px"
-                                        on:load="{(e) => {
+                                        on:load={(e) => {
                                             removeClass(e.target, "display-none");
                                             addClass(e.target, "loaded");
-                                        }}"
-                                        on:error="{(e) => {
+                                        }}
+                                        on:error={(e) => {
                                             removeClass(e.target, "loaded");
                                             addClass(e.target, "display-none");
-                                        }}"
+                                        }}
                                     />
                                 {/key}
                             {/if}
                             <span
                                 class="image-card-title"
-                                on:pointerdown="{cardPointerDown}"
-                                on:pointerup="{cardPointerEnd}"
-                                on:pointercancel="{cardPointerEnd}"
+                                on:pointerdown={cardPointerDown}
+                                on:pointerup={cardPointerEnd}
+                                on:pointercancel={cardPointerEnd}
                             >
                                 <span
                                     class="title copy"
-                                    data-copy="{media?.shownTitle || ""}"
-                                    data-secondcopy="{media?.copiedTitle || ""}"
+                                    data-copy={media?.shownTitle || ""}
+                                    data-secondcopy={media?.copiedTitle || ""}
                                 >{media?.shownTitle || "N/A"}</span>
                                 <span
                                     class="brief-info-wrapper copy"
-                                    data-copy="{media?.shownTitle || ""}"
-                                    data-secondcopy="{media?.copiedTitle || ""}"
+                                    data-copy={media?.shownTitle || ""}
+                                    data-secondcopy={media?.copiedTitle || ""}
                                 >
                                     <div class="brief-info">
                                         <span>
                                             <!-- circle -->
                                             <svg
                                                 viewBox="0 0 512 512"
-                                                class="{`${media?.userStatusColor}-fill circle`}"
+                                                class={`${media?.userStatusColor}-fill circle`}
                                                 ><path
                                                     d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512z"
                                                 ></path></svg
@@ -669,7 +664,7 @@
                                                 <!-- star -->
                                                 <svg
                                                     viewBox="0 0 576 512"
-                                                    class="{`${media?.contentCautionColor}-fill score`}"
+                                                    class={`${media?.contentCautionColor}-fill score`}
                                                     ><path
                                                         d="M317 18a32 32 0 0 0-58 0l-64 132-144 22a32 32 0 0 0-17 54l104 103-25 146a32 32 0 0 0 47 33l128-68 129 68a32 32 0 0 0 46-33l-24-146 104-103a32 32 0 0 0-18-54l-144-22-64-132z"
                                                     ></path></svg
@@ -679,7 +674,7 @@
                                                 <!-- people -->
                                                 <svg
                                                     viewBox="0 0 640 512"
-                                                    class="{`${media?.contentCautionColor}-fill score`}"
+                                                    class={`${media?.contentCautionColor}-fill score`}
                                                 >
                                                     <path
                                                         d="M96 128a128 128 0 1 1 256 0 128 128 0 1 1-256 0zM0 482c0-98 80-178 178-178h92c98 0 178 80 178 178 0 17-13 30-30 30H30c-17 0-30-13-30-30zm609 30H471c6-9 9-20 9-32v-8c0-61-27-115-70-152h69c89 0 161 72 161 161 0 17-14 31-31 31zM432 256c-31 0-59-13-79-33a159 159 0 0 0 13-169 112 112 0 1 1 66 202z"
@@ -689,7 +684,7 @@
                                             {:else if media?.shownFavorites != null}
                                                 <svg
                                                     viewBox="0 0 512 512"
-                                                    class="{`${media?.contentCautionColor}-fill score`}"
+                                                    class={`${media?.contentCautionColor}-fill score`}
                                                 >
                                                     <path
                                                         d="m48 300 180 169a41 41 0 0 0 56 0l180-169c31-28 48-68 48-109v-6A143 143 0 0 0 268 84l-12 12-12-12A143 143 0 0 0 0 185v6c0 41 17 81 48 109z"
@@ -699,7 +694,7 @@
                                             {:else if media?.shownActivity != null}
                                                 <svg
                                                     viewBox="0 0 512 512"
-                                                    class="{`${media?.contentCautionColor}-fill score`}"
+                                                    class={`${media?.contentCautionColor}-fill score`}
                                                 >
                                                     <path
                                                         d="M64 64a32 32 0 1 0-64 0v336c0 44 36 80 80 80h400a32 32 0 1 0 0-64H80c-9 0-16-7-16-16V64zm407 87a32 32 0 0 0-46-46L320 211l-57-58a32 32 0 0 0-46 0L105 265a32 32 0 0 0 46 46l89-90 57 58c13 12 33 12 46 0l128-128z"
@@ -717,7 +712,7 @@
                             <div
                                 aria-hidden="true"
                                 class="observed-grid"
-                                bind:this="{observedGrid}"
+                                bind:this={observedGrid}
                             ></div>
                         {/if}
                     </div>
@@ -738,7 +733,7 @@
                     <div class="image-card" aria-hidden="true">
                         <div
                             class="observed-grid empty-card"
-                            bind:this="{observedGrid}"
+                            bind:this={observedGrid}
                         ></div>
                     </div>
                 {/if}
@@ -759,11 +754,11 @@
             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
             <div
                 class="go-back-grid full-view"
-                tabindex="{$menuVisible || $popupVisible ? "" : "0"}"
-                on:click="{goBackGrid}"
-                on:keyup="{(e) => e.key === "Enter" && goBackGrid(e)}"
-                in:fade="{{ duration: 200, easing: sineOut }}"
-                out:fade="{{ duration: 200, easing: sineOut }}"
+                tabindex={$menuVisible || $popupVisible ? "" : "0"}
+                on:click={goBackGrid}
+                on:keyup={(e) => e.key === "Enter" && goBackGrid(e)}
+                in:fade={{ duration: 200, easing: sineOut }}
+                out:fade={{ duration: 200, easing: sineOut }}
             >
                 <svg
                     viewBox="0 0 320 512"
@@ -784,13 +779,13 @@
         width: 100%;
         min-width: 100%;
         min-height: 100vh;
-        padding: 20px 0px 0px 0px;
+        padding: 20px 0 0 0;
         margin-bottom: 65px;
         position: relative;
         overflow: hidden;
         scroll-snap-align: center;
         scroll-snap-stop: always !important;
-        overflow-anchor: visible;
+        overflow-anchor: auto;
         -ms-overflow-style: none;
         scrollbar-width: none;
         height: min(var(--grid-max-height), calc(100vh + max(20px, calc(var(--grid-position) + 20px))));
@@ -875,7 +870,7 @@
         align-items: flex-start;
         grid-gap: 10px;
         grid-template-columns: repeat(auto-fill,minmax(min(100% / 2 - 10px, 170px), 170px));
-        overflow-anchor: visible;
+        overflow-anchor: auto;
         -ms-overflow-style: none;
         scrollbar-width: none;
         position: absolute;
@@ -895,13 +890,13 @@
         position: unset !important;
     }
 
-    @media screen and (max-width: 390px) {
+    @media (max-width: 390px) {
         .image-grid {
             grid-template-columns: repeat(auto-fill, calc(100% / 2 - 10px));
         }
     }
 
-    @media screen and (max-width: 250px) {
+    @media (max-width: 250px) {
         .image-grid {
             grid-template-columns: repeat(auto-fill,minmax(min(100%, 180px), 180px));
         }
@@ -939,10 +934,10 @@
         grid-template-columns: 100%;
     }
     .image-card.full-view:empty {
-        height: 0px !important;
+        height: 0 !important;
     }
     .image-card:not(.full-view):empty {
-        width: 0px !important;
+        width: 0 !important;
     }
     :global(.image-card.hidden > .shimmer),
     :global(.image-card.hidden > .image-card-title) {
@@ -959,7 +954,7 @@
         background-color: hsla(0, 0%, 10%, 0.5);
         border-radius: 6px;
     }
-    @media screen and (min-width: 580px) {
+    @media (min-width: 580px) {
         .image-card > .shimmer {
             padding-bottom: calc(181 / 128 * 100%);
         }
@@ -976,7 +971,6 @@
         display: block;
         cursor: pointer;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.25);
-        transition: opacity 0.2s ease-out;
         object-fit: cover;
         object-position: center;
         width: 100%;
@@ -1083,13 +1077,13 @@
         height: 44px !important;
     }
 
-    @media screen and (max-width: 750px) {
+    @media (max-width: 750px) {
         .image-grid {
             padding-inline: 10px;
         }
     }
 
-    @media screen and (max-width: 425px) {
+    @media (max-width: 425px) {
         .go-back-grid.full-view {
             left: 0;
         }
@@ -1154,7 +1148,7 @@
         }
     }
 
-    @media screen and (max-width: 660px) {
+    @media (max-width: 660px) {
         .image-grid {
             justify-content: space-evenly;
         }

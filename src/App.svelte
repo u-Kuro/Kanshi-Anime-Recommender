@@ -2,9 +2,9 @@
 	import C from "./components/index.js";
 	import { onMount, tick } from "svelte";
 	import { fade } from "svelte/transition";
-	import { inject } from "@vercel/analytics";
 	import getWebVersion from "./js/version.js";
 	import { requestImmediate } from "./js/utils/appUtils.js";
+	import { loadAnalytics, loadYoutube, showErrorMessage } from "./js/utils/kanshiUtils.js";
 	import {
 		getIDBData,
 		setIDBData,
@@ -79,18 +79,19 @@
         androidBackground,
         evicted,
 	} from "./js/variables.js";
+    import { isValidDateTime } from "./js/utils/dataUtils.js";
 
 	const init = async () => {
 		try {			
-			// Initialize Checks for Data Eviction/Loss
+			// Init Checks for Data Eviction/Loss
 			if ($android) {
 				if ($visited) {
 					if ((await getIDBData("visited")) !== true) {
 						$evicted = true;
 						try {
-							JSBridge.notifyDataEviction();
+							window.JSBridge.notifyDataEviction();
 							if ($androidBackground) {
-								JSBridge.backgroundUpdateIsFinished(false);
+								window.JSBridge.backgroundUpdateIsFinished(false);
 							}
 						} catch (ex) { console.error(ex) }
 					}
@@ -98,13 +99,14 @@
 					setIDBData("visited", true, { important: true })
 					.then(() => {
 						try {
-							JSBridge.pageVisited()
+							window.JSBridge.pageVisited()
 						} catch (ex) { console.error(ex) }
 					})
 					.catch((ex) => console.error(ex))
 				}
 			}
 
+			// Load Initial Media
 			if (!$androidBackground) {
 				try {
 					$initList = (await mediaLoader({
@@ -119,66 +121,19 @@
 				} catch (ex) { console.error(ex) }
 			}
 
-			// Get Initial Data
-			await (async () => {
-				const hasInitialData = await hasIDBData([
-					"mediaEntries",
-					"mediaEntriesInfo",
-					"orderedMediaOptions",
-					"excludedMediaIds",
-					"tagInfo",
-				])
-				if (!hasInitialData) {
-					$initList = true
-					await retrieveInitialData()
-				}
-				if (!$androidBackground) {
-					const records = await getIDBRecords([
-						"username",
-						"orderedMediaOptions",
-						"algorithmFilters",
-						"tagInfo"
-					])
-					if (records) {
-						const savedUsername = records.username;
-						if (savedUsername !== $username) {
-							$username = savedUsername
-							setLSData("username", savedUsername || "")
-							.catch(() => removeLSData("username"))
-						}
-						$orderedMediaOptions = records.orderedMediaOptions;
-						$algorithmFilters = records.algorithmFilters || [
-							{
-								filterType: "bool",
-								optionName: "Content Focused",
-								status: "none"
-							},
-							{
-								filterType: "bool",
-								optionName: "Inc. All Factors",
-								status: "none"
-							},
-							{
-								filterType: "bool",
-								optionName: "Inc. Average Score",
-								status: "none"
-							},
-							{
-								filterType: "bool",
-								optionName: "Exclude Year",
-								status: "none"
-							},
-						];
-						$tagInfo = records.tagInfo || {};
-						updateTagInfo();
-					} else {
-						throw new Error("Failed to load initial data")
-					}
-				}
-			})()
-
-			$initData = false;
+			// Load Initial Data
+			if (!await hasIDBData([
+				"mediaEntries",
+				"mediaEntriesInfo",
+				"orderedMediaOptions",
+				"excludedMediaIds",
+				"tagInfo",
+			])) {
+				$initList = true
+				await retrieveInitialData()
+			}
 						
+			// Get Initial Data
 			if ($androidBackground) {
 				try {
 					let sendBackgroundStatusIsRunning;
@@ -187,7 +142,7 @@
 						sendBackgroundStatusIsRunning = true;
 						setTimeout(() => {
 							try {
-								JSBridge.sendBackgroundStatus(val);
+								window.JSBridge.sendBackgroundStatus(val);
 							} catch (ex) { console.error(ex) }
 							sendBackgroundStatusIsRunning = false;
 						}, 750);
@@ -205,7 +160,7 @@
 
 					let dataIsUpdated;
 					try {
-						JSBridge.setShouldProcessRecommendedEntries(true);
+						window.JSBridge.setShouldProcessRecommendedEntries(true);
 					} catch (ex) { console.error (ex) }
 
 					try {
@@ -230,13 +185,13 @@
 							await scheduleMediaNotifications()
 							await window.updateMediaNotifications(true)
 							try {
-								JSBridge.setShouldProcessRecommendedEntries(false)
+								window.JSBridge.setShouldProcessRecommendedEntries(false)
 							} catch (ex) { console.error(ex) }
 							recommendationListIsProcessed = true
 						} catch (ex) { console.error(ex) }
 					} else {
 						try {
-							JSBridge.setShouldProcessRecommendedEntries(false)
+							window.JSBridge.setShouldProcessRecommendedEntries(false)
 						} catch (ex) { console.error(ex) }
 					}
 					
@@ -245,12 +200,12 @@
 							try {
 								await mediaManager({ updateRecommendedMediaList: true, initList: true })
 								try {
-									JSBridge.setShouldManageMedia(false);
+									window.JSBridge.setShouldManageMedia(false);
 								} catch (ex) { console.error(ex) }
 							} catch (ex) { console.error(ex) }
 						} else {
 							try {
-								JSBridge.setShouldManageMedia(false);
+								window.JSBridge.setShouldManageMedia(false);
 							} catch (ex) { console.error(ex) }
 						}
 					} catch (ex) { console.error(ex) }
@@ -262,29 +217,48 @@
 							shouldExport = false
 						} catch (ex) { console.error(ex) }
 					}
-					JSBridge.backgroundUpdateIsFinished(true);
+					window.JSBridge.backgroundUpdateIsFinished(true);
 				} catch (ex) {
 					try {
-						JSBridge.backgroundUpdateIsFinished(false);
+						window.JSBridge.backgroundUpdateIsFinished(false);
 					} catch (ex) { console.error(ex) }
 					console.error(ex)
 				}
 			} else {
-				// Get/Show List
+				// Load Initial Data
+				const records = await getIDBRecords([
+					"username",
+					"orderedMediaOptions",
+					"algorithmFilters",
+					"tagInfo"
+				])
+				if (records) {
+					const savedUsername = records.username;
+					if (savedUsername !== $username) {
+						$username = savedUsername
+						setLSData("username", savedUsername || "")
+						.catch(() => removeLSData("username"))
+					}
+					$orderedMediaOptions = records.orderedMediaOptions;
+					$algorithmFilters = records.algorithmFilters || [{ filterType: "bool", optionName: "Content Focused", status: "none" }, { filterType: "bool", optionName: "Inc. All Factors", status: "none" }, { filterType: "bool", optionName: "Inc. Average Score", status: "none" }, { filterType: "bool", optionName: "Exclude Year", status: "none" }];
+					$tagInfo = records.tagInfo;
+					updateTagInfo();
+				} else {
+					throw new Error("Failed to Load Initial Data")
+				}
+				$initData = false;
+
+				// Check Reloads for Initial Data
 				let shouldProcessRecommendedEntries;
-				const nearestMediaReleaseAiringAt = getLSData("nearestMediaReleaseAiringAt") ?? (await getIDBData("nearestMediaReleaseAiringAt"));
-				if (
-					typeof nearestMediaReleaseAiringAt === "number" &&
-					!isNaN(nearestMediaReleaseAiringAt)
-				) {
-					const neareastMediaReleaseAiringDate = new Date(nearestMediaReleaseAiringAt * 1000);
-					if (
-						!isNaN(neareastMediaReleaseAiringDate) &&
-						neareastMediaReleaseAiringDate <= new Date()
-					) {
+				const nearestMediaReleaseAiringAt = getLSData("nearestMediaReleaseAiringAt") ?? (await getIDBData("nearestMediaReleaseAiringAt")),
+					nearestMediaReleaseAiringTime = nearestMediaReleaseAiringAt * 1000
+				// Reloads for Processing Recommended Entries and Reload Time
+				if (isValidDateTime(nearestMediaReleaseAiringTime)) {
+					const nearestMediaReleaseAiringDate = new Date(nearestMediaReleaseAiringTime);
+					if (nearestMediaReleaseAiringDate <= new Date()) {
 						shouldProcessRecommendedEntries = true;
 					} else {
-						window.setMediaReleaseUpdateTimeout?.(nearestMediaReleaseAiringAt);
+						window.setMediaReleaseUpdateTimeout(nearestMediaReleaseAiringAt);
 					}
 				}
 				if (!shouldProcessRecommendedEntries) {
@@ -298,6 +272,7 @@
 					shouldManageMedia = true
 				}
 
+				// Reloads for Updating Category Media
 				shouldManageMedia = shouldManageMedia || $initList !== false || (await getIDBData("shouldManageMedia"));
 				if (shouldManageMedia) {
 					if ($initList !== false) {
@@ -321,79 +296,20 @@
 				} else {
 					checkAutoFunctions(true);
 				}
-				
 			}
 		} catch (ex) {
-			if ($android) {
-				try {
-					JSBridge.backgroundUpdateIsFinished(false);
-				} catch (ex) { console.error(ex) }
-				$confirmPromise?.({
-					isAlert: true,
-					title: "Something went wrong",
-					text: "App may not be working properly, restart the app or clear your cache, if it still fails you may want to reinstall the app.",
-				});
-			} else {
-				$confirmPromise?.({
-					isAlert: true,
-					title: "Something went wrong",
-					text: "App may not be working properly, refresh the page or clear this website data, this also does not run in incognito.",
-				});
-			}
-			if ($initData) {
-				$initData = false;
-			}
-			if ($initList !== false) {
-				$initList = false;
-			}
-			
-			loadYoutube();
-
-			$dataStatus = "Something went wrong";
-			checkAutoFunctions(true);
-			loadAnalytics();
 			console.error(ex);
-		}
-
-		function loadYoutube() {
-			// For Youtube API
-			window.onYouTubeIframeAPIReady = () => {
-				window.playMostVisibleTrailer?.();
-			};
-			const YTscript = document.createElement("script");
-			YTscript.onload = () => {
-				window.onYouTubeIframeAPIReady();
-			};
-			YTscript.src = "https://www.youtube.com/iframe_api?v=16";
-			YTscript.id = "www-widgetapi-script";
-			YTscript.defer = true;
-			document.head.appendChild(YTscript);
-		}
-
-		function loadAnalytics() {
-			const isVercel = window.location?.origin === "https://kanshi.vercel.app";
-			// Google Analytics
-			const GAscript = document.createElement("script");
-			GAscript.onload = () => {
-				window.dataLayer = window.dataLayer || [];
-				function gtag() {
-					dataLayer.push(arguments);
-				}
-				gtag("js", new Date());
-				if (isVercel) {
-					gtag("config", "G-F5E8XNQS20");
-				} else {
-					gtag("config", "G-PPMY92TJCE");
-				}
-			};
-			if (isVercel) {
-				inject?.(); // Vercel Analytics
-				GAscript.src = "https://www.googletagmanager.com/gtag/js?id=G-F5E8XNQS20";
+			showErrorMessage()
+			if ($androidBackground) {
+				try {
+					window.JSBridge.backgroundUpdateIsFinished(false);
+				} catch (ex) { console.error(ex) }
 			} else {
-				GAscript.src = "https://www.googletagmanager.com/gtag/js?id=G-PPMY92TJCE";
+				$initList = $initData = false;
+				loadYoutube();
+				checkAutoFunctions(true);
+				loadAnalytics();
 			}
-			GAscript.defer = true;
-			document.head.appendChild(GAscript);
 		}
 	}
 	init()
@@ -605,7 +521,7 @@
 				try {
 					$appID = await getWebVersion();
 					if (!$androidBackground && typeof $appID === "number" && !isNaN($appID) && isFinite($appID)) {
-						JSBridge.checkAppID(Math.floor($appID), false);
+						window.JSBridge.checkAppID(Math.floor($appID), false);
 					}
 				} catch (ex) {
 					console.error(ex)
@@ -808,7 +724,7 @@
 		if ($android) {
 			if (!$androidBackground) {
 				try {
-					JSBridge.setShouldGoBack(false);
+					window.JSBridge.setShouldGoBack(false);
 				} catch (ex) {
 					console.error(ex)
 				}
@@ -884,8 +800,8 @@
 					if (appShouldExit) {
 						appShouldExit = false
 						try {
-							JSBridge.willExit();
-							JSBridge.setShouldGoBack(true);
+							window.JSBridge.willExit();
+							window.JSBridge.setShouldGoBack(true);
 						} catch (ex) {
 							console.error(ex)
 						}
@@ -1124,7 +1040,7 @@
 		if (typeof text !== "string" && !text) return;
 		if ($android) {
 			try {
-				JSBridge.copyToClipBoard(text);
+				window.JSBridge.copyToClipBoard(text);
 			} catch (ex) {
 				console.error(ex)
 			}
@@ -1158,8 +1074,7 @@
 				const offsetWidth = mediaListPagerEl.getBoundingClientRect().width;
 				const pagerPads = categoryIdx * offsetWidth;
 				const scrollOffset = Math.max(0, categoryIdx - 1) * mediaListPagerPad;
-				const newScrollLeft = pagerPads + scrollOffset;
-				mediaListPagerEl.scrollLeft = newScrollLeft;
+				mediaListPagerEl.scrollLeft = pagerPads + scrollOffset;
 				mediaListPagerIsChanging = false;
 			}
 
@@ -1269,7 +1184,7 @@
 				}
 				mediaListPagerIsChanging = false;
 			}
-		});		
+		});
 
 		mediaListPagerEl.addEventListener("scrollend", () => {
 			if (mediaListPagerIsChanging) {
@@ -1284,43 +1199,42 @@
 			}
 		});
 	});
-
 </script>
 
 <div
 	id="app"
-	class="{($android ? "android" : "") +
+	class={($android ? "android" : "") +
 		(isMaxWindowHeight ? " max-window-height" : "") +
-		($popupVisible ? " popup-visible" : "")}"
+		($popupVisible ? " popup-visible" : "")}
 >
 	{#if shownProgress > 0 && shownProgress < 100}
 		<div
 			role="progressbar"
-			out:fade="{{ duration: 0, delay: 400 }}"
-			on:outrostart="{(e) => {
+			out:fade={{ duration: 0, delay: 400 }}
+			on:outrostart={(e) => {
 				e.target.style.setProperty("--progress", "0%");
-			}}"
-			class="{"fixed-progress" +
-				(isBelowNav ? " is-below-absolute-progress" : "")}"
-			style:--progress="{"-" + (100 - shownProgress) + "%"}"
-		></div>
+			}}
+			class={"fixed-progress" +
+				(isBelowNav ? " is-below-absolute-progress" : "")}
+			style:--progress={"-" + (100 - shownProgress) + "%"}
+		/>
 	{/if}
 
-	<C.Fixed.Navigator />
+	<C.Fixed.Navigator></C.Fixed.Navigator>
 
 	<main>
 		<C.Media.Fixed.MediaPopup />
 		<C.Others.Search />
 		<section
-			bind:this="{mediaListPagerEl}"
-			style:--grid-position="{gridTopPosition + "px"}"
-			style:--grid-max-height="{gridMaxHeight + "px"}"
+			bind:this={mediaListPagerEl}
+			style:--grid-position={gridTopPosition + "px"}
+			style:--grid-max-height={gridMaxHeight + "px"}
 			id="media-list-pager"
-			class="{"media-list-pager" +
+			class={"media-list-pager" +
 				(mediaListPagerIsChanging ? " pager-is-changing" : "") +
 				(changingTopPosition ? " is-changing-top-position" : "") +
-				($gridFullView ? " remove-snap-scroll" : "")}"
-			style:--media-list-pager-pad="{mediaListPagerPad + "px"}"
+				($gridFullView ? " remove-snap-scroll" : "")}
+			style:--media-list-pager-pad={mediaListPagerPad + "px"}
 			aria-label="List of Category of Media"
 		>
 			{#if $categoriesKeys?.length > 0}
@@ -1328,7 +1242,7 @@
 					<C.Media.MediaGrid {mainCategory} />
 				{/each}
 			{:else}
-				<C.Media.MediaGrid mainCategory="{""}" />
+				<C.Media.MediaGrid mainCategory={""} />
 			{/if}
 		</section>
 	</main>
@@ -1340,9 +1254,9 @@
 	<C.Media.Fixed.MediaOptionsPopup />
 
 	<C.Others.Confirm
-		showConfirm="{$confirmIsVisible}"
-		on:confirmed="{handleConfirmationConfirmed}"
-		on:cancelled="{handleConfirmationCancelled}"
+		showConfirm={$confirmIsVisible}
+		on:confirmed={handleConfirmationConfirmed}
+		on:cancelled={handleConfirmationCancelled}
 		{isAlert}
 		{confirmTitle}
 		{confirmText}
@@ -1355,7 +1269,7 @@
 		<div
 			role="alert"
 			class="message-toast"
-			transition:fade="{{ duration: 200 }}"
+			transition:fade={{ duration: 200 }}
 		>{$toast}</div>
 	{/if}
 </div>
@@ -1363,7 +1277,7 @@
 <style>
 	:global(html) {
 		color-scheme: dark !important;
-		overflow-y: overlay !important;
+		overflow-y: auto !important;
 		scrollbar-gutter: stable !important;
 	}
 	#app {
@@ -1374,7 +1288,7 @@
 	#app.android {
 		user-select: none !important;
 	}
-	@media screen and not (pointer:fine) {
+	@media not (pointer: fine)  {
 		#app {
 			user-select: none !important;
 		}
@@ -1392,7 +1306,7 @@
 	.fixed-progress {
 		background-color: var(--fg-color);
 		position: fixed;
-		top: 0px;
+		top: 0;
 		z-index: 1003;
 		height: 2px;
 		width: 100%;
@@ -1441,7 +1355,7 @@
 		box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.2);
 	}
 
-	@media screen and (max-width: 750px) {
+	@media (max-width: 750px) {
 		.fixed-progress {
 			position: absolute;
 			height: 1px !important;
@@ -1451,7 +1365,7 @@
 		.fixed-progress.is-below-absolute-progress {
 			position: fixed;
 			height: 2px !important;
-			top: 0px !important;
+			top: 0 !important;
 			z-index: 1003 !important;
 		}
 		#app.android > .fixed-progress.is-below-absolute-progress {

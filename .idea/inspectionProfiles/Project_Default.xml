@@ -1,0 +1,79 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <option name="scopesOrder">
+      <list>
+        <option value="JavaScript" />
+        <option value="All Changed Files" />
+        <option value="Open Files" />
+        <option value="Project Files" />
+        <option value="Scratches and Consoles" />
+        <option value="Svelte" />
+        <option value="Tests" />
+      </list>
+    </option>
+    <inspection_tool class="Annotator" enabled="true" level="ERROR" enabled_by_default="true">
+      <scope name="Markdown" level="ERROR" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="CommaExpressionJS" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Svelte" level="WARNING" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="CssNonIntegerLengthInPixels" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
+    <inspection_tool class="CssUnusedSymbol" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Svelte" level="WARNING" enabled="false" editorAttributes="WARNING_ATTRIBUTES" />
+    </inspection_tool>
+    <inspection_tool class="ES6MissingAwait" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
+    <inspection_tool class="ExceptionCaughtLocallyJS" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="JavaScript" level="WARNING" enabled="false" />
+      <scope name="Svelte" level="WARNING" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="HtmlDeprecatedAttribute" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Markdown" level="WARNING" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="HtmlRequiredAltAttribute" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Markdown" level="WARNING" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="HtmlUnknownTag" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="myValues">
+        <value>
+          <list size="9">
+            <item index="0" class="java.lang.String" itemvalue="nobr" />
+            <item index="1" class="java.lang.String" itemvalue="noembed" />
+            <item index="2" class="java.lang.String" itemvalue="comment" />
+            <item index="3" class="java.lang.String" itemvalue="noscript" />
+            <item index="4" class="java.lang.String" itemvalue="embed" />
+            <item index="5" class="java.lang.String" itemvalue="script" />
+            <item index="6" class="java.lang.String" itemvalue="h1" />
+            <item index="7" class="java.lang.String" itemvalue="div" />
+            <item index="8" class="java.lang.String" itemvalue="h2" />
+          </list>
+        </value>
+      </option>
+      <option name="myCustomValuesEnabled" value="true" />
+    </inspection_tool>
+    <inspection_tool class="JSCheckFunctionSignatures" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <scope name="JavaScript" level="WEAK WARNING" enabled="false" />
+      <scope name="Svelte" level="WEAK WARNING" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="JSIgnoredPromiseFromCall" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
+    <inspection_tool class="JSIncompatibleTypesComparison" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <scope name="JavaScript" level="WEAK WARNING" enabled="false" />
+      <scope name="Svelte" level="WEAK WARNING" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="JSObjectNullOrUndefined" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="JavaScript" level="WARNING" enabled="false" />
+      <scope name="Svelte" level="WARNING" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="JSUnresolvedReference" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <scope name="JavaScript" level="WEAK WARNING" enabled="false" />
+      <scope name="Svelte" level="WEAK WARNING" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="JSValidateTypes" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <scope name="JavaScript" level="WEAK WARNING" enabled="false" />
+      <scope name="Svelte" level="WEAK WARNING" enabled="false" />
+    </inspection_tool>
+    <inspection_tool class="JSVoidFunctionReturnValueUsed" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Svelte" level="WARNING" enabled="false" />
+    </inspection_tool>
+  </profile>
+</component>

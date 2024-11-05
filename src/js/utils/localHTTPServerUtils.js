@@ -5,7 +5,7 @@ const getLocalServerURL = () => {
     return new Promise((resolve, reject) => {
         try {
             window[`${get(uniqueKey)}LOCAL_SERVER_URL_PROMISE`] = { resolve, reject }
-            JSBridge.getLocalServerURL()
+            window.JSBridge.getLocalServerURL()
         } catch (e) { 
             console.error(e)
             reject()

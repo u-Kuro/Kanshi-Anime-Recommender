@@ -118,7 +118,7 @@
     // Global Function For Android
     function handleExportDirectory() {
         try {
-            JSBridge.chooseExportDirectory();
+            window.JSBridge.chooseExportDirectory();
         } catch (ex) { console.error(ex); }
     }
     window.setExportPathAvailability = async (val = true) => {
@@ -216,7 +216,7 @@
             } else {
                 $toast = "No hidden entries were found"
             }
-            return;
+
         } else if (
             await $confirmPromise(
                 "Do you want to show all your hidden entries?",
@@ -261,7 +261,7 @@
     keepAppRunningInBackground.subscribe((val) => {
         if (typeof val === "boolean") {
             try {
-                JSBridge.setKeepAppRunningInBackground(val);
+                window.JSBridge.setKeepAppRunningInBackground(val);
             } catch (ex) { console.error(ex) }
         }
     })
@@ -354,7 +354,7 @@
             })
         ) {
             try {
-                JSBridge.clearCache();
+                window.JSBridge.clearCache();
             } catch (ex) { console.error(ex) }
         }
     }
@@ -370,7 +370,7 @@
                     $appID = await getWebVersion();
                 }
                 if (typeof $appID === "number" && !isNaN($appID) && isFinite($appID)) {
-                    JSBridge.checkAppID(Math.floor($appID), true);
+                    window.JSBridge.checkAppID(Math.floor($appID), true);
                 }
             } catch (ex) {
                 console.error(ex)
@@ -399,8 +399,7 @@
         startX = event.touches[0].clientX;
         startY = event.touches[0].clientY;
         touchID = event.touches[0].identifier;
-        let element = event.target;
-        let closestScrollableLeftElement = element;
+        let closestScrollableLeftElement = event.target;
         let hasScrollableLeftElement = false;
         while (
             closestScrollableLeftElement &&
@@ -411,11 +410,7 @@
                     closestScrollableLeftElement.clientWidth &&
                 closestScrollableLeftElement.scrollLeft > 0;
             if (isScrollableLeft) {
-                if (closestScrollableLeftElement.id === "menu") {
-                    hasScrollableLeftElement = false;
-                } else {
-                    hasScrollableLeftElement = true;
-                }
+                hasScrollableLeftElement = closestScrollableLeftElement.id !== "menu";
                 break;
             }
             closestScrollableLeftElement =
@@ -437,11 +432,7 @@
         } else if (menuIsGoingBack) {
             endX = event.touches[0].clientX;
             const deltaX = endX - startX;
-            if (deltaX > 48) {
-                willGoBack = true;
-            } else {
-                willGoBack = false;
-            }
+            willGoBack = deltaX > 48;
         }
     }
     function menuContainerTouchEnd(event) {
@@ -502,7 +493,6 @@
     if (!$android && $mobile) {
         isAndroidWeb = /android/i.test(
             window.navigator?.userAgent ||
-            window.navigator?.vendor ||
             window.opera,
         );
         window.addEventListener("beforeinstallprompt", (e) => { deferredPrompt = e });
@@ -515,7 +505,7 @@
             ) {
                 if (isAndroidWeb) {
                     downloadLink("https://github.com/u-Kuro/Kanshi-Anime-Recommender/raw/main/Kanshi.apk", "Kanshi.apk");
-                    return;
+
                 } else if (
                     typeof deferredPrompt?.prompt === "function"
                 ) {
@@ -586,18 +576,18 @@
 {#if $menuVisible}
     <div
         class="fixed-menu-container"
-        on:click="{handleMenuVisibility}"
-        on:keyup="{(e) => e.key === "Enter" && handleMenuVisibility(e)}"
-        in:fade="{{ duration: 200, easing: sineOut }}"
-        out:fade="{{ duration: 200, easing: sineOut }}"
+        on:click={handleMenuVisibility}
+        on:keyup={(e) => e.key === "Enter" && handleMenuVisibility(e)}
+        in:fade={{ duration: 200, easing: sineOut }}
+        out:fade={{ duration: 200, easing: sineOut }}
     >
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div class="menu"
-            on:touchstart|passive="{menuContainerTouchStart}"
-            on:touchmove|passive="{menuContainerTouchMove}"
-            on:touchend|passive="{menuContainerTouchEnd}"
-            on:touchcancel="{menuContainerTouchCancel}"
-            on:scroll="{menuScroll}"
+            on:touchstart|passive={menuContainerTouchStart}
+            on:touchmove|passive={menuContainerTouchMove}
+            on:touchend|passive={menuContainerTouchEnd}
+            on:touchcancel={menuContainerTouchCancel}
+            on:scroll={menuScroll}
             use:isScrollableMenu
             role="menu"
         >
@@ -605,9 +595,9 @@
             <div class="menu-options" role="group" aria-label="list actions">
                 <div
                     class="option switchable"
-                    tabindex="{$menuVisible ? "0" : "-1"}"
-                    on:click="{updateList}"
-                    on:keyup="{(e) => e.key === "Enter" && updateList(e)}"
+                    tabindex={$menuVisible ? "0" : "-1"}
+                    on:click={updateList}
+                    on:keyup={(e) => e.key === "Enter" && updateList(e)}
                     role="menuitem"
                 >
                     <!-- rotate-right -->
@@ -617,8 +607,8 @@
                     <span class="option-label">Update Entries</span>
                     <label 
                         class="switch"
-                        tabindex="{$menuVisible ? "0" : "-1"}"
-                        on:keyup="{(e) => {
+                        tabindex={$menuVisible ? "0" : "-1"}
+                        on:keyup={(e) => {
                             if(e.key === "Enter") {
                                 $autoUpdate = !$autoUpdate
                                 const message = `${$autoUpdate ? "Enabled" : "Disabled"} automatic update`
@@ -628,20 +618,20 @@
                                     $toast = message
                                 }
                             }
-                        }}"
+                        }}
                     >
                         <input
                             type="checkbox"
                             class="switch-toggle"
-                            bind:checked="{$autoUpdate}"
-                            on:change="{() => {
+                            bind:checked={$autoUpdate}
+                            on:change={() => {
                                 const message = `${$autoUpdate ? "Enabled" : "Disabled"} automatic update`
                                 if ($android) {
                                     showToast(message)
                                 } else {
                                     $toast = message
                                 }
-                            }}"
+                            }}
                         />
                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                         <span class="slider round">
@@ -651,9 +641,9 @@
                 </div>
                 <div
                     class="option"
-                    tabindex="{$menuVisible ? "0" : "-1"}"
-                    on:click="{showAllHiddenEntries}"
-                    on:keyup="{(e) => e.key === "Enter" && showAllHiddenEntries(e)}"
+                    tabindex={$menuVisible ? "0" : "-1"}
+                    on:click={showAllHiddenEntries}
+                    on:keyup={(e) => e.key === "Enter" && showAllHiddenEntries(e)}
                     role="menuitem"
                 >
                     <svg viewBox="0 0 576 512">
@@ -666,9 +656,9 @@
             <div class="menu-options" role="group" aria-label="backup and restore">
                 <div
                     class="option"
-                    tabindex="{$menuVisible ? "0" : "-1"}"
-                    on:click="{() => importData(true)}"
-                    on:keyup="{(e) => e.key === "Enter" && importData(true)}"
+                    tabindex={$menuVisible ? "0" : "-1"}
+                    on:click={() => importData(true)}
+                    on:keyup={(e) => e.key === "Enter" && importData(true)}
                     role="menuitem"
                 >
                     <svg 
@@ -681,9 +671,9 @@
                 </div>
                 <div
                     class={"option " + ($android ? ($exportPathIsAvailable ? "export-switchable" : "export") : "")}
-                    tabindex="{$menuVisible ? "0" : "-1"}"
-                    on:click="{exportData}"
-                    on:keyup="{(e) => e.key === "Enter" && exportData(e)}"
+                    tabindex={$menuVisible ? "0" : "-1"}
+                    on:click={exportData}
+                    on:keyup={(e) => e.key === "Enter" && exportData(e)}
                     role="menuitem"
                 >
                     <svg viewBox="0 0 512 512">
@@ -694,9 +684,9 @@
                         <div class="change-directory">
                             <svg 
                                 viewBox="0 0 576 512"
-                                tabindex="{$menuVisible ? "0" : "-1"}"
-                                on:click="{handleExportDirectory}"
-                                on:keyup="{(e) => e.key === "Enter" && handleExportDirectory(e)}"
+                                tabindex={$menuVisible ? "0" : "-1"}
+                                on:click={handleExportDirectory}
+                                on:keyup={(e) => e.key === "Enter" && handleExportDirectory(e)}
                             >
                                 <path d="M89 224 0 376V96c0-35 29-64 64-64h118c17 0 33 7 45 19l26 26c12 12 29 19 46 19h117c35 0 64 29 64 64v32H144c-23 0-44 12-55 32zm27 16c6-10 17-16 28-16h400c12 0 22 6 28 16s5 22 0 32L460 464c-6 10-17 16-28 16H32c-11 0-22-6-28-16s-5-22 0-32l112-192z"/>
                             </svg>
@@ -704,8 +694,8 @@
                         {#if $exportPathIsAvailable}
                             <label 
                                 class="switch"
-                                tabindex="{$menuVisible ? "0" : "-1"}"
-                                on:keyup="{(e) => {
+                                tabindex={$menuVisible ? "0" : "-1"}
+                                on:keyup={(e) => {
                                     if(e.key === "Enter") {
                                         $autoExport = !$autoExport
                                         const message = `${$autoExport ? "Enabled" : "Disabled"} automatic back up`
@@ -715,20 +705,20 @@
                                             $toast = message
                                         }
                                     }
-                                }}"
+                                }}
                             >
                                 <input
                                     type="checkbox"
                                     class="switch-toggle"
-                                    bind:checked="{$autoExport}"
-                                    on:change="{() => {
+                                    bind:checked={$autoExport}
+                                    on:change={() => {
                                         const message = `${$autoExport ? "Enabled" : "Disabled"} automatic back up`
                                         if ($android) {
                                             showToast(message)
                                         } else {
                                             $toast = message
                                         }
-                                    }}"
+                                    }}
                                 />
                                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                 <span class="slider round">
@@ -744,13 +734,13 @@
                 {#if $android}
                     <div
                         class="option switchable"
-                        on:click="{(e)=>{
+                        on:click={(e)=>{
                             const target = e.target
                             const classList = target.classList
                             if (classList.contains("switch") || target.closest(".switch")) return
                             $keepAppRunningInBackground = !$keepAppRunningInBackground
-                        }}"
-                        on:keyup="{()=>{}}"
+                        }}
+                        on:keyup={()=>{}}
                     >
                         <svg 
                             viewBox="0 0 640 512"
@@ -761,17 +751,17 @@
                         <span class="option-label">Enable Background Updates</span>
                         <label 
                             class="switch"
-                            tabindex="{$menuVisible ? "0" : "-1"}"
-                            on:keyup="{(e) => {
+                            tabindex={$menuVisible ? "0" : "-1"}
+                            on:keyup={(e) => {
                                 if(e.key === "Enter") {
                                     $keepAppRunningInBackground = !$keepAppRunningInBackground
                                 }
-                            }}"
+                            }}
                         >
                             <input
                                 type="checkbox"
                                 class="switch-toggle"
-                                bind:checked="{$keepAppRunningInBackground}"
+                                bind:checked={$keepAppRunningInBackground}
                             />
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                             <span class="slider round">
@@ -782,13 +772,13 @@
                 {/if}
                 <div
                     class="option switchable"
-                    on:click="{(e)=>{
+                    on:click={(e)=>{
                         const target = e.target
                         const classList = target.classList
                         if (classList.contains("switch") || target.closest(".switch")) return
                         $showStatus = !$showStatus
-                    }}"
-                    on:keyup="{()=>{}}"
+                    }}
+                    on:keyup={()=>{}}
                 >
                     <svg 
                         viewBox="0 0 384 512"
@@ -799,17 +789,17 @@
                     <span class="option-label">Show Status Updates</span>
                     <label 
                         class="switch"
-                        tabindex="{$menuVisible ? "0" : "-1"}"
-                        on:keyup="{(e) => {
+                        tabindex={$menuVisible ? "0" : "-1"}
+                        on:keyup={(e) => {
                             if(e.key === "Enter") {
                                 $showStatus = !$showStatus
                             }
-                        }}"
+                        }}
                     >
                         <input
                             type="checkbox"
                             class="switch-toggle"
-                            bind:checked="{$showStatus}"
+                            bind:checked={$showStatus}
                         />
                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                         <span class="slider round">
@@ -819,13 +809,13 @@
                 </div>
                 <div
                     class="option switchable"
-                    on:click="{(e)=>{
+                    on:click={(e)=>{
                         const target = e.target
                         const classList = target.classList
                         if (classList.contains("switch") || target.closest(".switch")) return
                         $showRateLimit = !$showRateLimit
-                    }}"
-                    on:keyup="{()=>{}}"
+                    }}
+                    on:keyup={()=>{}}
                 >
                     <svg 
                         viewBox="0 0 448 512"
@@ -836,17 +826,17 @@
                     <span class="option-label">Show Rate Limit</span>
                     <label 
                         class="switch"
-                        tabindex="{$menuVisible ? "0" : "-1"}"
-                        on:keyup="{(e) => {
+                        tabindex={$menuVisible ? "0" : "-1"}
+                        on:keyup={(e) => {
                             if(e.key === "Enter") {
                                 $showRateLimit = !$showRateLimit
                             }
-                        }}"
+                        }}
                     >
                         <input
                             type="checkbox"
                             class="switch-toggle"
-                            bind:checked="{$showRateLimit}"
+                            bind:checked={$showRateLimit}
                         />
                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                         <span class="slider round">
@@ -860,9 +850,9 @@
                 <div class="menu-options" role="group" aria-label="tool actions">
                     <div
                         class="option"
-                        tabindex="{$menuVisible ? "0" : "-1"}"
-                        on:keyup="{(e) => e.key === "Enter" && checkForUpdates(e)}"
-                        on:click="{checkForUpdates}"
+                        tabindex={$menuVisible ? "0" : "-1"}
+                        on:keyup={(e) => e.key === "Enter" && checkForUpdates(e)}
+                        on:click={checkForUpdates}
                         role="menuitem"
                     >
                         <svg viewBox="0 0 576 512">
@@ -872,9 +862,9 @@
                     </div>
                     <div
                         class="option"
-                        tabindex="{$menuVisible ? "0" : "-1"}"
-                        on:keyup="{(e) => e.key === "Enter" && clearCache(e)}"
-                        on:click="{clearCache}"
+                        tabindex={$menuVisible ? "0" : "-1"}
+                        on:keyup={(e) => e.key === "Enter" && clearCache(e)}
+                        on:click={clearCache}
                         role="menuitem"
                     >
                         <svg
@@ -892,9 +882,9 @@
                 {#if $mobile && !$android && (isAndroidWeb || (deferredPrompt && typeof deferredPrompt?.prompt === "function"))}
                     <div
                         class="option"
-                        tabindex="{$menuVisible ? "0" : "-1"}"
-                        on:click="{() => downloadAndroidApp?.()}"
-                        on:keyup="{(e) => e.key === "Enter" && downloadAndroidApp?.()}"
+                        tabindex={$menuVisible ? "0" : "-1"}
+                        on:click={() => downloadAndroidApp?.()}
+                        on:keyup={(e) => e.key === "Enter" && downloadAndroidApp?.()}
                         role="menuitem"
                     >
                         {#if isAndroidWeb}
@@ -916,9 +906,9 @@
                 {/if}
                 <div
                     class="option"
-                    tabindex="{$menuVisible ? "0" : "-1"}"
-                    on:click="{anilistSignup}"
-                    on:keyup="{(e) => e.key === "Enter" && anilistSignup(e)}"
+                    tabindex={$menuVisible ? "0" : "-1"}
+                    on:click={anilistSignup}
+                    on:keyup={(e) => e.key === "Enter" && anilistSignup(e)}
                     role="menuitem"
                 >
                     <svg viewBox="0 0 640 512">
@@ -928,9 +918,9 @@
                 </div>
                 <div
                     class="option"
-                    tabindex="{$menuVisible ? "0" : "-1"}"
-                    on:keyup="{(e) => e.key === "Enter" && showNotice(e)}"
-                    on:click="{showNotice}"
+                    tabindex={$menuVisible ? "0" : "-1"}
+                    on:keyup={(e) => e.key === "Enter" && showNotice(e)}
+                    on:click={showNotice}
                     role="menuitem"
                 >
                     <svg viewBox="0 0 512 512">
@@ -948,15 +938,15 @@
     type="file"
     style:display="none"
     accept=".gzip"
-    bind:this="{importFileInput}"
-    on:change="{importUserFile}"
+    bind:this={importFileInput}
+    on:change={importUserFile}
 />
 
 {#if $menuVisible && menuIsGoingBack}
     <div
-        class="{"go-back-grid-highlight" + (willGoBack ? " will-go-back" : "")}"
-        in:fade="{{ duration: 200, easing: sineOut }}"
-        out:fade="{{ duration: 200, easing: sineOut }}"
+        class={"go-back-grid-highlight" + (willGoBack ? " will-go-back" : "")}
+        in:fade={{ duration: 200, easing: sineOut }}
+        out:fade={{ duration: 200, easing: sineOut }}
     >
         <div class="go-back-grid">
             <!-- angle left -->
@@ -1182,14 +1172,14 @@
         height: 20px;
     }
 
-    @media screen and (min-width: 750px) {
+    @media (min-width: 750px) {
         .fixed-menu-container {
             height: 100% !important;
             top: 0 !important;
             z-index: 992 !important;
         }
     }
-    @media screen and (min-width: 640px) {
+    @media (min-width: 640px) {
         .menu {
             padding: 15px 50px !important;
         }

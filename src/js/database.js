@@ -92,6 +92,7 @@ const hasIDBData = async (recordKeys) => {
         console.error(ex)
         resolve(false)
     }
+
     return await promise
 }
 const getIDBData = async (key) => {
@@ -120,6 +121,7 @@ const getIDBData = async (key) => {
         console.error(ex);
         resolve();
     }
+
     return await promise
 }
 const getIDBRecords = async (recordKeys) => {
@@ -157,79 +159,84 @@ const getIDBRecords = async (recordKeys) => {
         console.error(ex);
         resolve();
     }
+
     return await promise
 }
-const setIDBData = (key, value, { important }) => {
+const setIDBData = async (key, value, { important }) => {
     if (get(androidBackground) && !important) return
-    return new Promise(async (resolve, reject) => {
+    
+    const { promise, resolve, reject } = Promise.withResolvers()
+    try {
         if (!db) await IDBInit()
-        try {
-            if (isJsonObject(value) || value instanceof Array) {
-                value = await new Response(
-                    new Blob([JSON.stringify(value)])
-                    .stream()
-                    .pipeThrough(new CompressionStream("gzip"))
-                ).blob()
-            } else if (value instanceof Blob) {
-                value = await new Response(
-                    value
-                    .stream()
-                    .pipeThrough(new CompressionStream("gzip"))
-                ).blob()
-            }
-            const transaction = db.transaction(key, "readwrite")
-            const put = transaction
-                .objectStore(key)
-                .put(value, key);
-            put.onerror = (ex) => {
-                console.error(ex);
-                reject(ex);
-                transaction.abort();
-            };
-            transaction.oncomplete = () => resolve()
-        } catch (ex) {
+        if (isJsonObject(value) || value instanceof Array) {
+            value = await new Response(
+                new Blob([JSON.stringify(value)])
+                .stream()
+                .pipeThrough(new CompressionStream("gzip"))
+            ).blob()
+        } else if (value instanceof Blob) {
+            value = await new Response(
+                value
+                .stream()
+                .pipeThrough(new CompressionStream("gzip"))
+            ).blob()
+        }
+        const transaction = db.transaction(key, "readwrite")
+        const put = transaction
+            .objectStore(key)
+            .put(value, key);
+        put.onerror = (ex) => {
             console.error(ex);
             reject(ex);
-        }
-    });
+            transaction.abort();
+        };
+        transaction.oncomplete = () => resolve()
+    } catch (ex) {
+        console.error(ex);
+        reject(ex);
+    }
+
+    return await promise
 }
-// const setIDBRecords = (records, { important }) => {
+// const setIDBRecords = async (records, { important }) => {
 //     if (get(androidBackground) && !important) return
-//     return new Promise(async (resolve, reject) => {
+
+//     const { promise, resolve, reject } = Promise.withResolvers()
+//     try {
 //         if (!db) await IDBInit()
-//         try {
-//             for (const key in records) {
-//                 if (isJsonObject(records[key]) || records[key] instanceof Array) {
-//                     records[key] = await new Response(
-//                         new Blob([JSON.stringify(records[key])])
-//                         .stream()
-//                         .pipeThrough(new CompressionStream("gzip"))
-//                     ).blob()
-//                 } else if (records[key] instanceof Blob) {
-//                     records[key] = await new Response(
-//                         records[key]
-//                         .stream()
-//                         .pipeThrough(new CompressionStream("gzip"))
-//                     ).blob()
-//                 }
+//         for (const key in records) {
+//             if (isJsonObject(records[key]) || records[key] instanceof Array) {
+//                 records[key] = await new Response(
+//                     new Blob([JSON.stringify(records[key])])
+//                     .stream()
+//                     .pipeThrough(new CompressionStream("gzip"))
+//                 ).blob()
+//             } else if (records[key] instanceof Blob) {
+//                 records[key] = await new Response(
+//                     records[key]
+//                     .stream()
+//                     .pipeThrough(new CompressionStream("gzip"))
+//                 ).blob()
 //             }
-//             const transaction = db.transaction(Object.keys(records), "readwrite");
-//             for (const key in records) {
-//                 const put = transaction
-//                     .objectStore(key)
-//                     .put(records[key], key);
-//                 put.onerror = (ex) => {
-//                     console.error(ex);
-//                     reject(ex);
-//                     transaction.abort();
-//                 };
-//             }
-//             transaction.oncomplete = () => resolve()
-//         } catch (ex) {
-//             console.error(ex);
-//             reject(ex);
 //         }
-//     });
+//         const transaction = db.transaction(Object.keys(records), "readwrite");
+//         for (const key in records) {
+//             const put = transaction
+//                 .objectStore(key)
+//                 .put(records[key], key);
+//             put.onerror = (ex) => {
+//                 console.error(ex);
+//                 reject(ex);
+//                 transaction.abort();
+//             };
+//         }
+//         transaction.oncomplete = () => resolve()
+//     } catch (ex) {
+//         console.error(ex);
+//         reject(ex);
+//     }
+    
+//     return await promise
 // }
 const getLSData = (key) => {
     try {
@@ -238,7 +245,9 @@ const getLSData = (key) => {
         let value = localStorage.getItem(key)
         data = JSON.parse(value)
         return data
-    } catch { }
+    } catch (ex) {
+        console.error(ex);
+    }
 }
 const setLSData = async (key, value) => {
     localStorage.setItem(get(uniqueKey) + key, JSON.stringify(value))
@@ -246,7 +255,9 @@ const setLSData = async (key, value) => {
 const removeLSData = (key) => {
     try {
         localStorage.removeItem(get(uniqueKey) + key);
-    } catch { }
+    } catch (ex) {
+        console.error(ex);
+    }
 }
 
 export { 

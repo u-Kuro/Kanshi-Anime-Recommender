@@ -765,7 +765,7 @@ function notifyUpdatedMediaNotification() {
                 )
             ) {
                 updateRecommendationList.update(e => !e)
-                JSBridge.showNewUpdatedMediaNotification(
+                window.JSBridge.showNewUpdatedMediaNotification(
                     Math.floor(newAddedMediaCount), 
                     Math.floor(newUpdatedMediaCount)
                 )
@@ -870,15 +870,14 @@ const requestMediaEntries = ($data = {}) => {
                                     updatedMediaCount = 0
                                 }
                                 if (
-                                    typeof addedMediaCount === "number" && !isNaN(addedMediaCount) && isFinite(addedMediaCount)
-                                    && typeof updatedMediaCount === "number" && !isNaN(updatedMediaCount) && isFinite(updatedMediaCount)
+                                    !isNaN(addedMediaCount) && isFinite(addedMediaCount) && !isNaN(updatedMediaCount) && isFinite(updatedMediaCount)
                                     && (
                                         addedMediaCount > 0 ||
                                         updatedMediaCount > 0
                                     )
                                 ) {
                                     if (get(androidBackground)) {
-                                        JSBridge.showNewUpdatedMediaNotification(
+                                        window.JSBridge.showNewUpdatedMediaNotification(
                                             Math.floor(addedMediaCount), 
                                             Math.floor(updatedMediaCount)
                                         )
@@ -1075,7 +1074,7 @@ const exportUserData = ($data) => {
             return
         }
         try {
-            if (get(android) && $data?.isManual && JSBridge.backUpIsAvailable() === false) {
+            if (get(android) && $data?.isManual && window.JSBridge.backUpIsAvailable() === false) {
                 if (get(androidBackground)) {
                     reject()
                 }
@@ -1133,7 +1132,7 @@ const exportUserData = ($data) => {
                         dataStatusPrio = false
                         isExporting.set(false)
                         try {
-                            if (JSBridge.backUpIsAvailable()) {
+                            if (window.JSBridge.backUpIsAvailable()) {
                                 await fetch(
                                     `${await getLocalServerURL()}/backup-user-data`, {
                                     method: "PUT",

@@ -72,8 +72,7 @@
         cancelAnimationFrame(checkMostVisiblePopupMediaFrame);
         if (!$popupVisible) return;
         checkMostVisiblePopupMediaFrame = requestAnimationFrame(() => {
-            const visiblePopupHeader =
-                getMostVisibleElement(
+            mostVisiblePopupHeader = getMostVisibleElement(
                     popupContainer,
                     ".popup-header",
                     $windowHeight > 360 ? 0.5 : 0,
@@ -83,7 +82,6 @@
                     ".popup-content",
                     0,
                 )?.getElementsByClassName("popup-header")?.[0];
-            mostVisiblePopupHeader = visiblePopupHeader;
             if (!$popupVisible) return;
             playMostVisibleTrailer();
         })
@@ -261,8 +259,7 @@
                     }
                 }
                 openedMedias.forEach(([openedMedia, openedMediaIdx], idx) => {
-                    if (haveTrailer && openedMedia && idx === 0) return;
-                    else if (openedMedia) createPopupYTPlayer(openedMedia, openedMediaIdx);
+                    if (openedMedia && (!haveTrailer || idx !== 0)) createPopupYTPlayer(openedMedia, openedMediaIdx);
                 });
                 $openedMediaPopupIdx = null;
                 window.addHistory?.();
@@ -530,6 +527,7 @@
             ytPlayerEl.id = "yt-player" + getUniqueId()
             bufferingTrailers[ytPlayerEl.id] = true
             // Add Trailer to Iframe
+            // noinspection JSUnusedGlobalSymbols
             const ytPlayer = new YT.Player(ytPlayerEl, {
                 videoId: trailerID,
                 playerVars: {
@@ -971,7 +969,7 @@
         if ($androidBackground) return
         if ($android) {
             try {
-                JSBridge.isOnline(true);
+                window.JSBridge.isOnline(true);
             } catch (ex) { console.error(ex) }
         } else if (isConnected === false) {
             isConnected = true;
@@ -996,7 +994,7 @@
         if ($androidBackground) return
         if ($android) {
             try {
-                JSBridge.isOnline(false);
+                window.JSBridge.isOnline(false);
             } catch (ex) { console.error(ex) }
         } else if (isConnected === true) {
             isConnected = false;
@@ -1007,10 +1005,10 @@
         return new Promise((resolve) => {
             let src = "https://www.youtube.com/iframe_api?v=16";
             let existingScript = document.querySelector(
-                `#www-widgetapi-script[src="${src}"]`,
+                `#www-widgetapi-script[src="${src}]`,
             );
             if (!existingScript) {
-                existingScript = document.querySelector(`script[src="${src}"]`);
+                existingScript = document.querySelector(`script[src="${src}]`);
             }
             if (existingScript) {
                 existingScript.parentElement.removeChild(existingScript);
@@ -1079,8 +1077,7 @@
         startX = event.touches[0].clientX;
         startY = event.touches[0].clientY;
         touchID = event.touches[0].identifier;
-        let element = event.target;
-        let closestScrollableLeftElement = element;
+        let closestScrollableLeftElement = event.target;
         let hasScrollableLeftElement = false;
         while (
             closestScrollableLeftElement &&
@@ -1091,11 +1088,7 @@
                     closestScrollableLeftElement.clientWidth &&
                 closestScrollableLeftElement.scrollLeft > 0;
             if (isScrollableLeft) {
-                if (closestScrollableLeftElement.id === "popup-container") {
-                    hasScrollableLeftElement = false;
-                } else {
-                    hasScrollableLeftElement = true;
-                }
+                hasScrollableLeftElement = closestScrollableLeftElement.id !== "popup-container";
                 break;
             }
             closestScrollableLeftElement =
@@ -1117,11 +1110,7 @@
         } else if ($popupIsGoingBack) {
             endX = event.touches[0].clientX;
             const deltaX = endX - startX;
-            if (deltaX > 48) {
-                willGoBack = true;
-            } else {
-                willGoBack = false;
-            }
+            willGoBack = deltaX > 48;
         }
     }
     function popupContainerTouchEnd(event) {
@@ -1379,8 +1368,7 @@
                 if (mutation.type === "childList") {
                     for (let node of mutation.removedNodes) {
                         if (node?.matches?.("iframe.trailer")) {
-                            const ytPlayer = node
-                            const thisYTId = ytPlayer?.id;
+                            const thisYTId = node?.id;
                             $ytPlayers = $ytPlayers.filter((e) => {
                                 const ytPlayer = e?.ytPlayer
                                 const ytEl = ytPlayer?.g;
@@ -1455,23 +1443,23 @@
 <div
     id="popup-wrapper"
     class="popup-wrapper"
-    on:click="{handlePopupVisibility}"
-    on:keyup="{(e) => e.key === "Enter" && handlePopupVisibility(e)}"
-    bind:this="{popupWrapper}"
-    tabindex="{!$menuVisible && $popupVisible ? "0" : "-1"}"
+    on:click={handlePopupVisibility}
+    on:keyup={(e) => e.key === "Enter" && handlePopupVisibility(e)}
+    bind:this={popupWrapper}
+    tabindex={!$menuVisible && $popupVisible ? "0" : "-1"}
 >
     <section
         id="popup-container"
         class="popup-container hide"
-        bind:this="{popupContainer}"
-        on:touchstart|passive="{popupContainerTouchStart}"
-        on:touchmove|passive="{popupContainerTouchMove}"
-        on:touchend|passive="{popupContainerTouchEnd}"
-        on:touchcancel="{popupContainerTouchCancel}"
-        on:pointerdown="{popupContainerPointerDown}"
-        on:pointerup="{popupContainerPointerEnd}"
-        on:pointercancel="{popupContainerPointerEnd}"
-        on:scroll="{popupScroll}"
+        bind:this={popupContainer}
+        on:touchstart|passive={popupContainerTouchStart}
+        on:touchmove|passive={popupContainerTouchMove}
+        on:touchend|passive={popupContainerTouchEnd}
+        on:touchcancel={popupContainerTouchCancel}
+        on:pointerdown={popupContainerPointerDown}
+        on:pointerup={popupContainerPointerEnd}
+        on:pointercancel={popupContainerPointerEnd}
+        on:scroll={popupScroll}
         aria-label="Detailed Information View for Media"
     >
         {#if $loadedMediaLists}
@@ -1486,20 +1474,20 @@
                         <div class="popup-main" use:popupMainEl>
                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                             <div
-                                class="{"popup-header " + (media.trailerID ? "loader" : "")}"
-                                bind:this="{media.popupHeader}"
-                                tabindex="{!$menuVisible && $popupVisible
+                                class={"popup-header " + (media.trailerID ? "loader" : "")}
+                                bind:this={media.popupHeader}
+                                tabindex={!$menuVisible && $popupVisible
                                     ? "0"
-                                    : "-1"}"
-                                on:click="{() => {
+                                    : "-1"}
+                                on:click={() => {
                                     if (!$popupVisible) return;
                                     openMoreInfo(
                                         media.trailerID,
                                         media.bannerImageUrl || media.trailerThumbnailUrl,
                                         youtubeRelatedLink
                                     )
-                                }}"
-                                on:keyup="{(e) => {
+                                }}
+                                on:keyup={(e) => {
                                     if (!$popupVisible) return;
                                     if (e.key === "Enter") {
                                         openMoreInfo(
@@ -1508,7 +1496,7 @@
                                             youtubeRelatedLink
                                         )
                                     }
-                                }}"
+                                }}
                             >
                                 <div class="popup-header-loading" aria-hidden="true">
                                     <!-- k icon -->
@@ -1529,13 +1517,13 @@
                                                 loading="lazy"
                                                 width="640px"
                                                 height="360px"
-                                                alt="{(media?.shownTitle ||
+                                                alt={(media?.shownTitle ||
                                                     "") +
                                                     (media.bannerImageUrl
                                                         ? " Banner"
-                                                        : " Thumbnail")}"
+                                                        : " Thumbnail")}
                                                 class="banner-img"
-                                                on:load="{(e) => {
+                                                on:load={(e) => {
                                                     removeClass(
                                                         e.target,
                                                         "display-none",
@@ -1544,8 +1532,8 @@
                                                         e.target,
                                                         "loaded",
                                                     );
-                                                }}"
-                                                on:error="{(e) => {
+                                                }}
+                                                on:error={(e) => {
                                                     removeClass(
                                                         e.target,
                                                         "loaded",
@@ -1554,7 +1542,7 @@
                                                         e.target,
                                                         "display-none",
                                                     );
-                                                }}"
+                                                }}
                                             />
                                         {/key}
                                     {/if}
@@ -1566,20 +1554,20 @@
                                     <div class="auto-play-container">
                                         <label 
                                             class="switch"
-                                            tabindex="{!$menuVisible && $popupVisible ? "0" : "-1"}"
-                                            on:keyup="{(e) => e.key === "Enter" && changeAutoPlay(e)}"
+                                            tabindex={!$menuVisible && $popupVisible ? "0" : "-1"}
+                                            on:keyup={(e) => e.key === "Enter" && changeAutoPlay(e)}
                                         >
                                             <label
                                                 class="disable-interaction"
-                                                for="{"auto-play-" + media?.id}"
+                                                for={"auto-play-" + media?.id}
                                             >
                                                 Auto Play
                                             </label>
                                             <input
-                                                id="{"auto-play-" + media?.id}"
+                                                id={"auto-play-" + media?.id}
                                                 type="checkbox"
                                                 class="auto-play-toggle"
-                                                bind:checked="{$autoPlay}"
+                                                bind:checked={$autoPlay}
                                             />
                                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                             <span class="slider round" aria-hidden="true">
@@ -1588,10 +1576,10 @@
                                         </label>
                                         <h3
                                             class="auto-play-label"
-                                            on:click="{changeAutoPlay}"
-                                            on:keyup="{(e) =>
+                                            on:click={changeAutoPlay}
+                                            on:keyup={(e) =>
                                                 e.key === "Enter" &&
-                                                changeAutoPlay(e)}"
+                                                changeAutoPlay(e)}
                                         >
                                             {#if $windowWidth >= 290}
                                                 Auto Play
@@ -1604,25 +1592,25 @@
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                         <div
                                             class="list-update-container"
-                                            tabindex="{!$menuVisible &&
+                                            tabindex={!$menuVisible &&
                                             $popupVisible
                                                 ? "0"
-                                                : "-1"}"
-                                            on:click="{() => {
+                                                : "-1"}
+                                            on:click={() => {
                                                 if ($listUpdateAvailable || $loadingCategory[""] || $loadingCategory[$selectedCategory]) {
                                                     updateList()
                                                 } else {
                                                     reloadList()
                                                 }
-                                            }}"
-                                            on:keyup="{(e) => {
+                                            }}
+                                            on:keyup={(e) => {
                                                 if (e.key === "Enter") return
                                                 if ($listUpdateAvailable || $loadingCategory[""] || $loadingCategory[$selectedCategory]) {
                                                     updateList()
                                                 } else {
                                                     reloadList()
                                                 }
-                                            }}"
+                                            }}
                                             role="button"
                                             aria-label="Reload List"
                                         >
@@ -1648,10 +1636,10 @@
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                         <a
                                             class="icon-button"
-                                            tabindex="{!$menuVisible && $popupVisible ? "0" : "-1"}"
+                                            tabindex={!$menuVisible && $popupVisible ? "0" : "-1"}
                                             rel="noopener noreferrer"
                                             target="_blank"
-                                            href="{`https://www.youtube.com/watch?v=${media.trailerID}`}"
+                                            href={`https://www.youtube.com/watch?v=${media.trailerID}`}
                                             role="button"
                                             aria-label="Open Trailer"
                                         >
@@ -1666,25 +1654,25 @@
                                     {:else}
                                         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                         {#if $webCrawler && $initList !== false && media.trailerID}
-                                            <a class="trailer-link" href="{`https://www.youtube.com/watch?v=${media.trailerID}`}">Trailer</a>
+                                            <a class="trailer-link" href={`https://www.youtube.com/watch?v=${media.trailerID}`}>Trailer</a>
                                         {/if}
                                         {#if media.bannerImageUrl || media.trailerThumbnailUrl}
                                             <div
                                                 class="icon-button"
-                                                tabindex="{!$menuVisible &&
+                                                tabindex={!$menuVisible &&
                                                 $popupVisible
                                                     ? "0"
-                                                    : "-1"}"
-                                                on:click="{() => {
+                                                    : "-1"}
+                                                on:click={() => {
                                                     if (!$popupVisible) return;
                                                     showFullScreenImage(media.bannerImageUrl || media.trailerThumbnailUrl)
-                                                }}"
-                                                on:keyup="{(e) => {
+                                                }}
+                                                on:keyup={(e) => {
                                                     if (!$popupVisible) return;
                                                     if (e.key === "Enter") {
                                                         showFullScreenImage(media.bannerImageUrl || media.trailerThumbnailUrl)
                                                     }
-                                                }}"
+                                                }}
                                                 role="button"
                                                 aria-label="Open Banner or Thumbnail"
                                             >
@@ -1709,22 +1697,22 @@
                                 <div class="popup-info">
                                     <div
                                         class="media-title-container"
-                                        style:overflow="{$popupIsGoingBack
+                                        style:overflow={$popupIsGoingBack
                                             ? "hidden"
-                                            : ""}"
-                                        on:scroll="{itemScroll}"
+                                            : ""}
+                                        on:scroll={itemScroll}
                                     >
                                         <a
-                                            tabindex="{!$menuVisible && $popupVisible ? "" : "-1"}"
-                                            rel="{media.mediaUrl ? "noopener noreferrer" : ""}"
-                                            target="{media.mediaUrl ? "_blank" : ""}"
-                                            href="{media.mediaUrl || "javascript:void(0)"}"
-                                            class="{media?.contentCautionColor + "-color media-title copy"}"
-                                            title="{media?.shownTitle || ""}"
-                                            data-copy="{media?.shownTitle || ""}"
-                                            data-secondcopy="{media?.copiedTitle || ""}"
-                                            style:overflow="{$popupIsGoingBack ? "hidden" : ""}"
-                                            on:scroll="{itemScroll}"
+                                            tabindex={!$menuVisible && $popupVisible ? "" : "-1"}
+                                            rel={media.mediaUrl ? "noopener noreferrer" : ""}
+                                            target={media.mediaUrl ? "_blank" : ""}
+                                            href={media.mediaUrl || "javascript:void(0)"}
+                                            class={media?.contentCautionColor + "-color media-title copy"}
+                                            title={media?.shownTitle || ""}
+                                            data-copy={media?.shownTitle || ""}
+                                            data-secondcopy={media?.copiedTitle || ""}
+                                            style:overflow={$popupIsGoingBack ? "hidden" : ""}
+                                            on:scroll={itemScroll}
                                             aria-label="Open in AniList"
                                         >
                                             {media?.shownTitle || "N/A"}
@@ -1764,10 +1752,10 @@
                                     </div>
                                     <div
                                         class="info-format"
-                                        style:overflow="{$popupIsGoingBack
+                                        style:overflow={$popupIsGoingBack
                                             ? "hidden"
-                                            : ""}"
-                                        on:scroll="{itemScroll}"
+                                            : ""}
+                                        on:scroll={itemScroll}
                                     >
                                         {#if media?.nextAiringEpisode?.airingAt}
                                             {@const formattedMediaFormat =
@@ -1854,16 +1842,16 @@
                                     </div>
                                     <div
                                         class="info-status"
-                                        style:overflow="{$popupIsGoingBack ? "hidden" : ""}"
-                                        on:scroll="{itemScroll}"
+                                        style:overflow={$popupIsGoingBack ? "hidden" : ""}
+                                        on:scroll={itemScroll}
                                     >
                                         <h4
                                             class="user-info"
-                                            on:click="{() => openInAnilist(media.mediaUrl)}"
-                                            on:keyup="{(e) => e.key === "Enter" && openInAnilist(media.mediaUrl)}"
+                                            on:click={() => openInAnilist(media.mediaUrl)}
+                                            on:keyup={(e) => e.key === "Enter" && openInAnilist(media.mediaUrl)}
                                             aria-label="Open in AniList"
                                         >
-                                            <span class="{media?.userStatusColor ? media.userStatusColor+"-color" : ""}">
+                                            <span class={media?.userStatusColor ? media.userStatusColor+"-color" : ""}>
                                                 {media.userStatus || "N/A"}
                                             </span>
                                             {#if true}
@@ -1908,7 +1896,7 @@
                                                             )}
                                                         {#if epsBehind >= 1}{" · "}
                                                             <span
-                                                                style:color="{"hsl(var(--ac-color))"}"
+                                                                style:color={"hsl(var(--ac-color))"}
                                                                 >{`${epsBehind} Ep${epsBehind > 1 ? "s" : ""} Behind`}</span
                                                             >
                                                         {/if}
@@ -1929,7 +1917,7 @@
                                                                     )}
                                                                 {#if volBehind >= 1}{" · "}
                                                                     <span
-                                                                        style:color="{"hsl(var(--ac-color))"}"
+                                                                        style:color={"hsl(var(--ac-color))"}
                                                                         >{`${volBehind} Vol${volBehind > 1 ? "s" : ""} Behind`}</span
                                                                     >
                                                                 {/if}
@@ -1948,7 +1936,7 @@
                                                                     )}
                                                                 {#if chapBehind >= 1}{" · "}
                                                                     <span
-                                                                        style:color="{"hsl(var(--ac-color))"}"
+                                                                        style:color={"hsl(var(--ac-color))"}
                                                                         >{`${chapBehind} Ch${chapBehind > 1 ? "s" : ""} Behind`}</span
                                                                     >
                                                                 {/if}
@@ -1968,7 +1956,7 @@
                                                                 )}
                                                             {#if chapBehind >= 1}{" · "}
                                                                 <span
-                                                                    style:color="{"hsl(var(--ac-color))"}"
+                                                                    style:color={"hsl(var(--ac-color))"}
                                                                     >{`${chapBehind} Ch${chapBehind > 1 ? "s" : ""} Behind`}</span
                                                                 >
                                                             {/if}
@@ -1987,7 +1975,7 @@
                                                                 )}
                                                             {#if volBehind >= 1}{" · "}
                                                                 <span
-                                                                    style:color="{"hsl(var(--ac-color))"}"
+                                                                    style:color={"hsl(var(--ac-color))"}
                                                                     >{`${volBehind} Vol${volBehind > 1 ? "s" : ""} Behind`}</span
                                                                 >
                                                             {/if}
@@ -2063,33 +2051,33 @@
                                                     Studio
                                                 </div>
                                                 <div
-                                                    class="{"studio-popup info"}"
-                                                    on:scroll="{itemScroll}"
-                                                    on:mouseenter="{addInfoDragScroll}"
+                                                    class={"studio-popup info"}
+                                                    on:scroll={itemScroll}
+                                                    on:mouseenter={addInfoDragScroll}
                                                 >
                                                     {#each media.shownStudios as studios (studios?.studio || {})}
                                                         <a
-                                                            tabindex="{!$menuVisible &&
+                                                            tabindex={!$menuVisible &&
                                                             $popupVisible
                                                                 ? ""
-                                                                : "-1"}"
-                                                            class="{studios?.studioColor
+                                                                : "-1"}
+                                                            class={studios?.studioColor
                                                                 ? `${studios?.studioColor}-color`
-                                                                : ""}"
-                                                            rel="{studios
+                                                                : ""}
+                                                            rel={studios
                                                                 ?.studio
                                                                 ?.studioUrl
                                                                 ? "noopener noreferrer"
-                                                                : ""}"
-                                                            target="{studios
+                                                                : ""}
+                                                            target={studios
                                                                 ?.studio
                                                                 ?.studioUrl
                                                                 ? "_blank"
-                                                                : ""}"
-                                                            href="{studios
+                                                                : ""}
+                                                            href={studios
                                                                 ?.studio
                                                                 ?.studioUrl ||
-                                                                "javascript:void(0)"}"
+                                                                "javascript:void(0)"}
                                                             aria-label="Open Studio in AniList"
                                                         >
                                                             {studios?.studio
@@ -2106,15 +2094,15 @@
                                                     Genre
                                                 </div>
                                                 <div
-                                                    class="{"genres-popup info"}"
-                                                    on:scroll="{itemScroll}"
-                                                    on:mouseenter="{addInfoDragScroll}"
+                                                    class={"genres-popup info"}
+                                                    on:scroll={itemScroll}
+                                                    on:mouseenter={addInfoDragScroll}
                                                 >
                                                     {#each media.shownGenres as genres (genres?.genre || {})}
                                                         <span
-                                                            class="{genres?.genreColor
+                                                            class={genres?.genreColor
                                                                 ? `${genres?.genreColor}-color`
-                                                                : ""}"
+                                                                : ""}
                                                             >{genres?.genre ||
                                                                 "N/A"}
                                                         </span>
@@ -2125,17 +2113,17 @@
                                         {#if media?.shownTags?.length}
                                             <div class="tag-info">
                                                 <div
-                                                    class="{"tags-info-content info"}"
-                                                    on:scroll="{itemScroll}"
-                                                    on:mouseenter="{addInfoDragScroll}"
+                                                    class={"tags-info-content info"}
+                                                    on:scroll={itemScroll}
+                                                    on:mouseenter={addInfoDragScroll}
                                                 >
                                                     {#each media.shownTags as tags (tags?.tag || {})}
                                                         <span
-                                                            tabindex="{!$menuVisible &&
+                                                            tabindex={!$menuVisible &&
                                                             $popupVisible
                                                                 ? "0"
-                                                                : ""}"
-                                                            on:click="{() => {
+                                                                : ""}
+                                                            on:click={() => {
                                                                 if (!$popupVisible) return;
                                                                 if (hasDragScroll == null || !itemIsScrolling) {
                                                                     showFullScreenInfo(
@@ -2144,8 +2132,8 @@
                                                                         ),
                                                                     );
                                                                 }
-                                                            }}"
-                                                            on:keyup="{(e) => {
+                                                            }}
+                                                            on:keyup={(e) => {
                                                                 if (
                                                                     !$popupVisible
                                                                 )
@@ -2159,10 +2147,10 @@
                                                                         ),
                                                                     );
                                                                 }
-                                                            }}"
-                                                            class="{tags?.tagColor
+                                                            }}
+                                                            class={tags?.tagColor
                                                                 ? `${tags?.tagColor}-color`
-                                                                : ""}"
+                                                                : ""}
                                                             role="button"
                                                             aria-label="Open Tag Description"
                                                             >{@html tags?.tag ||
@@ -2183,15 +2171,15 @@
                                                         loading="lazy"
                                                         width="150px"
                                                         height="210px"
-                                                        alt="{(media?.shownTitle || "") +
+                                                        alt={(media?.shownTitle || "") +
                                                             (media.coverImageUrl
                                                                 ? " Cover"
                                                                 : media.bannerImageUrl
                                                                 ? " Banner"
-                                                                : " Thumbnail")}"
-                                                        tabindex="{!$menuVisible && $popupVisible ? "0" : "-1"}"
+                                                                : " Thumbnail")}
+                                                        tabindex={!$menuVisible && $popupVisible ? "0" : "-1"}
                                                         class="cover-img"
-                                                        on:load="{(e) => {
+                                                        on:load={(e) => {
                                                             removeClass(
                                                                 e.target,
                                                                 "display-none",
@@ -2200,8 +2188,8 @@
                                                                 e.target,
                                                                 "loaded",
                                                             );
-                                                        }}"
-                                                        on:error="{(e) => {
+                                                        }}
+                                                        on:error={(e) => {
                                                             removeClass(
                                                                 e.target,
                                                                 "loaded",
@@ -2210,16 +2198,16 @@
                                                                 e.target,
                                                                 "display-none",
                                                             );
-                                                        }}"
-                                                        on:click="{() => {
+                                                        }}
+                                                        on:click={() => {
                                                             if (!$popupVisible) return;
                                                             showFullScreenImage(
                                                                 media.coverImageUrl ||
                                                                 media.bannerImageUrl ||
                                                                 media.trailerThumbnailUrl
                                                             )
-                                                        }}"
-                                                        on:keyup="{(e) => {
+                                                        }}
+                                                        on:keyup={(e) => {
                                                             if (!$popupVisible) return;
                                                             if (e.key === "Enter") {
                                                                 showFullScreenImage(
@@ -2228,7 +2216,7 @@
                                                                     media.trailerThumbnailUrl
                                                                 )
                                                             }
-                                                        }}"
+                                                        }}
                                                         aria-label="Open Cover Image"
                                                     />
                                                     <div class="shimmer-background"></div>
@@ -2240,20 +2228,20 @@
                                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                                             <div
                                                 class="media-description-wrapper"
-                                                tabindex="{!$menuVisible &&
+                                                tabindex={!$menuVisible &&
                                                 $popupVisible
                                                     ? "0"
-                                                    : "-1"}"
-                                                on:click="{() => {
+                                                    : "-1"}
+                                                on:click={() => {
                                                     if (!$popupVisible) return;
                                                     showFullScreenEditedHTMLInfo(editedHTMLString);
-                                                }}"
-                                                on:keyup="{(e) => {
+                                                }}
+                                                on:keyup={(e) => {
                                                     if (!$popupVisible) return;
                                                     if (e.key === "Enter") {
                                                         showFullScreenEditedHTMLInfo(editedHTMLString);
                                                     }
-                                                }}"
+                                                }}
                                                 role="button"
                                                 aria-label="Open Media Synopsis"
                                             >
@@ -2269,21 +2257,21 @@
                             </div>
                             <div class="popup-footer">
                                 <button
-                                    tabindex="{!$menuVisible && $popupVisible
+                                    tabindex={!$menuVisible && $popupVisible
                                         ? ""
-                                        : "-1"}"
+                                        : "-1"}
                                     class="hide-show-btn"
-                                    style:overflow="{$popupIsGoingBack
+                                    style:overflow={$popupIsGoingBack
                                         ? "hidden"
-                                        : ""}"
-                                    on:click="{() => {
+                                        : ""}
+                                    on:click={() => {
                                         if (!$popupVisible) return;
                                         handleHideShow(
                                             media.id,
                                             media?.shownTitle,
                                         );
-                                    }}"
-                                    on:keyup="{(e) => {
+                                    }}
+                                    on:keyup={(e) => {
                                         if (!$popupVisible) return;
                                         if (e.key === "Enter") {
                                             e.stopImmediatePropagation();
@@ -2293,7 +2281,7 @@
                                             );
                                             e.stopImmediatePropagation();
                                         }
-                                    }}"
+                                    }}
                                     aria-label="Hide or Show Media"
                                 >
                                     <!-- circle minus -->
@@ -2312,12 +2300,12 @@
                                     {/if}
                                 </button>
                                 <a
-                                    tabindex="{!$menuVisible && $popupVisible ? "" : "-1"}"
+                                    tabindex={!$menuVisible && $popupVisible ? "" : "-1"}
                                     class="more-videos"
-                                    style:overflow="{$popupIsGoingBack ? "hidden" : ""}"
-                                    rel="{youtubeRelatedLink ? "noopener noreferrer" : ""}"
-                                    target="{youtubeRelatedLink ? "_blank" : ""}"
-                                    href="{youtubeRelatedLink || "javascript:void(0)"}"
+                                    style:overflow={$popupIsGoingBack ? "hidden" : ""}
+                                    rel={youtubeRelatedLink ? "noopener noreferrer" : ""}
+                                    target={youtubeRelatedLink ? "_blank" : ""}
+                                    href={youtubeRelatedLink || "javascript:void(0)"}
                                     aria-label="Open Related YouTube Videos"
                                 >
                                     <!-- youtube logo -->
@@ -2328,11 +2316,11 @@
                                     </svg> YouTube
                                 </a>
                                 <button
-                                    tabindex="{!$menuVisible && $popupVisible ? "" : "-1"}"
+                                    tabindex={!$menuVisible && $popupVisible ? "" : "-1"}
                                     class="open-anilist"
-                                    style:overflow="{$popupIsGoingBack ? "hidden" : ""}"
-                                    on:click="{() => openInAnilist(media.mediaUrl)}"
-                                    on:keyup="{(e) => e.key === "Enter" && openInAnilist(media.mediaUrl)}"
+                                    style:overflow={$popupIsGoingBack ? "hidden" : ""}
+                                    on:click={() => openInAnilist(media.mediaUrl)}
+                                    on:keyup={(e) => e.key === "Enter" && openInAnilist(media.mediaUrl)}
                                     aria-label="Open in AniList"
                                 >
                                     <!-- anilist logo -->
@@ -2366,7 +2354,7 @@
                     {#key mediaList}
                         <div
                             class="observed-grid"
-                            bind:this="{observedGrid}"
+                            bind:this={observedGrid}
                         ></div>
                     {/key}
                 </div>
@@ -2376,9 +2364,9 @@
 </div>
 {#if $popupVisible && $popupIsGoingBack}
     <div
-        class="{"go-back-grid-highlight" + (willGoBack ? " will-go-back" : "")}"
-        in:fade="{{ duration: 200, easing: sineOut }}"
-        out:fade="{{ duration: 200, easing: sineOut }}"
+        class={"go-back-grid-highlight" + (willGoBack ? " will-go-back" : "")}
+        in:fade={{ duration: 200, easing: sineOut }}
+        out:fade={{ duration: 200, easing: sineOut }}
     >
         <div class="go-back-grid">
             <!-- angle left -->
@@ -2393,27 +2381,27 @@
 {#if fullDescriptionPopup}
     <div
         class="full-popup-wrapper"
-        on:click="{() => (fullImagePopup = fullDescriptionPopup = null)}"
-        on:keyup="{(e) =>
+        on:click={() => (fullImagePopup = fullDescriptionPopup = null)}
+        on:keyup={(e) =>
             e.key === "Enter" &&
-            (fullImagePopup = fullDescriptionPopup = null)}"
-        on:touchstart|passive="{fullViewTouchStart}"
-        on:touchend|passive="{fullViewTouchEnd}"
-        on:touchcancel="{fullViewTouchCancel}"
-        in:fade="{{ duration: 200, easing: sineOut }}"
-        out:fade="{{ duration: 200, easing: sineOut }}"
+            (fullImagePopup = fullDescriptionPopup = null)}
+        on:touchstart|passive={fullViewTouchStart}
+        on:touchend|passive={fullViewTouchEnd}
+        on:touchcancel={fullViewTouchCancel}
+        in:fade={{ duration: 200, easing: sineOut }}
+        out:fade={{ duration: 200, easing: sineOut }}
     >
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div class="full-popup">
             <div class="full-popup-description-wrapper">
                 <div
                     use:isDescriptionScrollable
-                    on:keyup="{(e) =>
+                    on:keyup={(e) =>
                         e.key === "Enter" &&
-                        (fullImagePopup = fullDescriptionPopup = null)}"
+                        (fullImagePopup = fullDescriptionPopup = null)}
                     tabindex="0"
                     class="full-popup-description"
-                    on:scroll="{fullViewScroll}"
+                    on:scroll={fullViewScroll}
                 >
                     {@html fullDescriptionPopup}
                 </div>
@@ -2423,29 +2411,29 @@
 {:else if fullImagePopup}
     <div
         class="full-popup-wrapper"
-        on:click="{() => (fullDescriptionPopup = fullImagePopup = null)}"
-        on:keyup="{(e) =>
+        on:click={() => (fullDescriptionPopup = fullImagePopup = null)}
+        on:keyup={(e) =>
             e.key === "Enter" &&
-            (fullDescriptionPopup = fullImagePopup = null)}"
-        on:touchstart|passive="{fullViewTouchStart}"
-        on:touchend|passive="{fullViewTouchEnd}"
-        on:touchcancel="{fullViewTouchCancel}"
-        in:fade="{{ duration: 200, easing: sineOut }}"
-        out:fade="{{ duration: 200, easing: sineOut }}"
+            (fullDescriptionPopup = fullImagePopup = null)}
+        on:touchstart|passive={fullViewTouchStart}
+        on:touchend|passive={fullViewTouchEnd}
+        on:touchcancel={fullViewTouchCancel}
+        in:fade={{ duration: 200, easing: sineOut }}
+        out:fade={{ duration: 200, easing: sineOut }}
     >
         <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <div class="full-popup">
             {#key fullImagePopup}
                 <img
-                    src="{fullImagePopup}"
+                    src={fullImagePopup}
                     tabindex="0"
                     class="full-popup-image"
                     loading="lazy"
                     alt="Full View"
-                    on:keyup="{(e) => e.key === "Enter" && (fullDescriptionPopup = fullImagePopup = null)}"
-                    on:error="{(e) => {
+                    on:keyup={(e) => e.key === "Enter" && (fullDescriptionPopup = fullImagePopup = null)}
+                    on:error={(e) => {
                         addClass(e.target, "display-none");
-                    }}"
+                    }}
                 />
             {/key}
         </div>
@@ -2481,7 +2469,7 @@
         max-width: 640px;
         overflow-y: auto;
         overflow-x: hidden;
-        overflow-anchor: visible;
+        overflow-anchor: auto;
         overscroll-behavior: contain;
         background: var(--bg-color);
         transition: opacity 0.2s ease-out;
@@ -2988,7 +2976,7 @@
         grid-template-columns: 26.6625px auto;
     }
 
-    @media screen and (max-width: 425px) {
+    @media (max-width: 425px) {
         .popup-footer {
             justify-content: space-between;
         }
@@ -3000,13 +2988,13 @@
             gap: 8px;
         }
     }
-    @media screen and (max-width: 225px) {
+    @media (max-width: 225px) {
         .auto-play-label,
         .small-icon-label {
             display: none;
         }
     }
-    @media screen and (max-width: 339px) {
+    @media (max-width: 339px) {
         .info-profile {
             flex-wrap: wrap;
         }
@@ -3020,7 +3008,7 @@
             width: auto;
         }
     }
-    @media screen and (min-width: 750px) {
+    @media (min-width: 750px) {
         .popup-container {
             margin-top: 0 !important;
         }
@@ -3028,7 +3016,7 @@
 
     @media (pointer: fine) {
         .popup-container {
-            overflow-y: overlay !important;
+            overflow-y: auto !important;
             scrollbar-gutter: stable !important;
         }
         .popup-container::-webkit-scrollbar {
@@ -3118,7 +3106,7 @@
         gap: 10px;
     }
 
-    @media screen and (min-width: 640px) {
+    @media (min-width: 640px) {
         .popup-wrapper {
             background-color: var(--ol-color);
         }
@@ -3327,7 +3315,7 @@
         font-size: 13px !important;
         color: var(--fg-color);
     }
-    @media screen and (min-width: 641px) {
+    @media (min-width: 641px) {
         .full-popup-description {
             font-size: 15px !important;
         }

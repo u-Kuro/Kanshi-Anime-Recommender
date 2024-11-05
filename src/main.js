@@ -1,3 +1,5 @@
+// noinspection JSUnusedGlobalSymbols
+
 import "./css/global.css";
 import App from "./App.svelte";
 import { get } from "svelte/store";
