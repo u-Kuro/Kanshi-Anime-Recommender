@@ -66,6 +66,8 @@ self.onmessage = async ({
                 "Recommended Studio",
                 "Non-Caution",
                 "Non-Semi-Caution",
+                "Non-Disliked-Genres",
+                "Non-Disliked-Tags",
                 "Recommended Score",
                 "Semi-Recommended Score",
                 "Other Score",

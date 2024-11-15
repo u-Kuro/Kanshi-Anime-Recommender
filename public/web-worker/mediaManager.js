@@ -958,6 +958,12 @@ function updateMediaList(mediaFilters, sortBy, loadedPercent = 1) {
                     return false
                 }
             }
+            if (exclude.shownList["Non-Disliked-Genres"]) {
+                if (media?.genres?.length && jsonIsEmpty(media.otherContents?.genres)) return false
+            }
+            if (exclude.shownList["Non-Disliked-Tags"]) {
+                if (media?.tags?.length && jsonIsEmpty(media.otherContents?.tags)) return false
+            }
             if (
                 exclude.shownList["Recommended Score"] ||
                 exclude.shownList["Semi-Recommended Score"] ||
@@ -1016,6 +1022,12 @@ function updateMediaList(mediaFilters, sortBy, loadedPercent = 1) {
             if (include.shownList["Non-Semi-Caution"]) {
                 if (media?.genres?.some(genre => typeof genre === "string" && semiContentCautions.genres[genre])) return false
                 if (media?.tags?.some(tag => typeof tag?.name === "string" && semiContentCautions.tags[tag.name])) return false
+            }
+            if (include.shownList["Non-Disliked-Genres"]) {
+                if (!jsonIsEmpty(media?.otherContents?.genres)) return false
+            }
+            if (include.shownList["Non-Disliked-Tags"]) {
+                if (!jsonIsEmpty(media?.otherContents?.tags)) return false
             }
             if (
                 include.shownList["Recommended Score"] ||
