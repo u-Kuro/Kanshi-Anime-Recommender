@@ -21,7 +21,7 @@ It's <b>free</b> and <b>runs locally</b> for your convenience.
 <h2 align="center"></h2>
 
 ## Android / Website
-[<img src="https://i.imgur.com/RtS6ib5.png" width="144px;"/>](https://github.com/u-Kuro/Kanshi-Anime-Recommender/raw/main/Kanshi.apk)
+[<img src="https://i.imgur.com/RtS6ib5.png" width="144px;"/>](https://github.com/u-Kuro/Kanshi-Anime-Recommender/releases/download/v9.5.0/Kanshi-v9.5.0.apk)
 [<img src="https://i.imgur.com/vXJ8zt8.png" width="144px;"/>](https://kanshi.vercel.app)
 
 <h2 align="center"></h2>
