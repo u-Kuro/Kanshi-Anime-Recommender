@@ -549,15 +549,12 @@ public class YoutubeViewActivity extends AppCompatActivity {
         }
     }
     public void initAnchor(WebView view) {
-        String javascript = "javascript:(()=>{for(let e=document.querySelectorAll('a'),n=0;n<e.length;n++)e[n].setAttribute('rel','noopener noreferrer'),e[n].setAttribute('target','_blank');window.KanshiMediaRecommendationObserver instanceof MutationObserver||(window.KanshiMediaRecommendationObserver=new MutationObserver(e=>{e.forEach((e)=>{if(e.addedNodes)for(let n=0;n<e.addedNodes.length;n++){let o=e.addedNodes[n];'A'===o.nodeName&&(o.setAttribute('rel','noopener noreferrer'),o.setAttribute('target','_blank'))}})})),!window.KanshiMediaRecommendationObserverObserved&&window.KanshiMediaRecommendationObserver instanceof MutationObserver&&document.body instanceof Node&&(window.KanshiMediaRecommendationObserver.observe(document.body,{childList:!0,subtree:!0}),window.KanshiMediaRecommendationObserverObserved=!0)})()";
-        view.post(() -> view.loadUrl(javascript));
+        view.post(() -> view.loadUrl("javascript:(()=>{let e=()=>{let t=document.body;if(!t)return document.addEventListener('load',e,{once:!0});if(!(window.KanshiMediaRecommendationVideoObserver instanceof MutationObserver)){window.KanshiMediaRecommendationVideoObserver=new MutationObserver(e=>{for(let t of e)if('childList'===t.type)for(let r of t.addedNodes){let o=document.createTreeWalker(r,NodeFilter.SHOW_ELEMENT,e=>'A'===e.tagName?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_SKIP),i=e=>{e.setAttribute('rel','noopener noreferrer'),e.setAttribute('target','_blank')};'A'===r.tagName&&i(r);let n;for(;n=o.nextNode();)i(n)}}),window.KanshiMediaRecommendationVideoObserver.observe(t,{childList:!0,subtree:!0});let r=document.querySelectorAll('a');for(let o of r)o.setAttribute('rel','noopener noreferrer'),o.setAttribute('target','_blank')}};e()})()"));
     }
     public void autoPlayVideo(WebView view) {
-        String javascript = "javascript:(()=>{const e=document?.getElementById('player')?.querySelector?.('video')||document?.querySelector?.('video.html5-main-video')||document?.querySelector?.('video');e instanceof Element&&!0!==e.autoplay&&(e.autoplay=!0)})()";
-        view.post(() -> view.loadUrl(javascript));
+        view.post(() -> view.loadUrl("javascript:(()=>{let e=document.querySelector('#player video')||document.querySelector('video.html5-main-video')||document.querySelector('video');e&&!0!==e.autoplay&&(e.autoplay=!0)})()"));
     }
     public void unMuteVideo(WebView view) {
-        String javascript = "javascript:(()=>{const e=document?.getElementById('player')?.querySelector?.('video')||document?.querySelector?.('video.html5-main-video')||document?.querySelector?.('video');t=e instanceof Element&&!1===e.paused;document?.querySelector?.('button.ytp-unmute')?.click?.();t&&e.paused&&e.play?.()})()";
-        view.post(() -> view.loadUrl(javascript));
+        view.post(() -> view.loadUrl("javascript:(()=>{let e=document.querySelector('#player video')||document.querySelector('video.html5-main-video')||document.querySelector('video');document.querySelector('button.ytp-unmute')?.click(),e&&e.paused&&e.play()})()"));
     }
 }
