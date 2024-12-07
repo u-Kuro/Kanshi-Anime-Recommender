@@ -132,11 +132,9 @@ public class YoutubeViewActivity extends AppCompatActivity {
 
         launchUrl.setOnClickListener(v -> {
             try {
-                pauseWebView();
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(webView.getUrl()));
                 startActivity(intent);
             } catch (Exception ignored) {
-                resumeWebView();
                 Toast.makeText(getApplicationContext(), "Can't open the link", Toast.LENGTH_LONG).show();
             }
         });
@@ -208,6 +206,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
                 return true;
             }
             public void onProgressChanged(WebView view, int progress) {
+                super.onProgressChanged(view, progress);
                 int newProgress = (int) Math.pow(10,4) * progress;
                 ObjectAnimator.ofInt(progressbar, "progress", newProgress)
                         .setDuration(300)
@@ -293,8 +292,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
             }
             @Override
             public void onPageFinished(WebView view, String url) {
-                unMuteVideo(view);
-                initAnchor(view);
                 CookieManager cookieManager = CookieManager.getInstance();
                 cookieManager.setAcceptCookie(true);
                 cookieManager.setAcceptThirdPartyCookies(view,true);
@@ -317,11 +314,13 @@ public class YoutubeViewActivity extends AppCompatActivity {
                     webViewIsLoaded = true;
                 }
                 super.onPageFinished(view, url);
+                initAnchor(view);
+                unMuteVideo(view);
             }
             @Override
             public void doUpdateVisitedHistory(WebView view, String url, boolean isReload) {
-                initAnchor(view);
                 super.doUpdateVisitedHistory(view, url, isReload);
+                initAnchor(view);
             }
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -351,7 +350,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
                     || url.startsWith("https://wa.me")
                 ) {
                     try {
-                        pauseWebView();
                         if (url.startsWith("intent://")) {
                             try {
                                 customTabsIntent.launchUrl(
@@ -378,7 +376,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
                         }
                         overridePendingTransition(R.anim.fade_in, R.anim.remove);
                     } catch (Exception ignored) {
-                        resumeWebView();
                         Toast.makeText(getApplicationContext(), "Can't open the link", Toast.LENGTH_LONG).show();
                     }
                 } else if (
@@ -417,7 +414,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
                     String urlToRedirect = request.getUrl().getQueryParameter("q");
                     if (urlToRedirect != null && !urlToRedirect.isEmpty()) {
                         try {
-                            pauseWebView();
                             customTabsIntent.launchUrl(
                                 YoutubeViewActivity.this,
                                 Uri.parse(urlToRedirect),
@@ -426,7 +422,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
                             );
                             overridePendingTransition(R.anim.fade_in, R.anim.remove);
                         } catch (Exception ignored) {
-                            resumeWebView();
                             Toast.makeText(getApplicationContext(), "Can't open the link", Toast.LENGTH_LONG).show();
                         }
                     } else {
@@ -447,7 +442,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
                     || url.startsWith("http://m.youtu.be")
                     || url.startsWith("http://youtu.be")
                 ) {
-                    pauseWebView();
                     Intent intent = new Intent(YoutubeViewActivity.this, YoutubeViewActivity.class);
                     intent.putExtra("url", url);
                     startActivity(intent);
@@ -549,12 +543,12 @@ public class YoutubeViewActivity extends AppCompatActivity {
         }
     }
     public void initAnchor(WebView view) {
-        view.post(() -> view.loadUrl("javascript:(()=>{let e=()=>{let t=document.body;if(!t)return document.addEventListener('load',e,{once:!0});if(!(window.KanshiMediaRecommendationVideoObserver instanceof MutationObserver)){window.KanshiMediaRecommendationVideoObserver=new MutationObserver(e=>{for(let t of e)if('childList'===t.type)for(let r of t.addedNodes){let o=document.createTreeWalker(r,NodeFilter.SHOW_ELEMENT,e=>'A'===e.tagName?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_SKIP),i=e=>{e.setAttribute('rel','noopener noreferrer'),e.setAttribute('target','_blank')};'A'===r.tagName&&i(r);let n;for(;n=o.nextNode();)i(n)}}),window.KanshiMediaRecommendationVideoObserver.observe(t,{childList:!0,subtree:!0});let r=document.querySelectorAll('a');for(let o of r)o.setAttribute('rel','noopener noreferrer'),o.setAttribute('target','_blank')}};e()})()"));
+        view.post(() -> view.loadUrl("javascript:(()=>{if(window.KanshiAnchorObserver instanceof MutationObserver)return;let e=()=>{let t=document.body;if(!t)return document.addEventListener('load',e,{once:!0});let r=new MutationObserver(e=>{for(let t of e)for(let r of t.addedNodes){let o=document.createTreeWalker(r,NodeFilter.SHOW_ELEMENT,e=>'A'===e.tagName?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_SKIP),n=e=>{e.setAttribute('rel','noopener noreferrer'),e.setAttribute('target','_blank')};'A'===r.tagName&&n(r);let l;for(;l=o.nextNode();)n(l)}});r.observe(t,{childList:!0,subtree:!0});try{let o=document.querySelectorAll('a');for(let n of o)n.setAttribute('rel','noopener noreferrer'),n.setAttribute('target','_blank');window.KanshiAnchorObserver=r}catch{r.disconnect()}};e()})()"));
     }
     public void autoPlayVideo(WebView view) {
         view.post(() -> view.loadUrl("javascript:(()=>{let e=document.querySelector('#player video')||document.querySelector('video.html5-main-video')||document.querySelector('video');e&&!0!==e.autoplay&&(e.autoplay=!0)})()"));
     }
     public void unMuteVideo(WebView view) {
-        view.post(() -> view.loadUrl("javascript:(()=>{let e=document.querySelector('#player video')||document.querySelector('video.html5-main-video')||document.querySelector('video');document.querySelector('button.ytp-unmute')?.click(),e&&e.paused&&e.play()})()"));
+        view.post(() -> view.loadUrl("javascript:(()=>{if(window.KanshiVideoObserver instanceof MutationObserver)return;let e=()=>{let t=document.body;if(!t)return document.addEventListener('load',e,{once:!0});let o=['button.ytp-unmute','button.YtmMuteButtonButton'],r=e=>o.some(t=>e.matches?.(t))&&'none'!==getComputedStyle(e).display&&!e.closest('a'),n=new WeakSet,d=e=>e.querySelector('#player video')||e.querySelector('video.html5-main-video')||e.querySelector('video'),l=e=>{let t=e.closest('ytm-video-preview');if(t){let o=d(t);o&&o.addEventListener('canplaythrough',()=>{n.has(e)||(e.click(),n.add(e))},{once:!0})}},i=new MutationObserver(e=>{for(let t of e)for(let o of t.addedNodes){let n=document.createTreeWalker(o,NodeFilter.SHOW_ELEMENT,e=>r(e)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_SKIP);if(r(o)){l(o),i.disconnect();return}let d=n.nextNode();if(d){l(d),i.disconnect();return}}});try{for(let c of(i.observe(t,{childList:!0,subtree:!0}),o)){let s=document.querySelector(c);s&&(s.click(),n.add(s))}window.KanshiVideoObserver=i}catch{i.disconnect()}let a=d(document);a?.paused&&a.play()};e()})()"));
     }
 }
