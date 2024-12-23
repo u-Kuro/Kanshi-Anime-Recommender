@@ -52,6 +52,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
     private final CustomTabsHelper customTabsIntent = CustomTabsHelper.getInstance();
     private boolean isFinished = false;
     private boolean isInitialYTVActivity = false;
+    private boolean isActivityPaused = false;
     final ActivityResultLauncher<Intent> chooseImportFile =
             registerForActivityResult(
                     new ActivityResultContracts.StartActivityForResult(),
@@ -94,7 +95,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
                         }
                     }
             );
-
+    String passedUrl;
     @SuppressLint({"SetJavaScriptEnabled", "RestrictedApi", "ClickableViewAccessibility"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,7 +111,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
         siteName = findViewById(R.id.site);
         isInitialYTVActivity = getIntent().getBooleanExtra("fromMainActivity", false);
 
-        String passedUrl = getIntent().getStringExtra("url");
+        passedUrl = getIntent().getStringExtra("url");
 
         ImageView launchUrl = findViewById(R.id.launchURL);
         ImageView close = findViewById(R.id.close_youtube);
@@ -324,6 +325,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
             }
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                if (isActivityPaused) return true;
                 String url = request.getUrl().toString();
                 boolean isRedirect = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && request.isRedirect();
                 if (
@@ -446,6 +448,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
                     intent.putExtra("url", url);
                     startActivity(intent);
                     overridePendingTransition(R.anim.fade_in, R.anim.none);
+                    return true;
                 } else {
                     return false;
                 }
@@ -467,6 +470,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
+        isActivityPaused = false;
         if (webViewIsLoaded) {
             overridePendingTransition(R.anim.none, R.anim.fade_out);
         }
@@ -476,6 +480,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
+        isActivityPaused = true;
         pauseWebView();
         super.onPause();
     }
