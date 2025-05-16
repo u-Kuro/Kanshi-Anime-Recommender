@@ -27,6 +27,7 @@ public class MediaReleaseViewAdapter extends FragmentStateAdapter {
         return fragment;
     }
 
+    /** @noinspection SameReturnValue*/
     @Override
     public int getItemCount() {
         return 2;

@@ -82,13 +82,13 @@ public class UITask {
                         UITaskRunnable poll = taskList.pollFirst();
                         if (poll != null) {
                             handler.postDelayed(() -> {
-                                poll.getTask().run();
+                                poll.task().run();
                                 if (queue.isEmpty()) {
                                     isRunning.set(false);
                                 } else {
                                     executeTasks();
                                 }
-                            }, taskId, poll.getDelay());
+                            }, taskId, poll.delay());
                             return;
                         }
                     }

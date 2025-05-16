@@ -57,7 +57,7 @@ public class SchedulesTabFragment extends Fragment {
     final AtomicInteger maxReleasesList = new AtomicInteger();
 
     @SuppressLint("ClickableViewAccessibility")
-    @RequiresApi(api = Build.VERSION_CODES.P)
+    @RequiresApi(api = Build.VERSION_CODES.VANILLA_ICE_CREAM)
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -155,7 +155,7 @@ public class SchedulesTabFragment extends Fragment {
         return schedulesView;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.P)
+    @RequiresApi(api = Build.VERSION_CODES.VANILLA_ICE_CREAM)
     public void updateScheduledMedia(boolean shouldSetAdapter, boolean shouldScrollToTop) {
         if (shouldScrollToTop) {
             mediaReleasesList.scrollToPosition(0);
@@ -272,7 +272,7 @@ public class SchedulesTabFragment extends Fragment {
                 if (mediaList != null && !mediaList.isEmpty()) {
                     Collections.sort(mediaList, Comparator.comparingLong(a -> a.releaseDateMillis));
 
-                    MediaNotification media = mediaList.get(0);
+                    MediaNotification media = mediaList.getFirst();
                     LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(media.releaseDateMillis), ZoneId.systemDefault());
 
                     groupedScheduledMedia.add(new MediaReleaseGroup(entry.getKey(), localDateTime, mediaList));

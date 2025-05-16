@@ -88,7 +88,7 @@ public class LocalServer extends NanoHTTPD {
             UIHandler.post(() -> localServerListener.onError(LOCAL_SERVER_URL_PROMISE));
         });
     }
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.VANILLA_ICE_CREAM)
     @Override
     public Response serve(IHTTPSession session) {
         String uri = session.getUri();
@@ -101,13 +101,14 @@ public class LocalServer extends NanoHTTPD {
         }
 
         try {
-            switch (uri) {
-                case "/backup-user-data": return backUpUserData(session);
-                case "/schedule-media-notifications": return scheduleMediaNotifications(session);
-                case "/update-media-notifications": return updateMediaNotifications(session);
-                case "/get-current-media-notification-ids": return getCurrentMediaNotificationIds();
-                default: return newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "Not Found");
-            }
+            return switch (uri) {
+                case "/backup-user-data" -> backUpUserData(session);
+                case "/schedule-media-notifications" -> scheduleMediaNotifications(session);
+                case "/update-media-notifications" -> updateMediaNotifications(session);
+                case "/get-current-media-notification-ids" -> getCurrentMediaNotificationIds();
+                default ->
+                        newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "Not Found");
+            };
         } catch (Exception e) {
             logException(getApplicationContext(), e, "serve ("+uri+"): "+getBodyText(session.getInputStream()));
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "Internal Server Error: " + e.getMessage());
@@ -122,7 +123,7 @@ public class LocalServer extends NanoHTTPD {
     // METHODS FOR BACK UP
     public final AtomicReference<File> atomicBackupDirectory = new AtomicReference<>();
     public void setBackupDirectory(File backupDirectory) { this.atomicBackupDirectory.set(backupDirectory); }
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     private Response backUpUserData(IHTTPSession session) {
         try {
             if (session.getInputStream().available() == 0) {
@@ -183,7 +184,7 @@ public class LocalServer extends NanoHTTPD {
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "Error: " + e.getMessage());
         }
     }
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     private Response scheduleMediaNotifications(IHTTPSession session) {
         Context context;
         try {
@@ -223,7 +224,7 @@ public class LocalServer extends NanoHTTPD {
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "Error: " + e.getMessage());
         }
     }
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.VANILLA_ICE_CREAM)
     private Response updateMediaNotifications(IHTTPSession session) {
         Context context;
         try {
@@ -344,6 +345,7 @@ public class LocalServer extends NanoHTTPD {
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "Error: " + e.getMessage());
         }
     }
+    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     @NonNull
     private static JSONArray getJsonArray(IHTTPSession session) throws Exception {
         String jsonData;
@@ -355,7 +357,7 @@ public class LocalServer extends NanoHTTPD {
                 byteArrayOutputStream.write(buffer, 0, bytesRead);
             }
             byteArrayOutputStream.flush();
-            jsonData = byteArrayOutputStream.toString("UTF-8");
+            jsonData = byteArrayOutputStream.toString(StandardCharsets.UTF_8);
         }
 
         return new JSONArray(jsonData);
@@ -379,6 +381,7 @@ public class LocalServer extends NanoHTTPD {
         }
         logger.log(Level.SEVERE, e.getMessage(), e);
     }
+    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     private String getBodyText(InputStream inputStream) {
         try {
             if (inputStream == null) return "InputStream is Null";
@@ -389,7 +392,7 @@ public class LocalServer extends NanoHTTPD {
             while ((length = inputStream.read(buffer)) != -1) {
                 result.write(buffer, 0, length);
             }
-            return result.toString("UTF-8");
+            return result.toString(StandardCharsets.UTF_8);
         } catch (Exception ignored) {
             return "Failed to Read Body As Text";
         }

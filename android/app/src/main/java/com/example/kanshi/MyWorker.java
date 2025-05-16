@@ -61,7 +61,7 @@ public class MyWorker extends Worker {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.P)
+    @RequiresApi(api = Build.VERSION_CODES.VANILLA_ICE_CREAM)
     @NonNull
     @Override
     public Result doWork() {
@@ -83,7 +83,7 @@ public class MyWorker extends Worker {
         return Result.success();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.P)
+    @RequiresApi(api = Build.VERSION_CODES.VANILLA_ICE_CREAM)
     private void showNotification(boolean isBooted) {
 
         SharedPreferences prefs = this.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);

@@ -1,10 +1,12 @@
 package com.example.kanshi;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 
 public class MediaNotification extends GroupedListItem implements Serializable {
+    @Serial
     private static final long serialVersionUID = 7899732545740810962L;
     public final long mediaId;
     final public long releaseEpisode;

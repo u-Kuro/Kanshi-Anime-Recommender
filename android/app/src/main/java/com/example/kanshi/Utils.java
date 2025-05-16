@@ -31,16 +31,17 @@ import android.webkit.WebResourceResponse;
 
 import androidx.annotation.RequiresApi;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -497,16 +498,25 @@ public class Utils {
         try {
             String existingContent = "";
             if (logFile.exists()) {
-                existingContent = new String(Files.readAllBytes(logFile.toPath()), StandardCharsets.UTF_8);
+                try (BufferedReader reader = new BufferedReader(new FileReader(logFile))) {
+                    StringBuilder content = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        content.append(line).append("\n");
+                    }
+                    existingContent = content.toString();
+                } catch (Exception e1) {
+                    logger.log(Level.SEVERE, e1.getMessage(), e1);
+                }
             }
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(logFile))) {
                 writer.write(newLogEntry.toString());
                 writer.write(existingContent);
-            } catch (Exception e1) {
-                logger.log(Level.SEVERE, e1.getMessage(), e1);
+            } catch (Exception e2) {
+                logger.log(Level.SEVERE, e2.getMessage(), e2);
             }
-        } catch (Exception e2) {
-            logger.log(Level.SEVERE, e2.getMessage(), e2);
+        } catch (Exception e3) {
+            logger.log(Level.SEVERE, e3.getMessage(), e3);
         } finally {
             fileLock.unlock();
         }

@@ -70,11 +70,11 @@ public class BackgroundTask {
             try {
                 BackgroundTaskRunnable poll = queue.pollFirst();
                 if (poll != null) {
-                    String taskId = poll.getTaskId();
+                    String taskId = poll.taskId();
                     if (executor.isShutdown() || executor.isTerminated()) return;
                     Future<?> future = executor.submit(()->{
                         try {
-                            poll.getTask().run();
+                            poll.task().run();
                         } catch (Exception e) {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                                 Utils.handleUncaughtException(this.context.getApplicationContext(), e, "BackgroundTask "+taskId);

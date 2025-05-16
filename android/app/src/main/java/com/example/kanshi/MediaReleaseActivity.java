@@ -54,7 +54,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
-@RequiresApi(api = Build.VERSION_CODES.O)
+@RequiresApi(api = Build.VERSION_CODES.VANILLA_ICE_CREAM)
 public class MediaReleaseActivity extends AppCompatActivity {
     private final Logger logger = Logger.getLogger(MediaReleaseActivity.class.getName());
     public static WeakReference<MediaReleaseActivity> weakActivity;
@@ -181,7 +181,7 @@ public class MediaReleaseActivity extends AppCompatActivity {
                     }
             );
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.VANILLA_ICE_CREAM)
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         // Log Errors
@@ -287,7 +287,7 @@ public class MediaReleaseActivity extends AppCompatActivity {
         }
 
         mediaReleaseSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @RequiresApi(api = Build.VERSION_CODES.O)
+            @RequiresApi(api = Build.VERSION_CODES.VANILLA_ICE_CREAM)
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 if (adapterView == null) return;
@@ -383,7 +383,6 @@ public class MediaReleaseActivity extends AppCompatActivity {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     public void backupBottomDialog() {
         if (bottomSheetDialog != null && bottomSheetDialog.isShowing()) {
             bottomSheetDialog.dismiss();
