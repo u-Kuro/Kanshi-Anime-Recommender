@@ -54,7 +54,7 @@ import java.util.logging.Logger;
 public class MainService extends Service {
     private final Logger logger = Logger.getLogger(MainService.class.getName());
     public static WeakReference<MainService> weakActivity;
-    WebView webView;
+    public MediaWebView mediaWebView;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
     private boolean keepAppRunningInBackground = false;
@@ -110,7 +110,7 @@ public class MainService extends Service {
 
         super.onCreate();
         // Init Global Variables
-        webView = new WebView(this);
+        mediaWebView = new MediaWebView(this);
         prefs = this.getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
         prefsEdit = prefs.edit();
         // Saved Data
@@ -135,7 +135,7 @@ public class MainService extends Service {
         }
 
         // Set WebView Settings
-        WebSettings webSettings = webView.getSettings();
+        WebSettings webSettings = mediaWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
         webSettings.setSaveFormData(true);
@@ -149,11 +149,11 @@ public class MainService extends Service {
         webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
         webSettings.setAllowUniversalAccessFromFileURLs(true);
 
-        webView.addJavascriptInterface(new JSBridge(), "JSBridge");
+        mediaWebView.addJavascriptInterface(new JSBridge(), "JSBridge");
 
         WebViewAssetLoader assetLoader = getAssetLoader(this);
 
-        webView.setWebViewClient(new WebViewClient() {
+        mediaWebView.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
@@ -187,7 +187,7 @@ public class MainService extends Service {
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 if (isReloaded) {
                     isReloaded = false;
-                    view.loadUrl("javascript:(()=>{window.shouldUpdateNotifications=true})();");
+                    ((MediaWebView) view).evaluateJS("(()=>{window.shouldUpdateNotifications=true})();");
                 }
                 super.onPageStarted(view, url, favicon);
             }
@@ -196,7 +196,7 @@ public class MainService extends Service {
                 return true;
             }
         });
-        webView.setWebChromeClient(new WebChromeClient() {
+        mediaWebView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
             String message = consoleMessage.message();
@@ -254,7 +254,7 @@ public class MainService extends Service {
 
         // Load Page
         isReloaded = true;
-        webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
+        mediaWebView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
 
         weakActivity = new WeakReference<>(MainService.this);
     }
@@ -274,8 +274,8 @@ public class MainService extends Service {
 
     @Override
     public void onDestroy() {
-        if (webView!=null) {
-            webView.destroy();
+        if (mediaWebView !=null) {
+            mediaWebView.destroy();
         }
         MediaNotificationManager.recentlyUpdatedMediaNotification(MainService.this, addedMediaCount, updatedMediaCount);
         MainActivity mainActivity = MainActivity.getInstanceActivity();
@@ -362,12 +362,12 @@ public class MainService extends Service {
             new LocalServerListener() {
                 @Override
                 public void onStart(String url) {
-                    webView.loadUrl("javascript:window?.['" + UNIQUE_KEY + localServer.LOCAL_SERVER_URL_PROMISE + "']?.resolve?.('" + url + "')");
+                    mediaWebView.evaluateJS("window?.['" + UNIQUE_KEY + localServer.LOCAL_SERVER_URL_PROMISE + "']?.resolve?.('" + url + "')");
                 }
 
                 @Override
                 public void onError(String promise) {
-                    webView.loadUrl("javascript:window?.['" + UNIQUE_KEY + promise + "']?.reject?.()");
+                    mediaWebView.evaluateJS("window?.['" + UNIQUE_KEY + promise + "']?.reject?.()");
                 }
             },
             false

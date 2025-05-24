@@ -107,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
     private ValueCallback<Uri[]> mUploadMessage;
-    public MediaWebView webView;
+    public MediaWebView mediaWebView;
     private ProgressBar progressbar;
     private boolean pageLoaded = false;
     private boolean webViewIsLoaded = false;
@@ -189,7 +189,7 @@ public class MainActivity extends AppCompatActivity {
                             Uri docUri = DocumentsContract.buildDocumentUriUsingTree(uri, DocumentsContract.getTreeDocumentId(uri));
                             prefsEdit.putString("savedExportPath", getThisPath(docUri)).apply();
                             showToast(Toast.makeText(getApplicationContext(), "Folder was selected, you can now back up your data", Toast.LENGTH_LONG));
-                            webView.post(()->webView.loadUrl("javascript:window?.setExportPathAvailability?.(true)"));
+                            mediaWebView.post(() -> mediaWebView.evaluateJS("window?.setExportPathAvailability?.(true)"));
                         }
                     }
             );
@@ -218,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         // Init Global Variables
-        webView = findViewById(R.id.webView);
+        mediaWebView = findViewById(R.id.mediaWebView);
         progressbar = findViewById(R.id.progressbar);
         progressbar.setMax((int) Math.pow(10, 6));
         // Shared Preference
@@ -247,16 +247,16 @@ public class MainActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (webView != null && webView.getUrl() != null && webView.getUrl().startsWith("https://appassets.androidplatform.net")) {
+                if (mediaWebView != null && mediaWebView.getUrl() != null && mediaWebView.getUrl().startsWith("https://appassets.androidplatform.net")) {
                     if (!shouldGoBack) {
-                        webView.loadUrl("javascript:window?.backPressed?.();");
+                        mediaWebView.evaluateJS("window?.backPressed?.();");
                     } else {
                         hideToast();
                         moveTaskToBack(true);
                     }
                 } else {
-                    if (webView != null && webView.canGoBack()) {
-                        webView.goBack();
+                    if (mediaWebView != null && mediaWebView.canGoBack()) {
+                        mediaWebView.goBack();
                     } else {
                         hideToast();
                         finish();
@@ -270,14 +270,14 @@ public class MainActivity extends AppCompatActivity {
 
         // Add WebView on Layout
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            webView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
+            mediaWebView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
         }
 
         // Warmup Custom Tab
         customTabsIntent.warmup(MainActivity.this);
 
         // Set WebView Settings
-        WebSettings webSettings = webView.getSettings();
+        WebSettings webSettings = mediaWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
         webSettings.setSaveFormData(true);
@@ -295,22 +295,22 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setDefaultFontSize(16);
 
         // Set WebView Configs
-        webView.setVerticalScrollBarEnabled(false);
-        webView.setHorizontalScrollBarEnabled(false);
-        webView.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_OVERLAY);
-        webView.setLongClickable(true);
-        webView.setKeepScreenOn(true);
+        mediaWebView.setVerticalScrollBarEnabled(false);
+        mediaWebView.setHorizontalScrollBarEnabled(false);
+        mediaWebView.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_OVERLAY);
+        mediaWebView.setLongClickable(true);
+        mediaWebView.setKeepScreenOn(true);
         getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
-        webView.setLayerType(View.LAYER_TYPE_NONE, null);
+        mediaWebView.setLayerType(View.LAYER_TYPE_NONE, null);
 
         // Add Bridge to WebView
-        webView.addJavascriptInterface(new JSBridge(), "JSBridge");
+        mediaWebView.addJavascriptInterface(new JSBridge(), "JSBridge");
 
         WebViewAssetLoader assetLoader = getAssetLoader(this);
 
-        webView.setWebViewClient(new WebViewClient() {
+        mediaWebView.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
@@ -339,8 +339,9 @@ public class MainActivity extends AppCompatActivity {
                 shouldRefreshList = shouldProcessRecommendedEntries = shouldManageMedia = false;
                 if (!pageLoaded) {
                     pageLoaded = true;
-                    view.loadUrl("javascript:(()=>{window.shouldUpdateNotifications=true})();");
-                    view.loadUrl("javascript:(()=>{window.keepAppRunningInBackground=" + (keepAppRunningInBackground ? "true" : "false") + "})();");
+                    MediaWebView mediaWebView = (MediaWebView) view;
+                    mediaWebView.evaluateJS("(()=>{window.shouldUpdateNotifications=true})();");
+                    mediaWebView.evaluateJS("(()=>{window.keepAppRunningInBackground=" + (keepAppRunningInBackground ? "true" : "false") + "})();");
                 }
                 super.onPageStarted(view, url, favicon);
             }
@@ -349,9 +350,10 @@ public class MainActivity extends AppCompatActivity {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 shouldRefreshList = shouldProcessRecommendedEntries = shouldManageMedia = false;
-                view.loadUrl("javascript:(()=>{window.shouldUpdateNotifications=true})();");
-                view.loadUrl("javascript:(()=>{window.keepAppRunningInBackground=" + (keepAppRunningInBackground ? "true" : "false") + "})();");
-                view.loadUrl("javascript:window?.setKeepAppRunningInBackground?.("+(keepAppRunningInBackground?"true":"false")+")");
+                MediaWebView mediaWebView = (MediaWebView) view;
+                mediaWebView.evaluateJS("(()=>{window.shouldUpdateNotifications=true})();");
+                mediaWebView.evaluateJS("(()=>{window.keepAppRunningInBackground=" + (keepAppRunningInBackground ? "true" : "false") + "})();");
+                mediaWebView.evaluateJS("window?.setKeepAppRunningInBackground?.(" + (keepAppRunningInBackground ? "true" : "false")+")");
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
                     Network network = connectivityManager.getActiveNetwork();
@@ -440,7 +442,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        webView.setWebChromeClient(new WebChromeClient() {
+        mediaWebView.setWebChromeClient(new WebChromeClient() {
             // Import
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
@@ -469,20 +471,20 @@ public class MainActivity extends AppCompatActivity {
                     fullscreen.setVisibility(View.GONE);
                 }
                 recheckStatusBar();
-                if (webView != null) {
-                    webView.setVisibility(View.VISIBLE);
+                if (mediaWebView != null) {
+                    mediaWebView.setVisibility(View.VISIBLE);
                 }
             }
             @Override
             public void onShowCustomView(View view, CustomViewCallback callback) {
-                if (webView == null) return;
+                if (mediaWebView == null) return;
                 FrameLayout decorView = (FrameLayout) getWindow().getDecorView();
                 if (fullscreen != null) {
                     decorView.removeView(fullscreen);
                 }
                 fullscreen = view;
                 decorView.addView(fullscreen, new FrameLayout.LayoutParams(-1, -1));
-                webView.setVisibility(View.GONE);
+                mediaWebView.setVisibility(View.GONE);
                 hideStatusBar();
                 fullscreen.setVisibility(View.VISIBLE);
             }
@@ -495,7 +497,7 @@ public class MainActivity extends AppCompatActivity {
                 if (progress == 100) {
                     CookieManager cookieManager = CookieManager.getInstance();
                     cookieManager.setAcceptCookie(true);
-                    cookieManager.setAcceptThirdPartyCookies(webView, true);
+                    cookieManager.setAcceptThirdPartyCookies(mediaWebView, true);
                     CookieManager.getInstance().acceptCookie();
                     CookieManager.getInstance().flush();
                     ObjectAnimator animator = ObjectAnimator.ofInt(progressbar, "progress", 0);
@@ -529,7 +531,7 @@ public class MainActivity extends AppCompatActivity {
 
         WebView.setWebContentsDebuggingEnabled(DEBUG);
 
-        webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
+        mediaWebView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
 
         // Only works after first page load
         webSettings.setBuiltInZoomControls(false);
@@ -558,8 +560,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         isInApp = false;
-        if (webView!=null) {
-            webView.loadUrl("javascript:window?.returnedAppIsVisible?.(false)");
+        if (mediaWebView != null) {
+            mediaWebView.evaluateJS("window?.returnedAppIsVisible?.(false)");
         }
         super.onPause();
     }
@@ -577,8 +579,7 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, MainService.class);
         stopService(intent);
         super.onResume();
-        webView.resumeTimers();
-        webView.onResume();
+        mediaWebView.resume();
         if (persistentToast != null) {
             if (currentToast != null) {
                 currentToast.cancel();
@@ -586,25 +587,25 @@ public class MainActivity extends AppCompatActivity {
             persistentToast.show();
             persistentToast = null;
         }
-        if (webView!=null) {
-            webView.loadUrl("javascript:" +
-                    "window?.returnedAppIsVisible?.(true);" + // Should Be Runned First
-                    (shouldRefreshList ?
-                            "window?.shouldRefreshMediaList?.("
-                                    + (shouldProcessRecommendedEntries ? "true" : "false") + ","
-                                    + (shouldManageMedia ? "true" : "false")
-                                    + ");"
-                            : "window?.checkEntries?.();")
+        if (mediaWebView !=null) {
+            mediaWebView.evaluateJS(
+                "window?.returnedAppIsVisible?.(true);" + // Should Be Runned First
+                (shouldRefreshList ?
+                        "window?.shouldRefreshMediaList?.("
+                                + (shouldProcessRecommendedEntries ? "true" : "false") + ","
+                                + (shouldManageMedia ? "true" : "false")
+                                + ");"
+                        : "window?.checkEntries?.();")
             );
             shouldRefreshList = shouldProcessRecommendedEntries = shouldManageMedia = false;
         }
     }
 
     public void refreshMediaList() {
-        if (!shouldRefreshList || webView==null) return;
+        if (!shouldRefreshList || mediaWebView ==null) return;
         try {
-            new Handler(Looper.getMainLooper()).post(() -> webView.post(() -> {
-                webView.loadUrl("javascript:window?.shouldRefreshMediaList?.("
+            new Handler(Looper.getMainLooper()).post(() -> mediaWebView.post(() -> {
+                mediaWebView.evaluateJS("window?.shouldRefreshMediaList?.("
                         + (shouldProcessRecommendedEntries ? "true" : "false") + ","
                         + (shouldManageMedia ? "true" : "false")
                         + ")"
@@ -617,8 +618,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         isInApp = false;
-        if (webView!=null) {
-            webView.post(() -> webView.loadUrl("javascript:window?.notifyUpdatedMediaNotification?.()"));
+        if (mediaWebView !=null) {
+            mediaWebView.post(() -> mediaWebView.evaluateJS("window?.notifyUpdatedMediaNotification?.()"));
         }
         setBackgroundUpdates(false);
         super.onDestroy();
@@ -641,11 +642,11 @@ public class MainActivity extends AppCompatActivity {
             new LocalServerListener() {
                 @Override
                 public void onStart(String url) {
-                    webView.loadUrl("javascript:window?.['" + UNIQUE_KEY + localServer.LOCAL_SERVER_URL_PROMISE + "']?.resolve?.('" + url + "')");
+                    mediaWebView.evaluateJS("window?.['" + UNIQUE_KEY + localServer.LOCAL_SERVER_URL_PROMISE + "']?.resolve?.('" + url + "')");
                 }
                 @Override
                 public void onError(String promise) {
-                    webView.loadUrl("javascript:window?.['" + UNIQUE_KEY + promise + "']?.reject?.()");
+                    mediaWebView.evaluateJS("window?.['" + UNIQUE_KEY + promise + "']?.reject?.()");
                 }
             },
             true
@@ -797,7 +798,7 @@ public class MainActivity extends AppCompatActivity {
         public void isOnline(boolean online) {
             try {
                 if (online) {
-                    isAppConnectionAvailable(isConnected -> webView.post(() -> {
+                    isAppConnectionAvailable(isConnected -> mediaWebView.post(() -> {
                         if (isConnected) {
                             showToast(Toast.makeText(getApplicationContext(), "Your internet has been restored", Toast.LENGTH_LONG));
                         }
@@ -819,7 +820,7 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void clearCache() {
             prefsEdit.putBoolean("permissionIsAsked", false).apply();
-            webView.post(() -> webView.clearCache(true));
+            mediaWebView.post(() -> mediaWebView.clearCache(true));
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
@@ -863,15 +864,15 @@ public class MainActivity extends AppCompatActivity {
         .post(()-> showDialog(new AlertDialog.Builder(MainActivity.this)
                 .setTitle("Possible Data Loss")
                 .setMessage("Some of your data may be cleared by chrome, please import your saved data.")
-                .setPositiveButton("OK", (dialogInterface, i) -> webView.post(() -> {
-                    webView.loadUrl("javascript:window?.importAndroidUserData?.(true)");
-                    String url = webView.getUrl();
+                .setPositiveButton("OK", (dialogInterface, i) -> mediaWebView.post(() -> {
+                    mediaWebView.evaluateJS("window?.importAndroidUserData?.(true)");
+                    String url = mediaWebView.getUrl();
                     if (url != null) {
                         prefsEdit.putBoolean("visited", false).apply();
                     }
                 }))
-                .setNegativeButton("CANCEL", ((dialogInterface, i) -> webView.post(() -> {
-                    String url = webView.getUrl();
+                .setNegativeButton("CANCEL", ((dialogInterface, i) -> mediaWebView.post(() -> {
+                    String url = mediaWebView.getUrl();
                     if (url != null) {
                         prefsEdit.putBoolean("visited", false).apply();
                     }
@@ -884,7 +885,7 @@ public class MainActivity extends AppCompatActivity {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
                                 .setTitle("Permission for Anime Releases")
                                 .setMessage("Do you like to allow permission for notifying anime release schedules at the exact time?")
-                                .setPositiveButton("YES", (dialogInterface, i) -> webView.post(() -> {
+                                .setPositiveButton("YES", (dialogInterface, i) -> mediaWebView.post(() -> {
                                     Intent intent = new Intent(ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.fromParts("package", getPackageName(), null));
                                     startActivity(intent);
                                 }))
@@ -894,7 +895,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     public void reloadWeb() {
-        webView.post(()->webView.reload());
+        mediaWebView.post(()-> mediaWebView.reload());
     }
     public void setBackgroundUpdates(boolean isStop) {
         long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime", 0);
@@ -971,11 +972,11 @@ public class MainActivity extends AppCompatActivity {
     public void changeKeepAppRunningInBackground(boolean enable) {
         keepAppRunningInBackground = enable;
         prefsEdit.putBoolean("keepAppRunningInBackground", keepAppRunningInBackground).apply();
-        webView.post(()->webView.loadUrl("javascript:window?.setKeepAppRunningInBackground?.("+(keepAppRunningInBackground?"true":"false")+")"));
+        mediaWebView.post(()-> mediaWebView.evaluateJS("window?.setKeepAppRunningInBackground?.(" + (keepAppRunningInBackground ? "true" : "false")+")"));
     }
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void updateCurrentNotifications() {
-        webView.post(() -> webView.loadUrl("javascript:window?.updateMediaNotifications?.()"));
+        mediaWebView.post(() -> mediaWebView.evaluateJS("window?.updateMediaNotifications?.()"));
     }
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void showUpdateNotice() {
@@ -1004,7 +1005,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     public void downloadUpdate() {
-        webView.post(() -> webView.clearCache(true));
+        mediaWebView.post(() -> mediaWebView.clearCache(true));
         prefsEdit.putBoolean("permissionIsAsked", false).apply();
         String fileUrl = "https://github.com/u-Kuro/Kanshi-Anime-Recommender/raw/main/Kanshi.apk";
         String fileName = "Kanshi.apk";
@@ -1053,8 +1054,8 @@ public class MainActivity extends AppCompatActivity {
 
     public void checkEntries() {
         try {
-            if (webView != null) {
-                webView.post(() -> webView.loadUrl("javascript:window?.checkEntries?.();"));
+            if (mediaWebView != null) {
+                mediaWebView.post(() -> mediaWebView.evaluateJS("window?.checkEntries?.();"));
             }
         } catch (Exception ignored) {}
     }

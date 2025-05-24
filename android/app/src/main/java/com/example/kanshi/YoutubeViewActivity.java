@@ -45,7 +45,7 @@ import java.io.File;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class YoutubeViewActivity extends AppCompatActivity {
-    private WebView webView;
+    private MediaWebView mediaWebView;
     private TextView siteName;
     private boolean webViewIsLoaded = false;
     private ValueCallback<Uri[]> mUploadMessage;
@@ -107,7 +107,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_web);
         // Init Global Variables
-        webView = findViewById(R.id.webView);
+        mediaWebView = findViewById(R.id.mediaWebView);
         siteName = findViewById(R.id.site);
         isInitialYTVActivity = getIntent().getBooleanExtra("fromMainActivity", false);
 
@@ -133,7 +133,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
 
         launchUrl.setOnClickListener(v -> {
             try {
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(webView.getUrl()));
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(mediaWebView.getUrl()));
                 startActivity(intent);
             } catch (Exception ignored) {
                 Toast.makeText(getApplicationContext(), "Can't open the link", Toast.LENGTH_LONG).show();
@@ -153,8 +153,8 @@ public class YoutubeViewActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (webView.canGoBack()) {
-                    webView.goBack();
+                if (mediaWebView.canGoBack()) {
+                    mediaWebView.goBack();
                 } else {
                     isFinished = true;
                     destroyWebView();
@@ -173,7 +173,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
         });
 
         siteName.setOnLongClickListener(view -> {
-            String text = webView.getUrl();
+            String text = mediaWebView.getUrl();
             if (text != null && !text.isEmpty()) {
                 ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
                 ClipData clip = ClipData.newPlainText("Copied Text", text);
@@ -187,7 +187,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
         // Orientation
         recheckStatusBar();
 
-        webView.setWebChromeClient(new WebChromeClient() {
+        mediaWebView.setWebChromeClient(new WebChromeClient() {
             // Import
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
@@ -228,20 +228,20 @@ public class YoutubeViewActivity extends AppCompatActivity {
                     fullscreen.setVisibility(View.GONE);
                 }
                 recheckStatusBar();
-                if (webView != null) {
-                    webView.setVisibility(View.VISIBLE);
+                if (mediaWebView != null) {
+                    mediaWebView.setVisibility(View.VISIBLE);
                 }
             }
             @Override
             public void onShowCustomView(View view, CustomViewCallback callback) {
-                if (webView == null) return;
+                if (mediaWebView == null) return;
                 FrameLayout decorView = (FrameLayout) getWindow().getDecorView();
                 if (fullscreen != null) {
                     decorView.removeView(fullscreen);
                 }
                 fullscreen = view;
                 decorView.addView(fullscreen, new FrameLayout.LayoutParams(-1, -1));
-                webView.setVisibility(View.GONE);
+                mediaWebView.setVisibility(View.GONE);
                 hideStatusBar();
                 fullscreen.setVisibility(View.VISIBLE);
             }
@@ -254,10 +254,10 @@ public class YoutubeViewActivity extends AppCompatActivity {
         });
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            webView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
+            mediaWebView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
         }
         // Set WebView Settings
-        WebSettings webSettings = webView.getSettings();
+        WebSettings webSettings = mediaWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
         webSettings.setSaveFormData(true);
@@ -276,16 +276,16 @@ public class YoutubeViewActivity extends AppCompatActivity {
             webSettings.setAlgorithmicDarkeningAllowed(true);
         }
         // Set WebView Configs
-        webView.setVerticalScrollBarEnabled(false);
-        webView.setHorizontalScrollBarEnabled(false);
-        webView.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_OVERLAY);
-        webView.setLongClickable(true);
-        webView.setKeepScreenOn(true);
+        mediaWebView.setVerticalScrollBarEnabled(false);
+        mediaWebView.setHorizontalScrollBarEnabled(false);
+        mediaWebView.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_OVERLAY);
+        mediaWebView.setLongClickable(true);
+        mediaWebView.setKeepScreenOn(true);
         getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
-        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        webView.setWebViewClient(new WebViewClient(){
+        mediaWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        mediaWebView.setWebViewClient(new WebViewClient(){
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 webViewIsLoaded = false;
@@ -459,12 +459,12 @@ public class YoutubeViewActivity extends AppCompatActivity {
 
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.setAcceptCookie(true);
-        cookieManager.setAcceptThirdPartyCookies(webView,true);
+        cookieManager.setAcceptThirdPartyCookies(mediaWebView,true);
         CookieManager.getInstance().acceptCookie();
         CookieManager.getInstance().flush();
 
         if (passedUrl != null) {
-            webView.loadUrl(passedUrl);
+            mediaWebView.loadUrl(passedUrl);
         }
     }
 
@@ -497,23 +497,20 @@ public class YoutubeViewActivity extends AppCompatActivity {
         recheckStatusBar();
     }
     public void destroyWebView() {
-        if (webView != null) {
-            webView.onPause();
-            webView.pauseTimers();
-            webView.destroy();
+        if (mediaWebView != null) {
+            mediaWebView.pause();
+            mediaWebView.destroy();
         }
     }
     public void pauseWebView() {
-        if (webView != null) {
-            autoPlayVideo(webView);
-            webView.onPause();
-            webView.pauseTimers();
+        if (mediaWebView != null) {
+            autoPlayVideo(mediaWebView);
+            mediaWebView.pause();
         }
     }
     public void resumeWebView() {
-        if (webView!=null) {
-            webView.resumeTimers();
-            webView.onResume();
+        if (mediaWebView !=null) {
+            mediaWebView.resume();
         }
     }
     public void recheckStatusBar() {
@@ -548,12 +545,12 @@ public class YoutubeViewActivity extends AppCompatActivity {
         }
     }
     public void initAnchor(WebView view) {
-        view.post(() -> view.loadUrl("javascript:(()=>{if(window.KanshiAnchorObserver instanceof MutationObserver)return;let e=()=>{let t=document.body;if(!t)return document.addEventListener('load',e,{once:!0});let r=new MutationObserver(e=>{for(let t of e)for(let r of t.addedNodes){let o=document.createTreeWalker(r,NodeFilter.SHOW_ELEMENT,e=>'A'===e.tagName?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_SKIP),n=e=>{e.setAttribute('rel','noopener noreferrer'),e.setAttribute('target','_blank')};'A'===r.tagName&&n(r);let l;for(;l=o.nextNode();)n(l)}});r.observe(t,{childList:!0,subtree:!0});try{let o=document.querySelectorAll('a');for(let n of o)n.setAttribute('rel','noopener noreferrer'),n.setAttribute('target','_blank');window.KanshiAnchorObserver=r}catch{r.disconnect()}};e()})()"));
+        ((MediaWebView) view).loadJSFileAsset("initAnchor.js");
     }
     public void autoPlayVideo(WebView view) {
-        view.post(() -> view.loadUrl("javascript:(()=>{let e=document.querySelector('#player video')||document.querySelector('video.html5-main-video')||document.querySelector('video');e&&!0!==e.autoplay&&(e.autoplay=!0)})()"));
+        ((MediaWebView) view).loadJSFileAsset("autoPlayVideo.js");
     }
     public void unMuteVideo(WebView view) {
-        view.post(() -> view.loadUrl("javascript:(()=>{if(window.KanshiVideoObserver instanceof MutationObserver)return;let e=()=>{let t=document.body;if(!t)return document.addEventListener('load',e,{once:!0});let o=['button.ytp-unmute','button.YtmMuteButtonButton'],r=e=>o.some(t=>e.matches?.(t))&&'none'!==getComputedStyle(e).display&&!e.closest('a'),n=new WeakSet,d=e=>e.querySelector('#player video')||e.querySelector('video.html5-main-video')||e.querySelector('video'),l=e=>{let t=e.closest('ytm-video-preview');if(t){let o=d(t);o&&o.addEventListener('canplaythrough',()=>{n.has(e)||(e.click(),n.add(e))},{once:!0})}},i=new MutationObserver(e=>{for(let t of e)for(let o of t.addedNodes){let n=document.createTreeWalker(o,NodeFilter.SHOW_ELEMENT,e=>r(e)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_SKIP);if(r(o)){l(o),i.disconnect();return}let d=n.nextNode();if(d){l(d),i.disconnect();return}}});try{for(let c of(i.observe(t,{childList:!0,subtree:!0}),o)){let s=document.querySelector(c);s&&(s.click(),n.add(s))}window.KanshiVideoObserver=i}catch{i.disconnect()}let a=d(document);a?.paused&&a.play()};e()})()"));
+        ((MediaWebView) view).loadJSFileAsset("unMuteVideo.js");
     }
 }

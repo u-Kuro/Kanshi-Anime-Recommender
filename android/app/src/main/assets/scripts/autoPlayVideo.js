@@ -1,0 +1,1 @@
+(()=>{let e=document.querySelector('#player video')||document.querySelector('video.html5-main-video')||document.querySelector('video');e&&!0!==e.autoplay&&(e.autoplay=!0)})()
