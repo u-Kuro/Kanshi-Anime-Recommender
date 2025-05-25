@@ -1,6 +1,5 @@
 package com.example.kanshi.localHTTPServer;
 
-import static com.example.kanshi.LocalPersistence.getLockForFile;
 import static com.example.kanshi.LocalPersistence.getLockForFileName;
 
 import android.content.Context;
@@ -29,10 +28,14 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -143,45 +146,90 @@ public class LocalServer extends NanoHTTPD {
             Response response = newFixedLengthResponse(Response.Status.NO_CONTENT, null, null);
             addCORSHeaders(response);
 
-            File tempOutputFile = new File(backupDirectory, isMain ? ".tmp" : "bg.tmp");
-            ReentrantLock tempBackupFileLock = getLockForFile(tempOutputFile);
-            tempBackupFileLock.lock();
+            Path tempOutputFile = backupDirectory.toPath().resolve(isMain ? ".tmp" : "bg.tmp");
+            Path outputFile = backupDirectory.toPath().resolve(filename);
+
+            // Use filename-based locking for consistency
+            ReentrantLock backupFileLock = getLockForFileName(filename);
+            backupFileLock.lock();
+
             try {
-                if (tempOutputFile.exists() && tempOutputFile.isFile()) {
-                    //noinspection ResultOfMethodCallIgnored
-                    tempOutputFile.delete();
-                }
-
-                GZIPInputStream gzipInputStream = new GZIPInputStream(new BufferedInputStream(session.getInputStream()));
-                try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(tempOutputFile, false)))) {
-                    byte[] buffer = new byte[8192];
-                    int bytesRead;
-                    while ((bytesRead = gzipInputStream.read(buffer)) != -1) {
-                        gzipOutputStream.write(buffer, 0, bytesRead);
-                    }
-                    gzipOutputStream.flush();
-                    gzipOutputStream.finish();
-                }
-
-                File outputFile = new File(backupDirectory, filename);
-                ReentrantLock backupFileLock = getLockForFileName(outputFile.getName());
-                backupFileLock.lock();
-                try {
-                    Files.copy(tempOutputFile.toPath(), outputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                } finally {
-                    backupFileLock.unlock();
-                }
+                // Download and process the backup file
+                downloadAndProcessBackup(session, tempOutputFile);
+                // Atomically replace the final file
+                atomicReplaceBackupFile(tempOutputFile, outputFile);
+                // Return a successful response
                 return response;
             } finally {
-                if (tempOutputFile.exists() && tempOutputFile.isFile()) {
-                    //noinspection ResultOfMethodCallIgnored
-                    tempOutputFile.delete();
-                }
-                tempBackupFileLock.unlock();
+                // Clean up temp file
+                safeDeleteFile(tempOutputFile);
+                backupFileLock.unlock();
             }
         } catch (Exception e) {
             logException(getApplicationContext(), e, "backUpUserData: "+getBodyText(session.getInputStream()));
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "Error: " + e.getMessage());
+        }
+    }
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void downloadAndProcessBackup(IHTTPSession session, Path tempOutputFile) throws IOException {
+        // Ensure parent directory exists
+        Path parentDir = tempOutputFile.getParent();
+        if (parentDir != null) {
+            Files.createDirectories(parentDir);
+        }
+        // Delete existing temp file if it exists
+        Files.deleteIfExists(tempOutputFile);
+        // Download and decompress the backup file
+        GZIPInputStream gzipInput = new GZIPInputStream(new BufferedInputStream(session.getInputStream()));
+        try (
+            OutputStream fileOutput = Files.newOutputStream(
+                tempOutputFile,
+                StandardOpenOption.CREATE,
+                StandardOpenOption.WRITE,
+                StandardOpenOption.TRUNCATE_EXISTING
+            );
+            BufferedOutputStream bufferedOutput = new BufferedOutputStream(fileOutput);
+            GZIPOutputStream gzipOutput = new GZIPOutputStream(bufferedOutput)
+        ) {
+            // Copy data with proper buffer management
+            copyWithBuffer(gzipInput, gzipOutput);
+            // Ensure all data is written and synced
+            gzipOutput.finish();
+            gzipOutput.flush();
+            bufferedOutput.flush();
+            // Force sync to disk for critical backup data
+            if (fileOutput instanceof FileOutputStream) {
+                ((FileOutputStream) fileOutput).getFD().sync();
+            }
+        }
+        // Verify the temp file was created successfully
+        if (!Files.exists(tempOutputFile) || Files.size(tempOutputFile) == 0) {
+            throw new IOException("Failed to download backup file - temp file is empty or missing");
+        }
+    }
+    private void copyWithBuffer(InputStream input, OutputStream output) throws IOException {
+        byte[] buffer = new byte[8192];
+        int bytesRead;
+        while ((bytesRead = input.read(buffer)) != -1) {
+            output.write(buffer, 0, bytesRead);
+        }
+    }
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void atomicReplaceBackupFile(Path tempFile, Path finalFile) throws IOException {
+        Files.move(
+            tempFile, finalFile,
+            StandardCopyOption.REPLACE_EXISTING,
+            StandardCopyOption.ATOMIC_MOVE
+        );
+    }
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void safeDeleteFile(Path file) {
+        if (file != null) {
+            try {
+                Files.deleteIfExists(file);
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "Failed to delete temporary backup file: " + file, e);
+            }
         }
     }
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)

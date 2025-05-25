@@ -2,7 +2,6 @@ package com.example.kanshi;
 
 import static com.example.kanshi.BuildConfig.DEBUG;
 import static com.example.kanshi.Configs.OWNER;
-import static com.example.kanshi.LocalPersistence.getLockForFile;
 import static com.example.kanshi.LocalPersistence.getLockForFileName;
 
 import android.content.ContentUris;
@@ -34,17 +33,20 @@ import androidx.annotation.RequiresApi;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -288,68 +290,107 @@ public class Utils {
     @RequiresApi(api = Build.VERSION_CODES.R)
     public static void exportReleasedMedia(Context context) {
         SharedPreferences prefs = context.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
-        boolean autoExportReleasedMedia = prefs.getBoolean("autoExportReleasedMedia", false);
-        if (!autoExportReleasedMedia) return;
+
+        // Early returns for invalid conditions
+        if (!prefs.getBoolean("autoExportReleasedMedia", false)) {
+            return;
+        }
+
         String exportPath = prefs.getString("savedExportPath", "");
-        if (!exportPath.isEmpty() && Environment.isExternalStorageManager()) {
-            File exportDirectory = new File(exportPath);
-            if (exportDirectory.isDirectory()) {
-                boolean dirIsCreated;
-                if (!exportDirectory.exists()) {
-                    dirIsCreated = exportDirectory.mkdirs();
-                } else {
-                    dirIsCreated = true;
-                }
-                if (exportDirectory.isDirectory() && dirIsCreated) {
-                    if (!MediaNotificationManager.allMediaNotification.isEmpty()) {
-                        FileOutputStream fileOut = null;
-                        ObjectOutputStream objectOut = null;
-                        final String filename = "Released Media.bin";
-                        File tempFile = new File(exportDirectory, filename + ".tmp");
-                        ReentrantLock fileLock = getLockForFile(tempFile);
-                        fileLock.lock();
-                        try {
-                            fileOut = new FileOutputStream(tempFile);
-                            objectOut = new ObjectOutputStream(fileOut);
-                            objectOut.writeObject(MediaNotificationManager.allMediaNotification);
-                            fileOut.getFD().sync();
-                            if (tempFile.exists() && tempFile.isFile() && tempFile.length() > 0) {
-                                File finalFile = new File(exportDirectory, filename);
-                                ReentrantLock finalFileNameLock = getLockForFileName(finalFile.getName());
-                                finalFileNameLock.lock();
-                                try {
-                                    //noinspection ResultOfMethodCallIgnored
-                                    finalFile.createNewFile();
-                                    Path tempFilePath = tempFile.toPath();
-                                    Path finalFilePath = finalFile.toPath();
-                                    Files.copy(tempFilePath, finalFilePath, StandardCopyOption.REPLACE_EXISTING);
-                                } catch (Exception e) {
-                                    handleUncaughtException(context.getApplicationContext(), e, "exportReleasedMedia 0");
-                                    logger.log(Level.SEVERE, e.getMessage(), e);
-                                } finally {
-                                    finalFileNameLock.unlock();
-                                }
-                            }
-                        } catch (Exception e) {
-                            handleUncaughtException(context.getApplicationContext(), e, "exportReleasedMedia 1");
-                            logger.log(Level.SEVERE, e.getMessage(), e);
-                        } finally {
-                            try {
-                                if (objectOut != null) {
-                                    objectOut.close();
-                                }
-                                if (fileOut != null) {
-                                    fileOut.close();
-                                }
-                                if (tempFile.exists()) {
-                                    //noinspection ResultOfMethodCallIgnored
-                                    tempFile.delete();
-                                }
-                            } catch (Exception ignored) {}
-                            fileLock.unlock();
-                        }
-                    }
-                }
+        if (exportPath.isEmpty() || !Environment.isExternalStorageManager()) {
+            return;
+        }
+
+        if (MediaNotificationManager.allMediaNotification.isEmpty()) {
+            return;
+        }
+
+        try {
+            exportMediaToPath(exportPath);
+        } catch (Exception e) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                handleUncaughtException(context.getApplicationContext(), e, "exportReleasedMedia");
+            } else {
+                logger.log(Level.SEVERE, "Failed to export released media", e);
+            }
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private static void exportMediaToPath(String exportPath) throws Exception {
+        Path exportDirectory = Paths.get(exportPath);
+
+        // Ensure export directory exists
+        if (!Files.exists(exportDirectory)) {
+            Files.createDirectories(exportDirectory);
+        }
+
+        if (!Files.isDirectory(exportDirectory)) {
+            throw new IOException("Export path is not a directory: " + exportPath);
+        }
+
+        final String filename = "Released Media.bin";
+        Path tempFile = exportDirectory.resolve(filename + ".tmp");
+        Path finalFile = exportDirectory.resolve(filename);
+
+        // Use filename-based locking for consistency
+        ReentrantLock fileNameLock = getLockForFileName(filename);
+        fileNameLock.lock();
+
+        try {
+            // Write to temporary file using NIO.2
+            writeMediaToFile(tempFile);
+            // Atomically replace the final file
+            atomicReplaceFile(tempFile, finalFile);
+        } finally {
+            // Clean up temp file if it still exists
+            safeDeleteFile(tempFile);
+            fileNameLock.unlock();
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private static void writeMediaToFile(Path tempFile) throws Exception {
+        // Serialize object to byte array first
+        byte[] serializedData;
+        try (
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream objectOut = new ObjectOutputStream(baos)
+        ) {
+            objectOut.writeObject(MediaNotificationManager.allMediaNotification);
+            objectOut.flush();
+            serializedData = baos.toByteArray();
+        }
+        // Write to temp file atomically with sync
+        Files.write(
+            tempFile, serializedData,
+            StandardOpenOption.CREATE,
+            StandardOpenOption.WRITE,
+            StandardOpenOption.TRUNCATE_EXISTING,
+            StandardOpenOption.SYNC
+        );
+        // Verify the file was written successfully
+        if (!Files.exists(tempFile) || Files.size(tempFile) == 0) {
+            throw new IOException("Failed to write media data to temporary file");
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private static void atomicReplaceFile(Path tempFile, Path finalFile) throws Exception {
+        Files.move(
+            tempFile, finalFile,
+            StandardCopyOption.REPLACE_EXISTING,
+            StandardCopyOption.ATOMIC_MOVE
+        );
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private static void safeDeleteFile(Path file) {
+        if (file != null) {
+            try {
+                Files.deleteIfExists(file);
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "Failed to delete temporary file: " + file, e);
             }
         }
     }
@@ -447,80 +488,109 @@ public class Utils {
     public static void executeHandleUncaughtException(Context context, Throwable e, String fileFrom) {
         SharedPreferences prefs = context.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
         String exportPath = prefs.getString("savedExportPath", "");
-        if (!exportPath.isEmpty() && Environment.isExternalStorageManager()) {
-            File exportDirectory = new File(exportPath);
-            if (exportDirectory.isDirectory()) {
-                boolean dirIsCreated;
-                if (!exportDirectory.exists()) {
-                    dirIsCreated = exportDirectory.mkdirs();
-                } else {
-                    dirIsCreated = true;
-                }
-                if (exportDirectory.isDirectory() && dirIsCreated) {
-                    final String filename = "error_log.txt";
-                    File file = new File(exportDirectory, filename);
-                    String threadType = isUIThread() ? "UI Thread" : "Non-UI Thread";
-                    logErrorToFile(file, e, threadType, fileFrom);
-                }
+
+        if (exportPath.isEmpty() || !Environment.isExternalStorageManager()) {
+            logger.log(Level.SEVERE, e.getMessage(), e);
+            return;
+        }
+
+        File exportDirectory = new File(exportPath);
+        boolean dirReady = true;
+        if (!exportDirectory.exists()) {
+            dirReady = exportDirectory.mkdirs();
+        }
+        if (!exportDirectory.isDirectory() || !dirReady) {
+            logger.log(Level.SEVERE, e.getMessage(), e);
+            return;
+        }
+
+        final String filename = "error_log.txt";
+        File finalLogFile = new File(exportDirectory, filename);
+        File tempLogFile  = new File(exportDirectory, filename + ".tmp");
+
+        ReentrantLock fileNameLock = getLockForFileName(finalLogFile.getAbsolutePath());
+        fileNameLock.lock();
+
+        try {
+            String combinedLog = buildLogEntry(e, fileFrom) + readExistingContents(finalLogFile);
+            File parentDir = tempLogFile.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                //noinspection ResultOfMethodCallIgnored
+                parentDir.mkdirs();
             }
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(tempLogFile))) {
+                writer.write(combinedLog);
+                writer.flush();
+            }
+            atomicReplace(tempLogFile, finalLogFile);
+        } catch (Exception ex) {
+            handleUncaughtException(context, ex, "executeHandleUncaughtException");
+        } finally {
+            safeDelete(tempLogFile);
+            fileNameLock.unlock();
         }
         logger.log(Level.SEVERE, e.getMessage(), e);
     }
-
-    @RequiresApi(api = Build.VERSION_CODES.R)
-    private static void logErrorToFile(File logFile, Throwable e, String threadType, String fileFrom) {
-        final SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, MMMM d, yyyy h:mm:ss a", Locale.US);
-        StringBuilder newLogEntry = new StringBuilder();
-        String timestamp = dateFormat.format(new Date());
-        newLogEntry.append("_________________________________________\n\n");
-        newLogEntry.append("Time: ").append(timestamp).append("\n");
-        newLogEntry.append("File From: ").append(fileFrom).append("\n");
-        newLogEntry.append("Thread: ").append(threadType).append("\n");
-        newLogEntry.append("Exception: ").append(e.toString()).append("\n");
-        if (e.getStackTrace().length > 0) {
-            StackTraceElement firstElement = e.getStackTrace()[0];
-            newLogEntry.append("At: ")
-                    .append(firstElement.getClassName())
-                    .append(".")
-                    .append(firstElement.getMethodName())
-                    .append("(")
-                    .append(firstElement.getFileName())
-                    .append(":")
-                    .append(firstElement.getLineNumber())
-                    .append(")\n");
-        }
-        for (StackTraceElement element : e.getStackTrace()) {
-            newLogEntry.append("\tat ").append(element.toString()).append("\n");
-        }
-
-        ReentrantLock fileLock = getLockForFile(logFile);
-        fileLock.lock();
-        try {
-            String existingContent = "";
-            if (logFile.exists()) {
-                try (BufferedReader reader = new BufferedReader(new FileReader(logFile))) {
-                    StringBuilder content = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        content.append(line).append("\n");
-                    }
-                    existingContent = content.toString();
-                } catch (Exception e1) {
-                    logger.log(Level.SEVERE, e1.getMessage(), e1);
-                }
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private static void atomicReplace(File tempFile, File finalFile) throws Exception {
+        Path tempPath = tempFile.toPath();
+        Path finalPath = finalFile.toPath();
+        Files.move(
+            tempPath, finalPath,
+            StandardCopyOption.REPLACE_EXISTING,
+            StandardCopyOption.ATOMIC_MOVE
+        );
+    }
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private static void safeDelete(File file) {
+        if (file != null) {
+            try {
+                Files.deleteIfExists(file.toPath());
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "Exception while deleting file: " + file.getAbsolutePath(), e);
             }
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(logFile))) {
-                writer.write(newLogEntry.toString());
-                writer.write(existingContent);
-            } catch (Exception e2) {
-                logger.log(Level.SEVERE, e2.getMessage(), e2);
-            }
-        } catch (Exception e3) {
-            logger.log(Level.SEVERE, e3.getMessage(), e3);
-        } finally {
-            fileLock.unlock();
         }
     }
+    private static String buildLogEntry(Throwable e, String fileFrom) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, MMMM d, yyyy h:mm:ss a", Locale.US);
+        String timestamp = dateFormat.format(new Date());
+        StringBuilder sb = new StringBuilder();
+        sb.append("_________________________________________\n\n");
+        sb.append("Time: ").append(timestamp).append("\n");
+        sb.append("File From: ").append(fileFrom).append("\n");
+        sb.append("Thread: ").append(isUIThread() ? "UI Thread" : "Non-UI Thread").append("\n");
+        sb.append("Exception: ").append(e.toString()).append("\n");
+        if (e.getStackTrace().length > 0) {
+            StackTraceElement first = e.getStackTrace()[0];
+            sb.append("At: ")
+            .append(first.getClassName()).append(".")
+            .append(first.getMethodName()).append("(")
+            .append(first.getFileName()).append(":")
+            .append(first.getLineNumber()).append(")\n");
+        }
+        for (StackTraceElement elem : e.getStackTrace()) {
+            sb.append("\tat ").append(elem.toString()).append("\n");
+        }
+        sb.append("\n");
+        return sb.toString();
+    }
+    private static String readExistingContents(File file) {
+        if (file == null || !file.exists() || !file.isFile()) {
+            return "";
+        }
+        StringBuilder existing = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                existing.append(line).append("\n");
+            }
+        } catch (IOException ioe) {
+            logger.log(Level.WARNING, "Could not read existing log file: " + file.getAbsolutePath(), ioe);
+            return "";
+        }
+        return existing.toString();
+    }
+
 
 //    private static List<FileData> fileList = new ArrayList<>();
 //    @RequiresApi(api = Build.VERSION_CODES.O)
