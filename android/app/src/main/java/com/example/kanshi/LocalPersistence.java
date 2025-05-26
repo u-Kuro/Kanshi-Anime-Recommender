@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Path;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -45,6 +46,7 @@ public class LocalPersistence {
             writeToTempFile(object, tempFile);
             // Atomically replace the final file
             atomicReplace(tempFile, finalFile);
+        } catch (ClosedByInterruptException ignored) {
         } catch (Exception e) {
             handleException(context, e, "writeObjectToFile");
         } finally {
