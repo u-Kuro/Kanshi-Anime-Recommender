@@ -577,40 +577,59 @@ public class MyWorker extends Worker {
     }
 
     private void updateData(boolean isManual) {
-        // Default 1 hour interval
         long currentTimeMillis = System.currentTimeMillis();
-        long newBackgroundUpdateTime = currentTimeMillis + TimeUnit.HOURS.toMillis(1);
+        long newBackgroundUpdateTime;
 
         TimeZone tz = TimeZone.getDefault();
         Calendar calendar = Calendar.getInstance(tz);
 
         int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY);
-        // Early morning (before 6am)
-        boolean isEarlyMorning = hourOfDay < 6;
-        // Check if the current time is less than 5am
-        // This is to ensure that there is always an hour or greater interval between updates
-        // Not really true when its currently 5:00am as it still has an hour before 6:00am
-        // But next update default (5:00am + 1hour) is still set at 6am
-        // So... Ah Eh Tooo... Blehhh...
-        boolean hasAnHourBeforeEarlyMorning = hourOfDay < 5;
-        if (hasAnHourBeforeEarlyMorning) {
-            calendar.set(Calendar.HOUR_OF_DAY, 6);
-            calendar.clear(Calendar.MINUTE);
-            calendar.clear(Calendar.SECOND);
-            calendar.clear(Calendar.MILLISECOND);
-            long sixAmInMillis = calendar.getTimeInMillis();
-            if (sixAmInMillis >= currentTimeMillis) {
-                newBackgroundUpdateTime = sixAmInMillis;
+        int minute = calendar.get(Calendar.MINUTE);
+
+        // Sleep time is 1:30am to 7:59am
+        boolean isSleepTime = ((hourOfDay == 1 && minute >= 30) || (hourOfDay >= 2 && hourOfDay < 8));
+
+        // Determine next update time
+        if (isSleepTime) {
+            // During sleep time: normal 1 hour interval
+            newBackgroundUpdateTime = currentTimeMillis + TimeUnit.HOURS.toMillis(1);
+
+            // But check if 1 hour later would go at or after 8am
+            Calendar oneHourLater = Calendar.getInstance(tz);
+            oneHourLater.setTimeInMillis(newBackgroundUpdateTime);
+            int nextHour = oneHourLater.get(Calendar.HOUR_OF_DAY);
+
+            // If next update would be at or after 8am, schedule for next day at 1:30am instead
+            if (nextHour >= 8) {
+                calendar.add(Calendar.DAY_OF_MONTH, 1);
+                calendar.set(Calendar.HOUR_OF_DAY, 1);
+                calendar.set(Calendar.MINUTE, 30);
+                calendar.set(Calendar.SECOND, 0);
+                calendar.set(Calendar.MILLISECOND, 0);
+                newBackgroundUpdateTime = calendar.getTimeInMillis();
             }
+        } else {
+            // Awake time: schedule for next 1:30am
+            calendar.set(Calendar.HOUR_OF_DAY, 1);
+            calendar.set(Calendar.MINUTE, 30);
+            calendar.set(Calendar.SECOND, 0);
+            calendar.set(Calendar.MILLISECOND, 0);
+
+            // If 1:30am today has already passed, schedule for tomorrow
+            if (calendar.getTimeInMillis() <= currentTimeMillis) {
+                calendar.add(Calendar.DAY_OF_MONTH, 1);
+            }
+
+            newBackgroundUpdateTime = calendar.getTimeInMillis();
         }
 
-        // Only Run Foreground Service if its set Manually or not an Early Morning (before 6am)
-        if (isManual || !isEarlyMorning) {
+        // Only run foreground service if manual OR during active time
+        if (isManual || isSleepTime) {
             SharedPreferences prefs = this.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
-            boolean keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",true);
+            boolean keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground", true);
             boolean isInApp = false;
             MainActivity mainActivity = MainActivity.getInstanceActivity();
-            if (mainActivity!=null) {
+            if (mainActivity != null) {
                 isInApp = mainActivity.isInApp;
             }
             // Run service if background update is enabled and user is not in app
@@ -620,16 +639,31 @@ public class MyWorker extends Worker {
             }
         }
 
+        // Schedule next
         Intent newIntent = new Intent(this.getApplicationContext(), MyReceiver.class);
         newIntent.setAction("UPDATE_DATA_AUTO");
 
-        PendingIntent newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent newPendingIntent = PendingIntent.getBroadcast(
+            this.getApplicationContext(),
+            UPDATE_DATA_PENDING_INTENT,
+            newIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
         AlarmManager alarmManager = (AlarmManager) this.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
-        // Cancel Old
+
+        // Cancel old
         newPendingIntent.cancel();
         alarmManager.cancel(newPendingIntent);
-        // Create New
-        newPendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        // Create new
+        newPendingIntent = PendingIntent.getBroadcast(
+            this.getApplicationContext(),
+            UPDATE_DATA_PENDING_INTENT,
+            newIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (alarmManager.canScheduleExactAlarms()) {
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newBackgroundUpdateTime, newPendingIntent);
