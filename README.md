@@ -41,7 +41,6 @@ It's <b>free</b> and <b>runs locally</b> for your convenience.
   <img src="https://i.imgur.com/IYqJUG8.png" width="1010px;"/>
 </div>
 
-
 <h2 align="center"></h2>
 
 ## Additional Information
