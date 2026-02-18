@@ -45,3 +45,4 @@ It's <b>free</b> and <b>runs locally</b> for your convenience.
 
 ## Additional Information
 - [Alternative Website](https://u-kuro.github.io/Kanshi-Anime-Recommender)
+ 
