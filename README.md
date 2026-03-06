@@ -64,11 +64,11 @@ Every title in the catalogue carries these fields, all of which are used in rank
 
 The user's tracked titles are sorted by their personal rating and by how popular the title is. If a user has rated both a series and its spin-off, the most representative entry is kept and the rest are skipped. This prevents the same underlying taste signal from being counted twice.
 
-## Step 2: Build a preference profile from genres, tags, and studios
+## Step 2: Build a preference profile from genres and tags
 
-For every title the user has personally rated, the algorithm collects all of its genres, tags, and studios. Each genre and studio accumulates the ratings from every title that shares it. Tags accumulate the rating multiplied by how relevant that tag is to the specific title — a tag listed as 95% relevant to a title counts for more than one listed at 40%.
+For every title the user has personally rated, the algorithm collects all of its genres and tags. Genre accumulates the ratings from every title that shares it. Tags accumulate the rating multiplied by how relevant that tag is to the specific title — a tag listed as 95% relevant to a title counts for more than one listed at 40%.
 
-This produces a raw preference score per genre, tag, and studio — essentially a map of what the user tends to enjoy.
+This produces a raw preference score per genre and tag — essentially a map of what the user tends to enjoy.
 
 ## Step 3: Down-weight uncertain preferences
 
@@ -96,11 +96,7 @@ These two components are multiplied together to produce a raw score.
 
 A title that almost nobody has tracked is penalized proportionally — the algorithm trusts the preference signal less for obscure titles. Similarly, titles with below-average community ratings for their format (anime vs. manga vs. novel are compared separately) receive a proportional penalty. This prevents niche titles from ranking highly just because they happen to share genres the user likes.
 
-## Step 7: Rescale everything to match the user's rating scale
-
-Every raw score is rescaled to sit within the range the user actually uses. If the user typically rates things between 6 and 9 out of 10, the final scores are compressed into that range. The floor is set at the mean rating minus one standard deviation; the ceiling at the mean plus one standard deviation.
-
-## Step 8: Classify each title into a tier
+## Step 7: Classify each title into a tier
 
 | Tier | Condition | Meaning |
 |---|---|---|
@@ -108,7 +104,7 @@ Every raw score is rescaled to sit within the range the user actually uses. If t
 | 🟡 **Possible match** | Score above the overall average across all catalogue titles | Moderate signal |
 | ⚪ **Weak signal** | Below the overall average | Little evidence this would appeal to the user |
 
-## Step 9: Report how accurate the algorithm is
+## Step 8: Report how accurate the algorithm is
 
 The algorithm compares its predicted scores against the user's actual ratings and calculates how far off it is on average, as a percentage of the total rating scale. This accuracy figure is shown to the user so they can judge how well the algorithm has learned their taste.
 
