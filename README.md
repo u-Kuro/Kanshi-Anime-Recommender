@@ -102,7 +102,7 @@ A title that almost nobody has tracked is penalized proportionally — the algor
 |---|---|---|
 | 🟢 **Strong match** | Score above the average of titles the user has personally scored | The algorithm is confident this fits the user's taste |
 | 🟡 **Possible match** | Score above the overall average across all catalogue titles | Moderate signal |
-| ⚪ **Weak signal** | Below the overall average | Little evidence this would appeal to the user |
+| ⚪ **Weak match** | Below the overall average | Little evidence this would appeal to the user |
 
 ## Step 8: Report how accurate the algorithm is
 
