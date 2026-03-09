@@ -5,7 +5,7 @@
     <a href="https://github.com/u-Kuro/Kanshi-Anime-Recommender/releases/download/v9.5.1/Kanshi-v9.5.1.apk">
       <img src="./images/android-download.svg" alt="Download"/>
     </a>
-    <a href="https://kanshi.vercel.app">
+    <a href="https://u-kuro.github.io/Kanshi-Anime-Recommender">
       <img src="./images/web-visit.svg" alt="Website"/>
     </a>
   </div>
