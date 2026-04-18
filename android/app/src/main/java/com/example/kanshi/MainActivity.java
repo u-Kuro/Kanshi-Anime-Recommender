@@ -568,7 +568,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        setBackgroundUpdates(true);
+        setBackgroundUpdates();
         super.onStop();
     }
 
@@ -621,7 +621,7 @@ public class MainActivity extends AppCompatActivity {
         if (mediaWebView !=null) {
             mediaWebView.post(() -> mediaWebView.evaluateJS("window?.notifyUpdatedMediaNotification?.()"));
         }
-        setBackgroundUpdates(false);
+        setBackgroundUpdates();
         super.onDestroy();
     }
 
@@ -883,34 +883,25 @@ public class MainActivity extends AppCompatActivity {
             AlarmManager alarmManager = (AlarmManager) MainActivity.this.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
             if (!alarmManager.canScheduleExactAlarms()) {
                 showDialog(new AlertDialog.Builder(MainActivity.this)
-                                .setTitle("Permission for Anime Releases")
-                                .setMessage("Do you like to allow permission for notifying anime release schedules at the exact time?")
-                                .setPositiveButton("YES", (dialogInterface, i) -> mediaWebView.post(() -> {
-                                    Intent intent = new Intent(ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.fromParts("package", getPackageName(), null));
-                                    startActivity(intent);
-                                }))
-                                .setNegativeButton("NO", null)
-                        ,false);
+                    .setTitle("Permission for Anime Releases")
+                    .setMessage("Do you like to allow permission for notifying anime release schedules at the exact time?")
+                    .setPositiveButton("YES", (dialogInterface, i) -> mediaWebView.post(() -> {
+                        Intent intent = new Intent(ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.fromParts("package", getPackageName(), null));
+                        startActivity(intent);
+                    }))
+                    .setNegativeButton("NO", null)
+                ,false);
             }
         }
     }
     public void reloadWeb() {
         mediaWebView.post(()-> mediaWebView.reload());
     }
-    public void setBackgroundUpdates(boolean isStop) {
-        long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime", 0);
-        long currentTimeInMillis = System.currentTimeMillis();
-        if (isStop) {
-            // Set and Apply New Background Update Time if there is none
-            backgroundUpdateTime = currentTimeInMillis + TimeUnit.HOURS.toMillis(1);
-        } else if (backgroundUpdateTime <= currentTimeInMillis && keepAppRunningInBackground && !isInApp) {
-            // Run service if background update is enabled and user is not in app
-            Intent intent = new Intent(getApplicationContext(), MainService.class);
-            startService(intent);
-            return;
-        }
+    public void setBackgroundUpdates() {
+        long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime", System.currentTimeMillis()) + TimeUnit.HOURS.toMillis(1);
+
         Intent newIntent = new Intent(getApplicationContext(), MyReceiver.class);
-        newIntent.setAction("UPDATE_DATA_MANUAL");
+        newIntent.setAction("UPDATE_DATA_AUTO");
 
         PendingIntent newPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         AlarmManager alarmManager = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);

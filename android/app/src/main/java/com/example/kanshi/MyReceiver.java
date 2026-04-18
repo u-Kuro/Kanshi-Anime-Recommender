@@ -37,10 +37,9 @@ public class MyReceiver extends BroadcastReceiver {
                     .setInputData(data)
                     .build();
             WorkManager.getInstance(context).enqueueUniqueWork(uniqueWorkName, ExistingWorkPolicy.REPLACE, workRequest);
-        } else if ("UPDATE_DATA_MANUAL".equals(action) || "UPDATE_DATA_AUTO".equals(action)) {
+        } else if ("UPDATE_DATA_AUTO".equals(action)) {
             String uniqueWorkName = "UPDATE_DATA";
             Data data = new Data.Builder()
-                    .putBoolean("isManual", "UPDATE_DATA_MANUAL".equals(action))
                     .putString("action", uniqueWorkName)
                     .build();
             OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(MyWorker.class)

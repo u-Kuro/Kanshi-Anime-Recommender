@@ -71,13 +71,12 @@ public class MyWorker extends Worker {
         }
         String action = getInputData().getString("action");
         if ("UPDATE_DATA".equals(action)) {
-            boolean isManual = getInputData().getBoolean("isManual",true);
-            updateData(isManual);
+            updateData();
         } else {
             boolean isBooted = getInputData().getBoolean("isBooted", false);
             showNotification(isBooted);
             if (isBooted) {
-                updateData(true);
+                updateData();
             }
         }
         return Result.success();
@@ -576,7 +575,7 @@ public class MyWorker extends Worker {
         void onResponse(JSONObject response);
     }
 
-    private void updateData(boolean isManual) {
+    private void updateData() {
         long currentTimeMillis = System.currentTimeMillis();
         long newBackgroundUpdateTime;
 
@@ -624,7 +623,7 @@ public class MyWorker extends Worker {
         }
 
         // Only run foreground service if manual OR during active time
-        if (isManual || isSleepTime) {
+        if (isSleepTime) {
             SharedPreferences prefs = this.getApplicationContext().getSharedPreferences("com.example.kanshi", Context.MODE_PRIVATE);
             boolean keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground", true);
             boolean isInApp = false;
