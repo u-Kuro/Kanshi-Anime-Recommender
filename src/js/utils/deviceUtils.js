@@ -43,15 +43,15 @@ const checkConnection = async () => {
             if (isAndroid()) {
                 const origin = location.origin
                 if (origin == null) return true
-                return await fetch(new URL("assets/check-connection", origin), {
+                return (await fetch(new URL("assets/check-connection", origin), {
                     method: "HEAD",
                     cache: "no-store"
-                }).ok;
+                })).ok;
             } else {
-                return await fetch(location, {
+                return (await fetch(location, {
                     method: "HEAD",
                     cache: "no-store"
-                }).ok
+                })).ok
             }
         }
     } catch {}

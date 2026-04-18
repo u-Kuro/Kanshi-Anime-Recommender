@@ -23,8 +23,8 @@ public class MyReceiver extends BroadcastReceiver {
         if (intent==null) { return; }
         String action = intent.getAction();
         if ("MEDIA_NOTIFICATION".equals(action) ||
-                "android.intent.action.BOOT_COMPLETED".equals(action) ||
-                "android.intent.action.QUICKBOOT_POWERON".equals(action)
+            Intent.ACTION_BOOT_COMPLETED.equals(action) ||
+            "android.intent.action.QUICKBOOT_POWERON".equals(action)
         ) {
             String uniqueWorkName = "MEDIA_NOTIFICATION";
             Data data = new Data.Builder()
@@ -51,6 +51,8 @@ public class MyReceiver extends BroadcastReceiver {
             WorkManager.getInstance(context).enqueueUniqueWork(uniqueWorkName, ExistingWorkPolicy.REPLACE, workRequest);
         } else if ("SEE_MORE_RELEASED".equals(action)) {
             MediaNotificationManager.seeMoreReleasedMediaNotification(context);
+        } else if (Intent.ACTION_USER_PRESENT.equals(action)) {
+            context.stopService(new Intent(context, MainService.class));
         }
     }
 }

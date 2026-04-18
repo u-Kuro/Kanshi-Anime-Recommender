@@ -22,7 +22,9 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.util.Log;
 import android.webkit.ConsoleMessage;
 import android.webkit.JavascriptInterface;
@@ -46,6 +48,8 @@ import com.example.kanshi.localHTTPServer.LocalServerListener;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
+import java.util.Calendar;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -255,6 +259,8 @@ public class MainService extends Service {
         // Load Page
         isReloaded = true;
         mediaWebView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
+
+        stopServiceAtWakeTime();
 
         weakActivity = new WeakReference<>(MainService.this);
     }
@@ -478,6 +484,22 @@ public class MainService extends Service {
         public void showNewUpdatedMediaNotification(long addedMediaCount, long updatedMediaCount) {
             MainService.this.addedMediaCount = addedMediaCount;
             MainService.this.updatedMediaCount = updatedMediaCount;
+        }
+    }
+
+    private void stopServiceAtWakeTime() {
+        Calendar wakeTime = Calendar.getInstance(TimeZone.getDefault());
+        wakeTime.set(Calendar.HOUR_OF_DAY, 8);
+        wakeTime.set(Calendar.MINUTE, 0);
+        wakeTime.set(Calendar.SECOND, 0);
+        wakeTime.set(Calendar.MILLISECOND, 0);
+
+        long delay = wakeTime.getTimeInMillis() - System.currentTimeMillis();
+        if (delay > 0) {
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                stopForeground(true);
+                stopSelf();
+            }, delay);
         }
     }
 }
