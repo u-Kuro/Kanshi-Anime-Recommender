@@ -99,11 +99,6 @@ public class YoutubeViewActivity extends AppCompatActivity {
     @SuppressLint({"SetJavaScriptEnabled", "RestrictedApi", "ClickableViewAccessibility"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Log Errors
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Thread.setDefaultUncaughtExceptionHandler((thread, e) -> Utils.handleUncaughtException(YoutubeViewActivity.this.getApplicationContext(), e, "YoutubeViewActivity"));
-        }
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_web);
         // Init Global Variables

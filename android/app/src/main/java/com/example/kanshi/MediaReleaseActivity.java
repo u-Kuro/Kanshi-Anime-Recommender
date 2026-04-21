@@ -53,8 +53,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
-@RequiresApi(api = Build.VERSION_CODES.VANILLA_ICE_CREAM)
 public class MediaReleaseActivity extends AppCompatActivity {
     private final Logger logger = Logger.getLogger(MediaReleaseActivity.class.getName());
     public static WeakReference<MediaReleaseActivity> weakActivity;
@@ -68,6 +66,7 @@ public class MediaReleaseActivity extends AppCompatActivity {
     Toast currentToast;
     BottomSheetDialog bottomSheetDialog;
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     final ActivityResultLauncher<String> chooseImportFile =
             registerForActivityResult(
                     new ActivityResultContracts.GetContent(),
@@ -184,11 +183,6 @@ public class MediaReleaseActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.VANILLA_ICE_CREAM)
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        // Log Errors
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Thread.setDefaultUncaughtExceptionHandler((thread, e) -> Utils.handleUncaughtException(MediaReleaseActivity.this.getApplicationContext(), e, "MediaReleaseActivity"));
-        }
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.media_releases_activity);
         // Init Global Variables
@@ -383,6 +377,7 @@ public class MediaReleaseActivity extends AppCompatActivity {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void backupBottomDialog() {
         if (bottomSheetDialog != null && bottomSheetDialog.isShowing()) {
             bottomSheetDialog.dismiss();

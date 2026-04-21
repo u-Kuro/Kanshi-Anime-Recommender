@@ -14,8 +14,10 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -107,11 +109,6 @@ public class MainService extends Service {
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     @Override
     public void onCreate() {
-        // Log Errors
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Thread.setDefaultUncaughtExceptionHandler((thread, e) -> Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService"));
-        }
-
         super.onCreate();
         // Init Global Variables
         mediaWebView = new MediaWebView(this);
@@ -227,17 +224,17 @@ public class MainService extends Service {
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
             Notification notification = new NotificationCompat.Builder(context, APP_IN_BACKGROUND_CHANNEL)
-                    .setContentTitle("Kanshi.")
-                    .setSmallIcon(R.drawable.ic_stat_name)
-                    .setContentIntent(pendingIntent)
-                    .addInvisibleAction(R.drawable.ic_stat_name, "OPEN", pendingIntent)
-                    .addAction(keepAppRunningInBackground ? R.drawable.check_white : R.drawable.disabled_white, keepAppRunningInBackground ? "ENABLED" : "DISABLED", setPendingIntent)
-                    .addAction(R.drawable.stop_white, "EXIT", stopPendingIntent)
-                    .setOnlyAlertOnce(true)
-                    .setSilent(true)
-                    .setShowWhen(false)
-                    .setNumber(0)
-                    .build();
+                .setContentTitle("Kanshi.")
+                .setSmallIcon(R.drawable.ic_stat_name)
+                .setContentIntent(pendingIntent)
+                .addInvisibleAction(R.drawable.ic_stat_name, "OPEN", pendingIntent)
+                .addAction(keepAppRunningInBackground ? R.drawable.check_white : R.drawable.disabled_white, keepAppRunningInBackground ? "ENABLED" : "DISABLED", setPendingIntent)
+                .addAction(R.drawable.stop_white, "EXIT", stopPendingIntent)
+                .setOnlyAlertOnce(true)
+                .setSilent(true)
+                .setShowWhen(false)
+                .setNumber(0)
+                .build();
 
             try {
                 startForeground(SERVICE_NOTIFICATION_ID, notification, FOREGROUND_SERVICE_TYPE_DATA_SYNC);
@@ -261,6 +258,7 @@ public class MainService extends Service {
         mediaWebView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
 
         stopServiceAtWakeTime();
+        stopServiceAtUserPresent();
 
         weakActivity = new WeakReference<>(MainService.this);
     }
@@ -276,19 +274,6 @@ public class MainService extends Service {
         channel.setShowBadge(false);
         channel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
         return channel;
-    }
-
-    @Override
-    public void onDestroy() {
-        if (mediaWebView !=null) {
-            mediaWebView.destroy();
-        }
-        MediaNotificationManager.recentlyUpdatedMediaNotification(MainService.this, addedMediaCount, updatedMediaCount);
-        MainActivity mainActivity = MainActivity.getInstanceActivity();
-        if (mainActivity != null) {
-            mainActivity.refreshMediaList();
-        }
-        super.onDestroy();
     }
 
     public static MainService getInstanceActivity() {
@@ -488,18 +473,51 @@ public class MainService extends Service {
     }
 
     private void stopServiceAtWakeTime() {
-        Calendar wakeTime = Calendar.getInstance(TimeZone.getDefault());
-        wakeTime.set(Calendar.HOUR_OF_DAY, 8);
-        wakeTime.set(Calendar.MINUTE, 0);
-        wakeTime.set(Calendar.SECOND, 0);
-        wakeTime.set(Calendar.MILLISECOND, 0);
+        Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
+        long currentTime = calendar.getTimeInMillis();
 
-        long delay = wakeTime.getTimeInMillis() - System.currentTimeMillis();
-        if (delay > 0) {
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                stopForeground(true);
-                stopSelf();
-            }, delay);
+        // Set to wake time 8am
+        calendar.set(Calendar.HOUR_OF_DAY, 8);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+
+        long delay = calendar.getTimeInMillis() - currentTime;
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            MainService.this.stopForeground(true);
+            MainService.this.stopSelf();
+        }, delay);
+    }
+
+    private BroadcastReceiver unlockReceiver;
+    private void stopServiceAtUserPresent() {
+        unlockReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (Intent.ACTION_USER_PRESENT.equals(intent.getAction())) {
+                    Log.d("MainService", "User unlocked - stopping");
+                    stopForeground(true);
+                    stopSelf();
+                }
+            }
+        };
+
+        registerReceiver(unlockReceiver, new IntentFilter(Intent.ACTION_USER_PRESENT));
+    }
+
+    @Override
+    public void onDestroy() {
+        if (unlockReceiver != null) {
+            unregisterReceiver(unlockReceiver);
         }
+        if (mediaWebView != null) {
+            mediaWebView.destroy();
+        }
+        MediaNotificationManager.recentlyUpdatedMediaNotification(MainService.this, addedMediaCount, updatedMediaCount);
+        MainActivity mainActivity = MainActivity.getInstanceActivity();
+        if (mainActivity != null) {
+            mainActivity.refreshMediaList();
+        }
+        super.onDestroy();
     }
 }

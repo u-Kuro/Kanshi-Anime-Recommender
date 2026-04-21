@@ -62,10 +62,7 @@ public class ReleasedTabFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         context = requireContext();
-        // Log Errors
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Thread.setDefaultUncaughtExceptionHandler((thread, e) -> Utils.handleUncaughtException(context.getApplicationContext(), e, "ReleasedTabFragment"));
-        }
+
         backgroundTask = new BackgroundTask(context);
         uiTask = new UITask(context);
 
@@ -155,7 +152,7 @@ public class ReleasedTabFragment extends Fragment {
         return releasedView;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @RequiresApi(api = Build.VERSION_CODES.P)
     public void updateReleasedMedia(boolean shouldSetAdapter, boolean shouldScrollToTop) {
         if (shouldScrollToTop) {
             mediaReleasesList.scrollToPosition(0);
@@ -273,7 +270,8 @@ public class ReleasedTabFragment extends Fragment {
                 if (mediaList != null && !mediaList.isEmpty()) {
                     Collections.sort(mediaList, (a1, a2) -> Long.compare(a2.releaseDateMillis, a1.releaseDateMillis));
 
-                    MediaNotification media = mediaList.getFirst();
+                    //noinspection SequencedCollectionMethodCanBeUsed
+                    MediaNotification media = mediaList.get(0);
                     LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(media.releaseDateMillis), ZoneId.systemDefault());
 
                     groupedReleasedMedia.add(new MediaReleaseGroup(entry.getKey(), localDateTime, mediaList));

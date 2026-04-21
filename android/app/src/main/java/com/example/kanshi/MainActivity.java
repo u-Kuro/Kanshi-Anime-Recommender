@@ -206,11 +206,6 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint({"SetJavaScriptEnabled", "WrongViewCast"})
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
-        // Log Errors
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Thread.setDefaultUncaughtExceptionHandler((thread, e) -> Utils.handleUncaughtException(MainActivity.this.getApplicationContext(), e, "MainActivity"));
-        }
-
         // Create WebView App Instance
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         splashScreen.setKeepOnScreenCondition(() -> !pageLoaded);
