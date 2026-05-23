@@ -34,6 +34,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -192,14 +193,10 @@ public class MediaReleaseActivity extends AppCompatActivity {
         prefsEdit = prefs.edit();
         showUnseenMedia.set(prefs.getBoolean("showUnseenMedia", false));
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            final WindowInsetsController insetsController = getWindow().getInsetsController();
-            if (insetsController != null) {
-                insetsController.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-            }
+        getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+        final WindowInsetsController insetsController = getWindow().getInsetsController();
+        if (insetsController != null) {
+            insetsController.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
         }
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -295,15 +292,13 @@ public class MediaReleaseActivity extends AppCompatActivity {
 
                 prefsEdit.putString("mediaReleaseOption", selectedMediaReleaseOption.get()).apply();
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
-                    if (schedulesTabFragment != null) {
-                        schedulesTabFragment.updateScheduledMedia(false, true);
-                    }
-                    ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
-                    if (releasedTabFragment != null) {
-                        releasedTabFragment.updateReleasedMedia(false, true);
-                    }
+                SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
+                if (schedulesTabFragment != null) {
+                    schedulesTabFragment.updateScheduledMedia(false, true);
+                }
+                ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
+                if (releasedTabFragment != null) {
+                    releasedTabFragment.updateReleasedMedia(false, true);
                 }
             }
             @Override
@@ -321,15 +316,13 @@ public class MediaReleaseActivity extends AppCompatActivity {
             }
             prefsEdit.putBoolean("showUnseenMedia", showUnseenMedia.get()).apply();
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
-                if (schedulesTabFragment != null) {
-                    schedulesTabFragment.updateScheduledMedia(false, true);
-                }
-                ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
-                if (releasedTabFragment != null) {
-                    releasedTabFragment.updateReleasedMedia(false, true);
-                }
+            SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
+            if (schedulesTabFragment != null) {
+                schedulesTabFragment.updateScheduledMedia(false, true);
+            }
+            ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
+            if (releasedTabFragment != null) {
+                releasedTabFragment.updateReleasedMedia(false, true);
             }
         });
 
@@ -455,7 +448,7 @@ public class MediaReleaseActivity extends AppCompatActivity {
             customTabsIntent.launchUrl(
                 MediaReleaseActivity.this,
                 Uri.parse(url),
-                getResources().getColor(R.color.dark_blue),
+                ContextCompat.getColor(MediaReleaseActivity.this, R.color.dark_blue),
                 true
             );
             overridePendingTransition(R.anim.remove, R.anim.remove);

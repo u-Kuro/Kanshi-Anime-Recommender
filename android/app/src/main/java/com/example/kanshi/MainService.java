@@ -118,12 +118,10 @@ public class MainService extends Service {
         keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground",true);
 
         // Create a notification channel
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = getNotificationChannel();
-            channel.setSound(null, null);
-            NotificationManager notificationManager = getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
-        }
+        NotificationChannel channel = getNotificationChannel();
+        channel.setSound(null, null);
+        NotificationManager notificationManager = getSystemService(NotificationManager.class);
+        notificationManager.createNotificationChannel(channel);
 
         // If is still in app
         MainActivity mainActivity = MainActivity.getInstanceActivity();
@@ -209,47 +207,45 @@ public class MainService extends Service {
         WebView.setWebContentsDebuggingEnabled(DEBUG);
 
         // Start the service in the foreground
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Context context = this.getApplicationContext();
-            // Stop Service
-            Intent stopIntent = new Intent(context, MainService.class);
-            stopIntent.setAction(STOP_SERVICE_ACTION);
-            PendingIntent stopPendingIntent = PendingIntent.getService(context, 0, stopIntent, PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE);
-            // Set Keep App In Background
-            Intent setIntent = new Intent(context, MainService.class);
-            setIntent.setAction(SET_MAIN_SERVICE);
-            PendingIntent setPendingIntent = PendingIntent.getService(context, 0, setIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
-            // Open App
-            Intent intent = new Intent(context, MainActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
-            Notification notification = new NotificationCompat.Builder(context, APP_IN_BACKGROUND_CHANNEL)
-                .setContentTitle("Kanshi.")
-                .setSmallIcon(R.drawable.ic_stat_name)
-                .setContentIntent(pendingIntent)
-                .addInvisibleAction(R.drawable.ic_stat_name, "OPEN", pendingIntent)
-                .addAction(keepAppRunningInBackground ? R.drawable.check_white : R.drawable.disabled_white, keepAppRunningInBackground ? "ENABLED" : "DISABLED", setPendingIntent)
-                .addAction(R.drawable.stop_white, "EXIT", stopPendingIntent)
-                .setOnlyAlertOnce(true)
-                .setSilent(true)
-                .setShowWhen(false)
-                .setNumber(0)
-                .build();
+        Context context = this.getApplicationContext();
+        // Stop Service
+        Intent stopIntent = new Intent(context, MainService.class);
+        stopIntent.setAction(STOP_SERVICE_ACTION);
+        PendingIntent stopPendingIntent = PendingIntent.getService(context, 0, stopIntent, PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE);
+        // Set Keep App In Background
+        Intent setIntent = new Intent(context, MainService.class);
+        setIntent.setAction(SET_MAIN_SERVICE);
+        PendingIntent setPendingIntent = PendingIntent.getService(context, 0, setIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+        // Open App
+        Intent intent = new Intent(context, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+        Notification notification = new NotificationCompat.Builder(context, APP_IN_BACKGROUND_CHANNEL)
+            .setContentTitle("Kanshi.")
+            .setSmallIcon(R.drawable.ic_stat_name)
+            .setContentIntent(pendingIntent)
+            .addInvisibleAction(R.drawable.ic_stat_name, "OPEN", pendingIntent)
+            .addAction(keepAppRunningInBackground ? R.drawable.check_white : R.drawable.disabled_white, keepAppRunningInBackground ? "ENABLED" : "DISABLED", setPendingIntent)
+            .addAction(R.drawable.stop_white, "EXIT", stopPendingIntent)
+            .setOnlyAlertOnce(true)
+            .setSilent(true)
+            .setShowWhen(false)
+            .setNumber(0)
+            .build();
 
+        try {
+            startForeground(SERVICE_NOTIFICATION_ID, notification, FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+        } catch (Exception e) {
+            Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService");
+            logger.log(Level.SEVERE, e.getMessage(), e);
             try {
-                startForeground(SERVICE_NOTIFICATION_ID, notification, FOREGROUND_SERVICE_TYPE_DATA_SYNC);
-            } catch (Exception e) {
-                Utils.handleUncaughtException(MainService.this.getApplicationContext(), e, "MainService");
-                logger.log(Level.SEVERE, e.getMessage(), e);
-                try {
-                    startForeground(SERVICE_NOTIFICATION_ID, notification);
-                } catch (Exception ex) {
-                    Utils.handleUncaughtException(MainService.this.getApplicationContext(), ex, "MainService");
-                    logger.log(Level.SEVERE, ex.getMessage(), ex);
-                    stopForeground(true);
-                    stopSelf();
-                    return;
-                }
+                startForeground(SERVICE_NOTIFICATION_ID, notification);
+            } catch (Exception ex) {
+                Utils.handleUncaughtException(MainService.this.getApplicationContext(), ex, "MainService");
+                logger.log(Level.SEVERE, ex.getMessage(), ex);
+                stopForeground(true);
+                stopSelf();
+                return;
             }
         }
 
@@ -272,7 +268,7 @@ public class MainService extends Service {
         NotificationChannel channel = new NotificationChannel(APP_IN_BACKGROUND_CHANNEL, name, importance);
         channel.setDescription(description);
         channel.setShowBadge(false);
-        channel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
+        channel.setLockscreenVisibility(NotificationCompat.VISIBILITY_SECRET);
         return channel;
     }
 

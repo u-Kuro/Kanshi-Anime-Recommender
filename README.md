@@ -2,7 +2,7 @@
   <img src="./images/logo.png" height="128" alt="Logo"/>
   <h1 align="center">Animanga Recommendation System</h1>
   <div align="center">
-    <a href="https://github.com/u-Kuro/Kanshi-Anime-Recommender/releases/download/v9.5.1/Kanshi-v9.5.1.apk">
+    <a href="https://github.com/u-Kuro/Kanshi-Anime-Recommender/releases/download/v9.5.2/Kanshi-v9.5.2.apk">
       <img src="./images/android-download.svg" alt="Download"/>
     </a>
     <a href="https://kanshi.vercel.app">
@@ -26,11 +26,11 @@ The user enters their username from AniList (a popular anime and manga tracking 
 
 # Data Sources
 
-| Source | What Is Pulled |
-|---|---|
-| **Built-in catalogue** | Full details on thousands of anime, manga, and novels — titles, genres, descriptive tags, production studios, community ratings, popularity counts, release dates, and franchise relationships between titles. |
-| **User's AniList account** | Everything the user has tracked — what they've watched or read, whether they completed it, their personal rating, and how many episodes or chapters they've gotten through. |
-| **AniList (timestamp check)** | A single timestamp of when the user's account last changed. Checked every time the system opens to decide whether a fresh sync is needed. |
+| Source                        | What Is Pulled                                                                                                                                                                                                 |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Built-in catalogue**        | Full details on thousands of anime, manga, and novels — titles, genres, descriptive tags, production studios, community ratings, popularity counts, release dates, and franchise relationships between titles. |
+| **User's AniList account**    | Everything the user has tracked — what they've watched or read, whether they completed it, their personal rating, and how many episodes or chapters they've gotten through.                                    |
+| **AniList (timestamp check)** | A single timestamp of when the user's account last changed. Checked every time the system opens to decide whether a fresh sync is needed.                                                                      |
 
 ---
 
@@ -38,23 +38,23 @@ The user enters their username from AniList (a popular anime and manga tracking 
 
 Every title in the catalogue carries these fields, all of which are used in ranking and filtering:
 
-| Data Point | What It Represents |
-|---|---|
-| Genres | Broad content categories — Action, Romance, Horror, etc. |
-| Descriptive tags | Granular descriptors, each with a relevance percentage specific to that title (e.g. "Time Skip — 78%") |
-| Tag groupings | Higher-level categories above individual tags (e.g. "Setting," "Demographic") |
-| Production studio | Who made it, flagged as primary or supporting |
-| Community rating | Average score given by all AniList users (0–100) |
-| Tracking count | How many AniList users have added it to their list |
-| Favorites count | How many users have marked it as a favorite |
-| Trending rank | Current trending position on AniList |
-| Release status | Finished airing · Currently airing · Not yet released · Cancelled |
-| Format | TV series · Film · OVA · Web series · Manga · One-shot · Novel |
-| Season and year | e.g. Fall 2023 |
-| Country of origin | Japan, South Korea, China, etc. |
-| Franchise links | Whether this title is a sequel, prequel, adaptation, spin-off, or alternative version of another title |
-| Episode / chapter count | Total and how far the user has gotten |
-| Next episode air date | Exact timestamp of the upcoming episode for currently airing titles |
+| Data Point              | What It Represents                                                                                     |
+| ----------------------- | ------------------------------------------------------------------------------------------------------ |
+| Genres                  | Broad content categories — Action, Romance, Horror, etc.                                               |
+| Descriptive tags        | Granular descriptors, each with a relevance percentage specific to that title (e.g. "Time Skip — 78%") |
+| Tag groupings           | Higher-level categories above individual tags (e.g. "Setting," "Demographic")                          |
+| Production studio       | Who made it, flagged as primary or supporting                                                          |
+| Community rating        | Average score given by all AniList users (0–100)                                                       |
+| Tracking count          | How many AniList users have added it to their list                                                     |
+| Favorites count         | How many users have marked it as a favorite                                                            |
+| Trending rank           | Current trending position on AniList                                                                   |
+| Release status          | Finished airing · Currently airing · Not yet released · Cancelled                                      |
+| Format                  | TV series · Film · OVA · Web series · Manga · One-shot · Novel                                         |
+| Season and year         | e.g. Fall 2023                                                                                         |
+| Country of origin       | Japan, South Korea, China, etc.                                                                        |
+| Franchise links         | Whether this title is a sequel, prequel, adaptation, spin-off, or alternative version of another title |
+| Episode / chapter count | Total and how far the user has gotten                                                                  |
+| Next episode air date   | Exact timestamp of the upcoming episode for currently airing titles                                    |
 
 ---
 
@@ -98,11 +98,11 @@ A title that almost nobody has tracked is penalized proportionally — the algor
 
 ## Step 7: Classify each title into a tier
 
-| Tier | Condition | Meaning |
-|---|---|---|
-| 🟢 **Strong match** | Score above the average of titles the user has personally scored | The algorithm is confident this fits the user's taste |
-| 🟡 **Possible match** | Score above the overall average across all catalogue titles | Moderate signal |
-| ⚪ **Weak match** | Below the overall average | Little evidence this would appeal to the user |
+| Tier                 | Condition                                                        | Meaning                                               |
+| -------------------- | ---------------------------------------------------------------- | ----------------------------------------------------- |
+| 🟢 **Strong match**   | Score above the average of titles the user has personally scored | The algorithm is confident this fits the user's taste |
+| 🟡 **Possible match** | Score above the overall average across all catalogue titles      | Moderate signal                                       |
+| ⚪ **Weak match**     | Below the overall average                                        | Little evidence this would appeal to the user         |
 
 ## Step 8: Report how accurate the algorithm is
 

@@ -10,7 +10,6 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.Person;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -22,13 +21,13 @@ import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.app.Person;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -165,15 +164,7 @@ public class MediaNotificationManager {
                     alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nearestNotificationTime, pendingIntent);
                 }
             } else {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nearestNotificationTime, pendingIntent);
-                } else {
-                    try {
-                        alarmManager.setExact(AlarmManager.RTC_WAKEUP, nearestNotificationTime, pendingIntent);
-                    } catch (Exception ignored) {
-                        alarmManager.set(AlarmManager.RTC_WAKEUP, nearestNotificationTime, pendingIntent);
-                    }
-                }
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nearestNotificationTime, pendingIntent);
             }
         } else {
             allMediaNotification.put(media.mediaId + "-" + media.releaseEpisode, media);
@@ -364,20 +355,20 @@ public class MediaNotificationManager {
 
         final int maxNotificationCount = 6;
 
-        Notification.MessagingStyle styleMA = new Notification.MessagingStyle(new Person.Builder().setName("").build()).setGroupConversation(true);
+        NotificationCompat.MessagingStyle styleMA = new NotificationCompat.MessagingStyle(new Person.Builder().setName("").build()).setGroupConversation(true);
 
         // Put in Descending Order for in Adding items for the Message Style Notification
         List<MediaNotification> descendedMyMediaNotificationsValues = new ArrayList<>(myMediaNotifications.values());
-        Collections.sort(descendedMyMediaNotificationsValues, (a1, a2) -> Long.compare(a2.releaseDateMillis, a1.releaseDateMillis));
+        descendedMyMediaNotificationsValues.sort((a1, a2) -> Long.compare(a2.releaseDateMillis, a1.releaseDateMillis));
 
         // Get the first 6 items in the list to only show what can be seen
         List<MediaNotification> finalMyMediaNotificationsValues = descendedMyMediaNotificationsValues.subList(0, Math.min(maxNotificationCount, descendedMyMediaNotificationsValues.size()));
 
         for (MediaNotification media : finalMyMediaNotificationsValues) {
             Person.Builder itemBuilder = new Person.Builder()
-                    .setName(media.title)
-                    .setKey(String.valueOf(media.mediaId))
-                    .setBot(true);
+                .setName(media.title)
+                .setKey(String.valueOf(media.mediaId))
+                .setBot(true);
             if (media.imageByte != null) {
                 Bitmap image = BitmapFactory.decodeByteArray(media.imageByte, 0, media.imageByte.length);
                 itemBuilder.setIcon(createRoundIcon(image));
@@ -425,24 +416,24 @@ public class MediaNotificationManager {
         pendingIntent.cancel();
         pendingIntent = PendingIntent.getActivity(context.getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
-        Notification.Builder notificationMABuilder = new Notification.Builder(context.getApplicationContext(), MEDIA_RELEASES_CHANNEL)
+        NotificationCompat.Builder notificationMABuilder = new NotificationCompat.Builder(context.getApplicationContext(), MEDIA_RELEASES_CHANNEL)
                 .setSmallIcon(R.drawable.ic_stat_name)
                 .setContentTitle(notificationTitleMA)
                 .setStyle(styleMA)
                 .setContentIntent(pendingIntent)
                 .setGroup(MEDIA_RELEASE_NOTIFICATION_GROUP)
-                .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
+                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
                 .setNumber(0)
                 .setOnlyAlertOnce(true)
                 .setWhen(mostRecentlySentMyMediaNotificationTime)
                 .setShowWhen(true);
 
         // Other Media Released
-        Notification.MessagingStyle styleOA = new Notification.MessagingStyle(new Person.Builder().setName("").build()).setGroupConversation(true);
+        NotificationCompat.MessagingStyle styleOA = new NotificationCompat.MessagingStyle(new Person.Builder().setName("").build()).setGroupConversation(true);
 
         // Put in Ascending Order for in Adding items for the Message Style Notification
         List<MediaNotification> descendedMediaNotificationsValues = new ArrayList<>(mediaNotifications.values());
-        Collections.sort(descendedMediaNotificationsValues, (a1, a2) -> Long.compare(a2.releaseDateMillis, a1.releaseDateMillis));
+        descendedMediaNotificationsValues.sort((a1, a2) -> Long.compare(a2.releaseDateMillis, a1.releaseDateMillis));
 
         // Get the last 6 items in the list to only show what can be seen
         List<MediaNotification> finalMediaNotificationsValues = descendedMediaNotificationsValues.subList(0, Math.min(maxNotificationCount, descendedMediaNotificationsValues.size()));
@@ -493,14 +484,14 @@ public class MediaNotificationManager {
         }
         styleOA.setConversationTitle(notificationTitleOA);
 
-        Notification.Builder notificationOABuilder = new Notification.Builder(context.getApplicationContext(), MEDIA_RELEASES_CHANNEL)
+        NotificationCompat.Builder notificationOABuilder = new NotificationCompat.Builder(context.getApplicationContext(), MEDIA_RELEASES_CHANNEL)
                 .setContentTitle(notificationTitleOA)
                 .setSmallIcon(R.drawable.ic_stat_name)
                 .setStyle(styleOA)
-                .setPriority(Notification.PRIORITY_LOW)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setContentIntent(pendingIntent)
                 .setGroup(MEDIA_RELEASE_NOTIFICATION_GROUP)
-                .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
+                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
                 .setNumber(0)
                 .setOnlyAlertOnce(true)
                 .setWhen(mostRecentlySentOtherMediaNotificationTime)
@@ -514,11 +505,11 @@ public class MediaNotificationManager {
             notificationTitle = notificationTitle + " +" + mediaReleaseNotificationSize;
         }
 
-        Notification.Builder notificationSummaryBuilder = new Notification.Builder(context.getApplicationContext(), MEDIA_RELEASES_CHANNEL)
+        NotificationCompat.Builder notificationSummaryBuilder = new NotificationCompat.Builder(context.getApplicationContext(), MEDIA_RELEASES_CHANNEL)
                 .setContentTitle(notificationTitle)
                 .setSmallIcon(R.drawable.ic_stat_name)
                 .setStyle(styleOA)
-                .setPriority(Notification.PRIORITY_DEFAULT)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setContentIntent(pendingIntent)
                 .setGroup(MEDIA_RELEASE_NOTIFICATION_GROUP)
                 .setGroupSummary(true)
@@ -529,11 +520,11 @@ public class MediaNotificationManager {
         boolean hasNewMyMediaNotification = newMyMediaNotificationCount > 0;
         if (hasNewMyMediaNotification) { // Set with vibration
             notificationSummaryBuilder
-                    .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY);
+                    .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY);
         } else { // Set with no vibration
             notificationSummaryBuilder
-                    .setGroupAlertBehavior(Notification.GROUP_ALERT_CHILDREN)
-                    .setDefaults(Notification.DEFAULT_ALL)
+                    .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
+                    .setDefaults(NotificationCompat.DEFAULT_ALL)
                     .setVibrate(new long[]{0L});
         }
 

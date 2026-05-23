@@ -1,4 +1,4 @@
-const version = 481;
+const version = 482;
 let webVersionPromise
 export default async function getWebVersion() {
     if (webVersionPromise) return webVersionPromise

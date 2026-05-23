@@ -327,15 +327,13 @@ public class LocalServer extends NanoHTTPD {
             MediaNotificationManager.allMediaNotification.putAll(updatedMediaNotifications);
             MediaNotificationManager.writeMediaNotificationInFile(context, true);
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
-                if (schedulesTabFragment != null) {
-                    UIHandler.post(() -> schedulesTabFragment.updateScheduledMedia(false, false));
-                }
-                ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
-                if (releasedTabFragment != null) {
-                    UIHandler.post(() -> releasedTabFragment.updateReleasedMedia(false, false));
-                }
+            SchedulesTabFragment schedulesTabFragment = SchedulesTabFragment.getInstanceActivity();
+            if (schedulesTabFragment != null) {
+                UIHandler.post(() -> schedulesTabFragment.updateScheduledMedia(false, false));
+            }
+            ReleasedTabFragment releasedTabFragment = ReleasedTabFragment.getInstanceActivity();
+            if (releasedTabFragment != null) {
+                UIHandler.post(() -> releasedTabFragment.updateReleasedMedia(false, false));
             }
 
             return response;

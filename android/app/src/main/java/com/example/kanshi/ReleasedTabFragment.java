@@ -33,7 +33,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
@@ -43,7 +42,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@RequiresApi(api = Build.VERSION_CODES.N)
 public class ReleasedTabFragment extends Fragment {
     public static final String UPDATE_RELEASED_MEDIA = "UPDATE_RELEASED_MEDIA";
     public static WeakReference<ReleasedTabFragment> weakActivity;
@@ -169,7 +167,7 @@ public class ReleasedTabFragment extends Fragment {
             }
 
             ArrayList<MediaNotification> allMediaNotificationValues = new ArrayList<>(MediaNotificationManager.allMediaNotification.values());
-            Collections.sort(allMediaNotificationValues, Comparator.comparingLong(media -> media.releaseDateMillis));
+            allMediaNotificationValues.sort(Comparator.comparingLong(media -> media.releaseDateMillis));
 
             ArrayList<MediaNotification> mediaReleased = new ArrayList<>();
 
@@ -268,7 +266,7 @@ public class ReleasedTabFragment extends Fragment {
             for (Map.Entry<String, ArrayList<MediaNotification>> entry : map.entrySet()) {
                 ArrayList<MediaNotification> mediaList = entry.getValue();
                 if (mediaList != null && !mediaList.isEmpty()) {
-                    Collections.sort(mediaList, (a1, a2) -> Long.compare(a2.releaseDateMillis, a1.releaseDateMillis));
+                    mediaList.sort((a1, a2) -> Long.compare(a2.releaseDateMillis, a1.releaseDateMillis));
 
                     //noinspection SequencedCollectionMethodCanBeUsed
                     MediaNotification media = mediaList.get(0);
@@ -278,7 +276,7 @@ public class ReleasedTabFragment extends Fragment {
                 }
             }
 
-            Collections.sort(groupedReleasedMedia, (a1, a2) -> {
+            groupedReleasedMedia.sort((a1, a2) -> {
                 try {
                     if (a1.date == null && a2.date == null) return 0;
                     if (a1.date == null) return 1;

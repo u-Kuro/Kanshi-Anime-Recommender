@@ -46,7 +46,8 @@ public class LocalPersistence {
             writeToTempFile(object, tempFile);
             // Atomically replace the final file
             atomicReplace(tempFile, finalFile);
-        } catch (ClosedByInterruptException ignored) {
+        } catch (ClosedByInterruptException e) {
+            logger.log(Level.WARNING, "Failed to write object", e);
         } catch (Exception e) {
             handleException(context, e, "writeObjectToFile");
         } finally {

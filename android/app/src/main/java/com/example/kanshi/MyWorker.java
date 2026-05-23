@@ -10,7 +10,6 @@ import android.Manifest;
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.PendingIntent;
-import android.app.Person;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -24,7 +23,9 @@ import android.os.Looper;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.app.Person;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
@@ -38,7 +39,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -166,11 +166,11 @@ public class MyWorker extends Worker {
 
         final int maxNotificationCount = 6;
 
-        Notification.MessagingStyle styleMA = new Notification.MessagingStyle(new Person.Builder().setName("").build()).setGroupConversation(true);
+        NotificationCompat.MessagingStyle styleMA = new NotificationCompat.MessagingStyle(new Person.Builder().setName("").build()).setGroupConversation(true);
 
         // Put in Descending Order for in Adding items for the Message Style Notification
         List<MediaNotification> ascendedMyMediaNotificationsValues = new ArrayList<>(myMediaNotifications.values());
-        Collections.sort(ascendedMyMediaNotificationsValues, Comparator.comparingLong(a -> a.releaseDateMillis));
+        ascendedMyMediaNotificationsValues.sort(Comparator.comparingLong(a -> a.releaseDateMillis));
 
         // Get the last 6 items in the list to only show what can be seen
         int startIndexMA = Math.max(0, ascendedMyMediaNotificationsValues.size() - maxNotificationCount);
@@ -227,25 +227,29 @@ public class MyWorker extends Worker {
         seeMoreIntent.setAction("SEE_MORE_RELEASED");
         PendingIntent seeMorePendingIntent = PendingIntent.getBroadcast(this.getApplicationContext(), 0, seeMoreIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
 
-        Notification.Builder notificationMABuilder = new Notification.Builder(this.getApplicationContext(), MediaNotificationManager.MEDIA_RELEASES_CHANNEL)
+        NotificationCompat.Builder notificationMABuilder = new NotificationCompat.Builder(this.getApplicationContext(), MediaNotificationManager.MEDIA_RELEASES_CHANNEL)
                 .setSmallIcon(R.drawable.ic_stat_name)
                 .setContentTitle(notificationTitleMA)
                 .setStyle(styleMA)
                 .setContentIntent(pendingIntent)
                 .setGroup(MediaNotificationManager.MEDIA_RELEASE_NOTIFICATION_GROUP)
-                .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
+                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
                 .setNumber(0)
-                .addAction(R.drawable.more_white_horizontal, "SEE MORE", seeMorePendingIntent)
+                .addAction(new NotificationCompat.Action.Builder(
+                        R.drawable.more_white_horizontal,
+                        "SEE MORE",
+                        seeMorePendingIntent
+                ).build())
                 .setOnlyAlertOnce(true)
                 .setWhen(mostRecentlySentMyMediaNotificationTime)
                 .setShowWhen(true);
 
         // Other Media Released
-        Notification.MessagingStyle styleOA = new Notification.MessagingStyle(new Person.Builder().setName("").build()).setGroupConversation(true);
+        NotificationCompat.MessagingStyle styleOA = new NotificationCompat.MessagingStyle(new Person.Builder().setName("").build()).setGroupConversation(true);
 
         // Put in Ascending Order for in Adding items for the Message Style Notification
         List<MediaNotification> ascendedMediaNotificationsValues = new ArrayList<>(mediaNotifications.values());
-        Collections.sort(ascendedMediaNotificationsValues, Comparator.comparingLong(a -> a.releaseDateMillis));
+        ascendedMediaNotificationsValues.sort(Comparator.comparingLong(a -> a.releaseDateMillis));
 
         // Get the last 6 items in the list to only show what can be seen
         int startIndexOA = Math.max(0, ascendedMediaNotificationsValues.size() - maxNotificationCount);
@@ -292,14 +296,14 @@ public class MyWorker extends Worker {
         }
         styleOA.setConversationTitle(notificationTitleOA);
 
-        Notification.Builder notificationOABuilder = new Notification.Builder(this.getApplicationContext(), MediaNotificationManager.MEDIA_RELEASES_CHANNEL)
+        NotificationCompat.Builder notificationOABuilder = new NotificationCompat.Builder(this.getApplicationContext(), MediaNotificationManager.MEDIA_RELEASES_CHANNEL)
                 .setContentTitle(notificationTitleOA)
                 .setSmallIcon(R.drawable.ic_stat_name)
                 .setStyle(styleOA)
-                .setPriority(Notification.PRIORITY_LOW)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setContentIntent(pendingIntent)
                 .setGroup(MediaNotificationManager.MEDIA_RELEASE_NOTIFICATION_GROUP)
-                .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
+                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
                 .setNumber(0)
                 .addAction(R.drawable.more_white_horizontal, "SEE MORE", seeMorePendingIntent)
                 .setOnlyAlertOnce(true)
@@ -315,11 +319,11 @@ public class MyWorker extends Worker {
                 notificationTitle = notificationTitle + " +" + mediaReleaseNotificationSize;
             }
 
-            Notification.Builder notificationSummaryBuilder = new Notification.Builder(this.getApplicationContext(), MediaNotificationManager.MEDIA_RELEASES_CHANNEL)
+            NotificationCompat.Builder notificationSummaryBuilder = new NotificationCompat.Builder(this.getApplicationContext(), MediaNotificationManager.MEDIA_RELEASES_CHANNEL)
                     .setContentTitle(notificationTitle)
                     .setSmallIcon(R.drawable.ic_stat_name)
                     .setStyle(styleOA)
-                    .setPriority(Notification.PRIORITY_DEFAULT)
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                     .setContentIntent(pendingIntent)
                     .setGroup(MediaNotificationManager.MEDIA_RELEASE_NOTIFICATION_GROUP)
                     .setGroupSummary(true)
@@ -330,11 +334,11 @@ public class MyWorker extends Worker {
             boolean hasNewMyMediaNotification = !myMediaNotifications.isEmpty();
             if (hasNewMyMediaNotification) { // Set with vibration
                 notificationSummaryBuilder
-                        .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY);
+                        .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY);
             } else { // Set with no vibration
                 notificationSummaryBuilder
-                        .setGroupAlertBehavior(Notification.GROUP_ALERT_CHILDREN)
-                        .setDefaults(Notification.DEFAULT_ALL)
+                        .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
+                        .setDefaults(NotificationCompat.DEFAULT_ALL)
                         .setVibrate(new long[]{0L});
             }
 
@@ -380,9 +384,7 @@ public class MyWorker extends Worker {
                 MediaNotificationManager.allMediaNotification.remove(mediaKey);
             }
             LocalPersistence.writeObjectToFile(this.getApplicationContext(), MediaNotificationManager.allMediaNotification, "allMediaNotification");
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                Utils.exportReleasedMedia(this.getApplicationContext());
-            }
+            Utils.exportReleasedMedia(this.getApplicationContext());
         }
 
         for (MediaNotification media : newSentMedia) {
@@ -416,15 +418,7 @@ public class MyWorker extends Worker {
                     alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextMediaNotificationInfo.releaseDateMillis, newPendingIntent);
                 }
             } else {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextMediaNotificationInfo.releaseDateMillis, newPendingIntent);
-                } else {
-                    try {
-                        alarmManager.setExact(AlarmManager.RTC_WAKEUP, nextMediaNotificationInfo.releaseDateMillis, newPendingIntent);
-                    } catch (Exception ignored) {
-                        alarmManager.set(AlarmManager.RTC_WAKEUP, nextMediaNotificationInfo.releaseDateMillis, newPendingIntent);
-                    }
-                }
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextMediaNotificationInfo.releaseDateMillis, newPendingIntent);
             }
         }
     }
@@ -499,10 +493,9 @@ public class MyWorker extends Worker {
         } catch (Exception ignored) {}
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
     private void makePostRequest(PostRequestCallback callback, JSONObject jsonData) {
         CompletableFuture.supplyAsync(() -> postRequest(jsonData))
-                .thenAccept(callback::onResponse);
+            .thenAccept(callback::onResponse);
     }
     final ExecutorService executor = Executors.newFixedThreadPool(1);
     public JSONObject postRequest(JSONObject jsonData) {
@@ -662,15 +655,7 @@ public class MyWorker extends Worker {
                 alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newBackgroundUpdateTime, newPendingIntent);
             }
         } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newBackgroundUpdateTime, newPendingIntent);
-            } else {
-                try {
-                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, newBackgroundUpdateTime, newPendingIntent);
-                } catch (Exception ignored) {
-                    alarmManager.set(AlarmManager.RTC_WAKEUP, newBackgroundUpdateTime, newPendingIntent);
-                }
-            }
+            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, newBackgroundUpdateTime, newPendingIntent);
         }
     }
 }

@@ -1,9 +1,6 @@
 package com.example.kanshi;
 
-import android.os.Build;
-
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
@@ -14,7 +11,6 @@ public class MediaReleaseViewAdapter extends FragmentStateAdapter {
         super(fragmentActivity);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
     @NonNull
     @Override
     public Fragment createFragment(int position) {

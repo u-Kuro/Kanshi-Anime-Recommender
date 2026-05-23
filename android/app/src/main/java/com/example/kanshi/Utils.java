@@ -17,7 +17,6 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
-import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -29,6 +28,7 @@ import android.provider.MediaStore;
 import android.webkit.WebResourceResponse;
 
 import androidx.annotation.RequiresApi;
+import androidx.core.graphics.drawable.IconCompat;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -42,6 +42,7 @@ import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -307,12 +308,10 @@ public class Utils {
 
         try {
             exportMediaToPath(exportPath);
+        } catch (ClosedByInterruptException e) {
+            logger.log(Level.WARNING, "Failed to export released media", e);
         } catch (Exception e) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                handleUncaughtException(context.getApplicationContext(), e, "exportReleasedMedia");
-            } else {
-                logger.log(Level.SEVERE, "Failed to export released media", e);
-            }
+            handleUncaughtException(context.getApplicationContext(), e, "exportReleasedMedia");
         }
     }
 
@@ -425,9 +424,8 @@ public class Utils {
 //        }
 //    }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    public static Icon createRoundIcon(Bitmap bitmap) {
-        return Icon.createWithBitmap(createRoundBitmap(bitmap));
+    public static IconCompat createRoundIcon(Bitmap bitmap) {
+        return IconCompat.createWithBitmap(createRoundBitmap(bitmap));
     }
 
     public static Bitmap createRoundBitmap(Bitmap bitmap) {

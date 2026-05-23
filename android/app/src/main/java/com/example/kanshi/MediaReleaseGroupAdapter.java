@@ -20,6 +20,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.kanshi.utils.BackgroundTask;
@@ -156,7 +157,7 @@ public class MediaReleaseGroupAdapter extends RecyclerView.Adapter<RecyclerView.
                     uiTask.post(() -> {
                         // Set Time
                         if (hasReleaseTime) {
-                            holder.mediaReleaseTime.setTextColor(context.getResources().getColor(fontColorId));
+                            holder.mediaReleaseTime.setTextColor(ContextCompat.getColor(context, fontColorId));
                             holder.mediaReleaseTime.setText(releaseTime);
                             holder.mediaReleaseTime.setVisibility(View.VISIBLE);
                         } else {
@@ -165,10 +166,10 @@ public class MediaReleaseGroupAdapter extends RecyclerView.Adapter<RecyclerView.
 
                         // Set Title
                         if (hasTitle) {
-                            holder.mediaName.setTextColor(context.getResources().getColor(fontColorId));
+                            holder.mediaName.setTextColor(ContextCompat.getColor(context, fontColorId));
                             holder.mediaName.setText(title);
                         } else {
-                            holder.mediaName.setTextColor(context.getResources().getColor(R.color.grey));
+                            holder.mediaName.setTextColor(ContextCompat.getColor(context, R.color.grey));
                             holder.mediaName.setText(R.string.na);
                         }
 
@@ -188,10 +189,10 @@ public class MediaReleaseGroupAdapter extends RecyclerView.Adapter<RecyclerView.
 
                         // Set Release Info
                         if (hasMessage) {
-                            holder.mediaReleaseInfo.setTextColor(context.getResources().getColor(fontColorId));
+                            holder.mediaReleaseInfo.setTextColor(ContextCompat.getColor(context, fontColorId));
                             holder.mediaReleaseInfo.setText(media.message);
                         } else {
-                            holder.mediaReleaseInfo.setTextColor(context.getResources().getColor(R.color.grey));
+                            holder.mediaReleaseInfo.setTextColor(ContextCompat.getColor(context, R.color.grey));
                             holder.mediaReleaseInfo.setText(R.string.na);
                         }
                     }, taskId);
@@ -218,28 +219,24 @@ public class MediaReleaseGroupAdapter extends RecyclerView.Adapter<RecyclerView.
         });
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
     public void add(int position, GroupedListItem item) {
         if (position == items.size()) {
             items.add(position, item);
             notifyItemInserted(position);
         }
     }
-    @RequiresApi(api = Build.VERSION_CODES.N)
     public void set(int position, GroupedListItem item) {
         if (position < items.size()) {
             items.set(position, item);
             notifyItemChanged(position);
         }
     }
-    @RequiresApi(api = Build.VERSION_CODES.N)
     public void remove(int position) {
         if (position < items.size()) {
             items.remove(position);
             notifyItemRemoved(position);
         }
     }
-    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public int getItemCount() {
         return items.size();
@@ -280,7 +277,6 @@ public class MediaReleaseGroupAdapter extends RecyclerView.Adapter<RecyclerView.
             this.mediaReleaseTime = view.findViewById(R.id.media_release_time);
         }
     }
-    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
         backgroundTask.shutDownNow();

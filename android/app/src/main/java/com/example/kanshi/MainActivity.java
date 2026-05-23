@@ -93,6 +93,7 @@ import java.util.regex.Pattern;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
 import androidx.webkit.WebViewAssetLoader;
@@ -225,14 +226,10 @@ public class MainActivity extends AppCompatActivity {
         permissionIsAsked = prefs.getBoolean("permissionIsAsked", false);
         // Others
         // Show status bar
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            final WindowInsetsController insetsController = getWindow().getInsetsController();
-            if (insetsController != null) {
-                insetsController.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-            }
+        getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+        final WindowInsetsController insetsController = getWindow().getInsetsController();
+        if (insetsController != null) {
+            insetsController.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
         }
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -264,9 +261,7 @@ public class MainActivity extends AppCompatActivity {
         recheckStatusBar();
 
         // Add WebView on Layout
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            mediaWebView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
-        }
+        mediaWebView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
 
         // Warmup Custom Tab
         customTabsIntent.warmup(MainActivity.this);
@@ -349,12 +344,10 @@ public class MainActivity extends AppCompatActivity {
                 mediaWebView.evaluateJS("(()=>{window.shouldUpdateNotifications=true})();");
                 mediaWebView.evaluateJS("(()=>{window.keepAppRunningInBackground=" + (keepAppRunningInBackground ? "true" : "false") + "})();");
                 mediaWebView.evaluateJS("window?.setKeepAppRunningInBackground?.(" + (keepAppRunningInBackground ? "true" : "false")+")");
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-                    Network network = connectivityManager.getActiveNetwork();
-                    if (network == null) {
-                        showToast(Toast.makeText(getApplicationContext(), "You are currently offline", Toast.LENGTH_LONG));
-                    }
+                ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                Network network = connectivityManager.getActiveNetwork();
+                if (network == null) {
+                    showToast(Toast.makeText(getApplicationContext(), "You are currently offline", Toast.LENGTH_LONG));
                 }
                 CookieManager cookieManager = CookieManager.getInstance();
                 cookieManager.setAcceptCookie(true);
@@ -409,14 +402,14 @@ public class MainActivity extends AppCompatActivity {
                                 customTabsIntent.launchUrl(
                                     MainActivity.this,
                                     Uri.parse("https://" + url.substring(9)),
-                                    getResources().getColor(customTabColor),
+                                    ContextCompat.getColor(MainActivity.this, customTabColor),
                                     true
                                 );
                             } catch (Exception ignored) {
                                 customTabsIntent.launchUrl(
                                     MainActivity.this,
                                     request.getUrl(),
-                                    getResources().getColor(customTabColor),
+                                    ContextCompat.getColor(MainActivity.this, customTabColor),
                                     true
                                 );
                             }
@@ -424,7 +417,7 @@ public class MainActivity extends AppCompatActivity {
                             customTabsIntent.launchUrl(
                                 MainActivity.this,
                                 request.getUrl(),
-                                getResources().getColor(customTabColor),
+                                ContextCompat.getColor(MainActivity.this, customTabColor),
                                 true
                             );
                         }
@@ -517,9 +510,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        if (!permissionIsAsked
+        if (
+            !permissionIsAsked
             && ActivityCompat.checkSelfPermission(MainActivity.this, POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-            && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
         ) {
             notificationPermission.launch(POST_NOTIFICATIONS);
         }
@@ -788,7 +781,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-        @RequiresApi(api = Build.VERSION_CODES.N)
         @JavascriptInterface
         public void isOnline(boolean online) {
             try {
@@ -912,15 +904,7 @@ public class MainActivity extends AppCompatActivity {
                 alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
             }
         } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
-            } else {
-                try {
-                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
-                } catch (SecurityException ignored) {
-                    alarmManager.set(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
-                }
-            }
+            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
         }
     }
     public void setReleaseNotification() {
@@ -943,15 +927,7 @@ public class MainActivity extends AppCompatActivity {
                     alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, lastSentNotificationTime, newPendingIntent);
                 }
             } else {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, lastSentNotificationTime, newPendingIntent);
-                } else {
-                    try {
-                        alarmManager.setExact(AlarmManager.RTC_WAKEUP, lastSentNotificationTime, newPendingIntent);
-                    } catch (SecurityException ignored) {
-                        alarmManager.set(AlarmManager.RTC_WAKEUP, lastSentNotificationTime, newPendingIntent);
-                    }
-                }
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, lastSentNotificationTime, newPendingIntent);
             }
         }
     }
@@ -1105,7 +1081,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
     private void isAppConnectionAvailable(ConnectivityCallback callback) {
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         Network network = connectivityManager.getActiveNetwork();

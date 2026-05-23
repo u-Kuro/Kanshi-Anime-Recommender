@@ -322,7 +322,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 if (isActivityPaused) return true;
                 String url = request.getUrl().toString();
-                boolean isRedirect = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && request.isRedirect();
+                boolean isRedirect = request.isRedirect();
                 if (
                     // Should Load In Another App
                     !url.startsWith("http")

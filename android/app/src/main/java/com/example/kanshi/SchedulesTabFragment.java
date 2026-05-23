@@ -33,7 +33,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
@@ -43,7 +42,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@RequiresApi(api = Build.VERSION_CODES.N)
 public class SchedulesTabFragment extends Fragment {
     public static final String UPDATE_SCHEDULED_MEDIA = "UPDATE_SCHEDULED_MEDIA";
     public static WeakReference<SchedulesTabFragment> weakActivity;
@@ -169,7 +167,7 @@ public class SchedulesTabFragment extends Fragment {
             }
 
             ArrayList<MediaNotification> allMediaNotificationValues = new ArrayList<>(MediaNotificationManager.allMediaNotification.values());
-            Collections.sort(allMediaNotificationValues, (media1, media2) -> Long.compare(media2.releaseDateMillis, media1.releaseDateMillis));
+            allMediaNotificationValues.sort((media1, media2) -> Long.compare(media2.releaseDateMillis, media1.releaseDateMillis));
 
             ArrayList<MediaNotification> mediaSchedules = new ArrayList<>();
 
@@ -267,7 +265,7 @@ public class SchedulesTabFragment extends Fragment {
             for (Map.Entry<String, ArrayList<MediaNotification>> entry : map.entrySet()) {
                 ArrayList<MediaNotification> mediaList = entry.getValue();
                 if (mediaList != null && !mediaList.isEmpty()) {
-                    Collections.sort(mediaList, Comparator.comparingLong(a -> a.releaseDateMillis));
+                    mediaList.sort(Comparator.comparingLong(a -> a.releaseDateMillis));
 
                     //noinspection SequencedCollectionMethodCanBeUsed
                     MediaNotification media = mediaList.get(0);
@@ -277,7 +275,7 @@ public class SchedulesTabFragment extends Fragment {
                 }
             }
 
-            Collections.sort(groupedScheduledMedia, (a1, a2) -> {
+            groupedScheduledMedia.sort((a1, a2) -> {
                 try {
                     if (a1.date == null && a2.date == null) return 0;
                     if (a1.date == null) return 1;
