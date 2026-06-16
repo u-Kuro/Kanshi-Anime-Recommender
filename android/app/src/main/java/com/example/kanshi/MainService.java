@@ -491,7 +491,6 @@ public class MainService extends Service {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (Intent.ACTION_USER_PRESENT.equals(intent.getAction())) {
-                    Log.d("MainService", "User unlocked - stopping");
                     stopForeground(true);
                     stopSelf();
                 }

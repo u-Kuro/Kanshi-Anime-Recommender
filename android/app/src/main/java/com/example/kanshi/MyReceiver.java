@@ -19,14 +19,10 @@ public class MyReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (intent == null) { return; }
         String action = intent.getAction();
-        if (
-            "MEDIA_NOTIFICATION".equals(action) ||
-            Intent.ACTION_BOOT_COMPLETED.equals(action) ||
-            "android.intent.action.QUICKBOOT_POWERON".equals(action)
-        ) {
+        if ("MEDIA_NOTIFICATION".equals(action)) {
             String uniqueWorkName = "MEDIA_NOTIFICATION";
             Data data = new Data.Builder()
-                .putBoolean("isBooted", !(uniqueWorkName.equals(action)))
+                .putBoolean("isBooted", false)
                 .putString("action", uniqueWorkName)
                 .build();
             OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(MyWorker.class)
