@@ -2,7 +2,7 @@
   <img src="./images/logo.png" height="128" alt="Logo"/>
   <h1 align="center">Animanga Recommendation System</h1>
   <div align="center">
-    <a href="https://github.com/u-Kuro/Kanshi-Anime-Recommender/releases/download/v9.5.3/Kanshi-v9.5.3.apk">
+    <a href="https://github.com/u-Kuro/Kanshi-Anime-Recommender/releases/download/v9.5.4/Kanshi-v9.5.4.apk">
       <img src="./images/android-download.svg" alt="Download"/>
     </a>
     <a href="https://kanshi.vercel.app">
