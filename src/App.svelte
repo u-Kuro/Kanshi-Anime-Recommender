@@ -198,6 +198,23 @@
 						}, 750);
 					});
 
+					// Reprocess Old State
+					try {
+						await processRecommendedMediaEntries({ initList: true })
+					} catch (ex) { console.error(ex) }
+					try {
+						await getOrderedMediaOptions(false)
+					} catch (ex) { console.error(ex) }
+					try {
+						await scheduleMediaNotifications()
+					} catch (ex) { console.error(ex) }
+					try {
+						await window.updateMediaNotifications(true)
+					} catch (ex) { console.error(ex) }
+					try {
+						await mediaManager({ updateRecommendedMediaList: true, initList: true })
+					} catch (ex) { console.error(ex) }
+
 					let shouldExport = await autoExportIsPastDate();
 					$exportPathIsAvailable = $exportPathIsAvailable ?? (await getIDBData("exportPathIsAvailable"));
 					$autoExport = $autoExport ?? (await getIDBData("autoExport"));
@@ -208,10 +225,16 @@
 						} catch (ex) { console.error(ex) }
 					}
 
+					// Init New State
 					let dataIsUpdated;
 					try {
 						JSBridge.setShouldProcessRecommendedEntries(true);
 					} catch (ex) { console.error (ex) }
+
+					// Update for New State
+					try {
+						await updateTagInfo(false);
+					} catch (ex) { console.error(ex) }
 
 					try {
 						await requestUserEntries({ initList: true })
@@ -223,50 +246,57 @@
 					} catch (ex) { console.error(ex) }
 					dataIsUpdated = dataIsUpdated || window.KanshiBackgroundshouldProcessRecommendedEntries;
 
-					try {
-						await updateTagInfo(false);
-					} catch (ex) { console.error(ex) }
-
-					let recommendationListIsProcessed
+					// Process New State
 					if (dataIsUpdated) {
+						let recommendationListIsProcessed = true
+
 						try {
 							await processRecommendedMediaEntries({ initList: true })
+						} catch (ex) {
+							recommendationListIsProcessed = false
+							console.error(ex)
+						}
+						try {
 							await getOrderedMediaOptions(false)
+						} catch (ex) {
+							recommendationListIsProcessed = false
+							console.error(ex)
+						}
+						try {
 							await scheduleMediaNotifications()
+						} catch (ex) {
+							recommendationListIsProcessed = false
+							console.error(ex)
+						}
+						try {
 							await window.updateMediaNotifications(true)
+						} catch (ex) {
+							recommendationListIsProcessed = false
+							console.error(ex)
+						}
+
+						if (recommendationListIsProcessed) {
 							try {
 								JSBridge.setShouldProcessRecommendedEntries(false)
 							} catch (ex) { console.error(ex) }
-							recommendationListIsProcessed = true
-						} catch (ex) { console.error(ex) }
-					} else {
-						try {
-							JSBridge.setShouldProcessRecommendedEntries(false)
-						} catch (ex) { console.error(ex) }
-					}
-					
-					try {
-						if (recommendationListIsProcessed) {
 							try {
 								await mediaManager({ updateRecommendedMediaList: true, initList: true })
-								try {
-									JSBridge.setShouldManageMedia(false);
-								} catch (ex) { console.error(ex) }
-							} catch (ex) { console.error(ex) }
-						} else {
-							try {
 								JSBridge.setShouldManageMedia(false);
 							} catch (ex) { console.error(ex) }
 						}
-					} catch (ex) { console.error(ex) }
+						
+						try {
+							await exportUserData({ initList: true })
+							shouldExport = false
+						} catch (ex) { console.error(ex) }
 
-					shouldExport = shouldExport || dataIsUpdated;
-					if (shouldExport && $exportPathIsAvailable && $autoExport) {
+					} else if (shouldExport && $exportPathIsAvailable && $autoExport) {
 						try {
 							await exportUserData({ initList: true })
 							shouldExport = false
 						} catch (ex) { console.error(ex) }
 					}
+										
 					JSBridge.backgroundUpdateIsFinished(true);
 				} catch (ex) {
 					try {
