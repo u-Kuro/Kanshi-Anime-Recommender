@@ -166,7 +166,7 @@ public class MyWorker extends Worker {
 
         final int maxNotificationCount = 6;
 
-        NotificationCompat.MessagingStyle styleMA = new NotificationCompat.MessagingStyle(new Person.Builder().setName("").build()).setGroupConversation(true);
+        NotificationCompat.MessagingStyle styleMA = new NotificationCompat.MessagingStyle(MediaNotificationManager.mediaGroupNotificationStyle).setGroupConversation(true);
 
         // Put in Descending Order for in Adding items for the Message Style Notification
         List<MediaNotification> ascendedMyMediaNotificationsValues = new ArrayList<>(myMediaNotifications.values());
@@ -245,7 +245,7 @@ public class MyWorker extends Worker {
                 .setShowWhen(true);
 
         // Other Media Released
-        NotificationCompat.MessagingStyle styleOA = new NotificationCompat.MessagingStyle(new Person.Builder().setName("").build()).setGroupConversation(true);
+        NotificationCompat.MessagingStyle styleOA = new NotificationCompat.MessagingStyle(MediaNotificationManager.mediaGroupNotificationStyle).setGroupConversation(true);
 
         // Put in Ascending Order for in Adding items for the Message Style Notification
         List<MediaNotification> ascendedMediaNotificationsValues = new ArrayList<>(mediaNotifications.values());

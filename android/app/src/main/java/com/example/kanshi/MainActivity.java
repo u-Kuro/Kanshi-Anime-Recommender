@@ -579,11 +579,11 @@ public class MainActivity extends AppCompatActivity {
             mediaWebView.evaluateJS(
                 "window?.returnedAppIsVisible?.(true);" + // Should Be Runned First
                 (shouldRefreshList ?
-                        "window?.shouldRefreshMediaList?.("
-                                + (shouldProcessRecommendedEntries ? "true" : "false") + ","
-                                + (shouldManageMedia ? "true" : "false")
-                                + ");"
-                        : "window?.checkEntries?.();")
+                    "window?.shouldRefreshMediaList?.("
+                        + (shouldProcessRecommendedEntries ? "true" : "false") + ","
+                        + (shouldManageMedia ? "true" : "false")
+                        + ");"
+                    : "window?.checkEntries?.();")
             );
             shouldRefreshList = shouldProcessRecommendedEntries = shouldManageMedia = false;
         }
