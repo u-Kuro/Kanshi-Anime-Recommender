@@ -20,7 +20,7 @@ function serve() {
 			if (server) return;
 			server = spawn('pnpm', ['run', 'start', '--', '--dev'], {
 				stdio: ['ignore', 'inherit', 'inherit'],
-				shell: true
+				shell: false
 			});
 
 			process.on('SIGTERM', toExit);
