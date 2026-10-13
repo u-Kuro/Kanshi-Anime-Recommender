@@ -78,7 +78,7 @@ This produces a raw preference score per genre and tag, essentially a map of wha
 
 ## Step 3: Down-weight uncertain preferences
 
-Preferences that appear in very few titles are less reliable. If a genre or tag shows up in fewer titles than average across the user's history, the preference score for it is reduced proportionally. Preferences with below-average scores are penalized further. Only attributes that pass both thresholds carry forward into scoring other titles.
+Preferences that appear in very few titles are less reliable. If a genre or tag shows up in fewer titles than average across the user's history, the preference score for it is reduced proportionally.
 
 ## Step 4: Optionally train two trend models
 
