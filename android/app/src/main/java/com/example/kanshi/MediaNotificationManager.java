@@ -58,7 +58,7 @@ public class MediaNotificationManager {
     public static long nearestNotificationTime = 0L;
     public static final Person mediaGroupNotificationStyle = new Person.Builder().setName("Kanshi.").build();
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    @RequiresApi(api = Build.VERSION_CODES.R)
     public static void scheduleMediaNotification(Context context, long mediaId, String title, long releaseEpisode, long maxEpisode, long releaseDateMillis, String imageUrl, String mediaUrl, String userStatus, long episodeProgress) {
         context = context.getApplicationContext();
         createMediaReleasesNotificationChannel(context);
@@ -80,11 +80,7 @@ public class MediaNotificationManager {
                         byte[] imageByte = null;
                         ByteArrayOutputStream stream = new ByteArrayOutputStream();
                         if (imageBitmap != null) {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                imageBitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 25, stream);
-                            } else {
-                                imageBitmap.compress(Bitmap.CompressFormat.WEBP, 25, stream);
-                            }
+                            imageBitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 25, stream);
                             imageByte = stream.toByteArray();
                         } else {
                             try {
@@ -92,11 +88,7 @@ public class MediaNotificationManager {
                                 if ($imageBitmap == null || $imageBitmap.length == 0) {
                                     imageBitmap = BitmapFactory.decodeResource(finalContext.getResources(), R.drawable.ic_launcher_round);
                                     imageBitmap = createRoundBitmap(imageBitmap);
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                        imageBitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 25, stream);
-                                    } else {
-                                        imageBitmap.compress(Bitmap.CompressFormat.WEBP, 25, stream);
-                                    }
+                                    imageBitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 25, stream);
                                     $imageBitmap = stream.toByteArray();
                                     if ($imageBitmap.length > 0) {
                                         LocalPersistence.writeObjectToFile(finalContext, $imageBitmap, "notificationLogoIcon");
@@ -114,9 +106,7 @@ public class MediaNotificationManager {
                             }
                         }
                     } catch (Exception e) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            Utils.handleUncaughtException(finalContext.getApplicationContext(), e, "notificationImageDownloaderExecutor");
-                        }
+                        Utils.handleUncaughtException(finalContext.getApplicationContext(), e, "notificationImageDownloaderExecutor");
                         logger.log(Level.SEVERE, e.getMessage(), e);
                     }
                 });

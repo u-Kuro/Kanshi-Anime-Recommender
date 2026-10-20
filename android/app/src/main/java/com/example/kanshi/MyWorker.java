@@ -53,6 +53,9 @@ import java.util.concurrent.TimeUnit;
 
 public class MyWorker extends Worker {
     public final String RETRY_KEY = "Kanshi-Media-Recommendation.Retry";
+    private static final String RETRY_AFTER_MILLIS_KEY = "Kanshi-Media-Recommendation.RetryAfterMillis";
+    private static final long DEFAULT_RETRY_DELAY_MILLIS = 60_000L;
+    private static final long MAX_RETRY_DELAY_MILLIS = 2_147_483_000L;
     public MyWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
     }
@@ -433,12 +436,15 @@ public class MyWorker extends Worker {
             JSONObject jsonData = new JSONObject();
             jsonData.put("query", query);
             makePostRequest(response -> {
-                if (response != null) {
-                    JSONObject data = response.optJSONObject("data");
-                    if (response.has(RETRY_KEY) || data == null) {
-                        // Call Another
-                        new android.os.Handler(Looper.getMainLooper()).postDelayed(() -> getAiringMedia(media, retries + 1), 60000);
-                    } else {
+                if (response == null) {
+                    new android.os.Handler(Looper.getMainLooper()).postDelayed(() -> getAiringMedia(media, retries + 1), DEFAULT_RETRY_DELAY_MILLIS);
+                    return;
+                }
+                JSONObject data = response.optJSONObject("data");
+                if (response.has(RETRY_KEY) || data == null) {
+                    long retryDelayMillis = getRetryDelayMillis(response);
+                    new android.os.Handler(Looper.getMainLooper()).postDelayed(() -> getAiringMedia(media, retries + 1), retryDelayMillis);
+                } else {
                         JSONObject airingSchedule = data.optJSONObject("AiringSchedule");
                         if (airingSchedule != null) {
                             if (MediaNotificationManager.allMediaNotification.isEmpty()) {
@@ -488,9 +494,30 @@ public class MyWorker extends Worker {
                             }
                         }
                     }
-                }
             },jsonData);
         } catch (Exception ignored) {}
+    }
+
+    private long parseRetryAfterMillis(String retryAfterHeader) {
+        if (retryAfterHeader == null) return DEFAULT_RETRY_DELAY_MILLIS;
+        String value = retryAfterHeader.trim();
+        if (!value.matches("\\d+")) return DEFAULT_RETRY_DELAY_MILLIS;
+        try {
+            long seconds = Long.parseLong(value);
+            if (seconds <= 0 || seconds > MAX_RETRY_DELAY_MILLIS / 1000L) return DEFAULT_RETRY_DELAY_MILLIS;
+            return seconds * 1000L;
+        } catch (NumberFormatException ignored) {
+            return DEFAULT_RETRY_DELAY_MILLIS;
+        }
+    }
+
+    private long getRetryDelayMillis(JSONObject response) {
+        if (response == null) return DEFAULT_RETRY_DELAY_MILLIS;
+        Object value = response.opt(RETRY_AFTER_MILLIS_KEY);
+        if (!(value instanceof Number)) return DEFAULT_RETRY_DELAY_MILLIS;
+        double delayMillis = ((Number) value).doubleValue();
+        if (delayMillis <= 0 || delayMillis > MAX_RETRY_DELAY_MILLIS || delayMillis != Math.floor(delayMillis)) return DEFAULT_RETRY_DELAY_MILLIS;
+        return (long) delayMillis;
     }
 
     private void makePostRequest(PostRequestCallback callback, JSONObject jsonData) {
@@ -536,10 +563,13 @@ public class MyWorker extends Worker {
                         return responseJSON;
                     }
                 } else {
+                    String retryAfterHeader = urlConnection.getHeaderField("Retry-After");
+                    long retryAfterMillis = parseRetryAfterMillis(retryAfterHeader);
                     urlConnection.disconnect();
                     JSONObject jsonObject = new JSONObject();
                     try {
-                        jsonObject.put(RETRY_KEY,true);
+                        jsonObject.put(RETRY_KEY, true);
+                        jsonObject.put(RETRY_AFTER_MILLIS_KEY, retryAfterMillis);
                         return jsonObject;
                     } catch (Exception ignored) {
                         return null;

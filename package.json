@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@11.0.5",
+  "packageManager": "pnpm@12.14.0",
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",

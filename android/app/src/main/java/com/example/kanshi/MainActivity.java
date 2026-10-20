@@ -57,6 +57,7 @@ import android.provider.DocumentsContract;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
@@ -64,6 +65,7 @@ import android.view.WindowManager;
 import android.webkit.ConsoleMessage;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
+import android.webkit.RenderProcessGoneDetail;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -96,6 +98,8 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.splashscreen.SplashScreen;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.webkit.WebViewAssetLoader;
 
 import com.example.kanshi.localHTTPServer.LocalServer;
@@ -232,7 +236,7 @@ public class MainActivity extends AppCompatActivity {
             insetsController.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
         }
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).show(WindowInsetsCompat.Type.statusBars());
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
 
         // Add On Press Back Listener
@@ -270,17 +274,13 @@ public class MainActivity extends AppCompatActivity {
         WebSettings webSettings = mediaWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
-        webSettings.setSaveFormData(true);
         webSettings.setAllowFileAccess(true);
         webSettings.setAllowContentAccess(true);
         webSettings.setLoadsImagesAutomatically(true);
-        webSettings.setDatabaseEnabled(true);
         webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
-        webSettings.setAllowFileAccessFromFileURLs(true);
         webSettings.setBlockNetworkLoads(false);
         webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
         webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-        webSettings.setAllowUniversalAccessFromFileURLs(true);
         webSettings.setMediaPlaybackRequiresUserGesture(false);
         webSettings.setDefaultFontSize(16);
 
@@ -331,7 +331,7 @@ public class MainActivity extends AppCompatActivity {
                     pageLoaded = true;
                     MediaWebView mediaWebView = (MediaWebView) view;
                     mediaWebView.evaluateJS("(()=>{window.shouldUpdateNotifications=true})();");
-                    mediaWebView.evaluateJS("(()=>{window.keepAppRunningInBackground=" + (keepAppRunningInBackground ? "true" : "false") + "})();");
+                    mediaWebView.evaluateJS("(()=>{window.keepAppRunningInBackground=" + keepAppRunningInBackground + "})();");
                 }
                 super.onPageStarted(view, url, favicon);
             }
@@ -342,8 +342,8 @@ public class MainActivity extends AppCompatActivity {
                 shouldRefreshList = shouldProcessRecommendedEntries = shouldManageMedia = false;
                 MediaWebView mediaWebView = (MediaWebView) view;
                 mediaWebView.evaluateJS("(()=>{window.shouldUpdateNotifications=true})();");
-                mediaWebView.evaluateJS("(()=>{window.keepAppRunningInBackground=" + (keepAppRunningInBackground ? "true" : "false") + "})();");
-                mediaWebView.evaluateJS("window?.setKeepAppRunningInBackground?.(" + (keepAppRunningInBackground ? "true" : "false")+")");
+                mediaWebView.evaluateJS("(()=>{window.keepAppRunningInBackground=" + (keepAppRunningInBackground) + "})();");
+                mediaWebView.evaluateJS("window?.setKeepAppRunningInBackground?.(" + (keepAppRunningInBackground)+")");
                 ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
                 Network network = connectivityManager.getActiveNetwork();
                 if (network == null) {
@@ -359,6 +359,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
+            @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 // In App Browsing
@@ -374,7 +375,7 @@ public class MainActivity extends AppCompatActivity {
                     intent.putExtra("url", url);
                     intent.putExtra("fromMainActivity", true);
                     startActivity(intent);
-                    overridePendingTransition(R.anim.fade_in, R.anim.remove);
+                    overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, R.anim.fade_in, R.anim.remove);
                 } else if (
                     url.startsWith("https://www.youtu.be")
                     || url.startsWith("https://m.youtu.be")
@@ -421,11 +422,32 @@ public class MainActivity extends AppCompatActivity {
                                 true
                             );
                         }
-                        overridePendingTransition(R.anim.fade_in, R.anim.remove);
+                        overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, R.anim.fade_in, R.anim.remove);
                     } catch (Exception ignored) {
                         showToast(Toast.makeText(getApplicationContext(), "Can't open the link", Toast.LENGTH_LONG));
                     }
                 }
+                return true;
+            }
+
+            @Override
+            public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+                if (view.getParent() instanceof ViewGroup) {
+                    ((ViewGroup) view.getParent()).removeView(view);
+                }
+
+                boolean isMainWebView = view == mediaWebView;
+
+                view.destroy();
+
+                if (isMainWebView) {
+                    mediaWebView = null;
+                }
+
+                if (isMainWebView) {
+                    recreate();
+                }
+
                 return true;
             }
         });
@@ -560,10 +582,11 @@ public class MainActivity extends AppCompatActivity {
         super.onStop();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     @Override
     protected void onResume() {
         isInApp = true;
-        overridePendingTransition(R.anim.none, R.anim.fade_out);
+        overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, R.anim.none, R.anim.fade_out);
         Intent intent = new Intent(this, MainService.class);
         stopService(intent);
         super.onResume();
@@ -580,8 +603,8 @@ public class MainActivity extends AppCompatActivity {
                 "window?.returnedAppIsVisible?.(true);" + // Should Be Runned First
                 (shouldRefreshList ?
                     "window?.shouldRefreshMediaList?.("
-                        + (shouldProcessRecommendedEntries ? "true" : "false") + ","
-                        + (shouldManageMedia ? "true" : "false")
+                        + (shouldProcessRecommendedEntries) + ","
+                        + (shouldManageMedia)
                         + ");"
                     : "window?.checkEntries?.();")
             );
@@ -594,8 +617,8 @@ public class MainActivity extends AppCompatActivity {
         try {
             new Handler(Looper.getMainLooper()).post(() -> mediaWebView.post(() -> {
                 mediaWebView.evaluateJS("window?.shouldRefreshMediaList?.("
-                        + (shouldProcessRecommendedEntries ? "true" : "false") + ","
-                        + (shouldManageMedia ? "true" : "false")
+                        + (shouldProcessRecommendedEntries) + ","
+                        + (shouldManageMedia)
                         + ")"
                 );
                 shouldRefreshList = shouldProcessRecommendedEntries = shouldManageMedia = false;
@@ -617,7 +640,7 @@ public class MainActivity extends AppCompatActivity {
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         recheckStatusBar();
-        getWindow().setStatusBarColor(Color.BLACK);
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).setAppearanceLightStatusBars(false);
         if (progressbar!=null) {
             progressbar.setProgressBackgroundTintList(ColorStateList.valueOf(Color.BLACK));
         }
@@ -813,12 +836,12 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         }
-        @RequiresApi(api = Build.VERSION_CODES.P)
+        @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
         @JavascriptInterface
         public void showRecentReleases() {
             Intent intent = new Intent(MainActivity.this, MediaReleaseActivity.class);
             startActivity(intent);
-            overridePendingTransition(R.anim.fade_in, R.anim.remove);
+            overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, R.anim.fade_in, R.anim.remove);
         }
         @JavascriptInterface
         public void showNewUpdatedMediaNotification(long addedMediaCount, long updatedMediaCount) {
@@ -934,7 +957,7 @@ public class MainActivity extends AppCompatActivity {
     public void changeKeepAppRunningInBackground(boolean enable) {
         keepAppRunningInBackground = enable;
         prefsEdit.putBoolean("keepAppRunningInBackground", keepAppRunningInBackground).apply();
-        mediaWebView.post(()-> mediaWebView.evaluateJS("window?.setKeepAppRunningInBackground?.(" + (keepAppRunningInBackground ? "true" : "false")+")"));
+        mediaWebView.post(()-> mediaWebView.evaluateJS("window?.setKeepAppRunningInBackground?.(" + (keepAppRunningInBackground)+")"));
     }
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void updateCurrentNotifications() {
@@ -1064,7 +1087,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).show(WindowInsetsCompat.Type.statusBars());
     }
     public void hideStatusBar() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -1074,10 +1097,7 @@ public class MainActivity extends AppCompatActivity {
             }
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         } else {
-            getWindow().setFlags(
-                WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN
-            );
+            WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).hide(WindowInsetsCompat.Type.statusBars());
         }
     }
 

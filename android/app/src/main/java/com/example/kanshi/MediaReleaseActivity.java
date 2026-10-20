@@ -35,6 +35,8 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -199,7 +201,7 @@ public class MediaReleaseActivity extends AppCompatActivity {
             insetsController.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
         }
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).show(WindowInsetsCompat.Type.statusBars());
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
 
         recheckStatusBar();
@@ -231,7 +233,7 @@ public class MediaReleaseActivity extends AppCompatActivity {
             Intent i = new Intent(this, MainActivity.class);
             i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             finish();
-            overridePendingTransition(R.anim.none, R.anim.fade_out);
+            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, R.anim.none, R.anim.fade_out);
             startActivity(i);
         });
 
@@ -335,7 +337,7 @@ public class MediaReleaseActivity extends AppCompatActivity {
                 Intent i = new Intent(MediaReleaseActivity.this, MainActivity.class);
                 i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 finish();
-                overridePendingTransition(R.anim.none, R.anim.fade_out);
+                overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, R.anim.none, R.anim.fade_out);
                 startActivity(i);
             }
         });
@@ -344,17 +346,18 @@ public class MediaReleaseActivity extends AppCompatActivity {
     }
 
     boolean wasOpened;
+    @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     @Override
     protected void onResume() {
         if (!wasOpened) {
             wasOpened = true;
-            overridePendingTransition(R.anim.fade_in, R.anim.remove);
+            overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, R.anim.fade_in, R.anim.remove);
         } else {
             MainActivity mainActivity = MainActivity.getInstanceActivity();
             if (mainActivity!=null) {
                 mainActivity.checkEntries();
             }
-            overridePendingTransition(R.anim.none, R.anim.fade_out);
+            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, R.anim.none, R.anim.fade_out);
         }
         super.onResume();
     }
@@ -443,6 +446,7 @@ public class MediaReleaseActivity extends AppCompatActivity {
         bottomSheetDialog.show();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void openMediaInAniList(String url) {
         try {
             customTabsIntent.launchUrl(
@@ -451,7 +455,7 @@ public class MediaReleaseActivity extends AppCompatActivity {
                 ContextCompat.getColor(MediaReleaseActivity.this, R.color.dark_blue),
                 true
             );
-            overridePendingTransition(R.anim.remove, R.anim.remove);
+            overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, R.anim.remove, R.anim.remove);
         } catch (Exception ignored) {
             showToast(Toast.makeText(getApplicationContext(), "Can't open the link", Toast.LENGTH_LONG));
         }
@@ -480,7 +484,7 @@ public class MediaReleaseActivity extends AppCompatActivity {
             }
         }
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).show(WindowInsetsCompat.Type.statusBars());
     }
     public void hideStatusBar() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -490,10 +494,7 @@ public class MediaReleaseActivity extends AppCompatActivity {
             }
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         } else {
-            getWindow().setFlags(
-                WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN
-            );
+            WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).hide(WindowInsetsCompat.Type.statusBars());
         }
     }
     public static MediaReleaseActivity getInstanceActivity() {

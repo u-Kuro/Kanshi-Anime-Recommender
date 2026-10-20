@@ -16,11 +16,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.webkit.ConsoleMessage;
 import android.webkit.CookieManager;
+import android.webkit.RenderProcessGoneDetail;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -39,7 +41,10 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import java.io.File;
 import java.util.concurrent.locks.ReentrantLock;
@@ -96,6 +101,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
                     }
             );
     String passedUrl;
+    @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     @SuppressLint({"SetJavaScriptEnabled", "RestrictedApi", "ClickableViewAccessibility"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,17 +119,13 @@ public class YoutubeViewActivity extends AppCompatActivity {
         ProgressBar progressbar = findViewById(R.id.progressbar);
 
         // Show status bar
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            final WindowInsetsController insetsController = getWindow().getInsetsController();
-            if (insetsController != null) {
-                insetsController.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-            }
+        getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+        final WindowInsetsController insetsController = getWindow().getInsetsController();
+        if (insetsController != null) {
+            insetsController.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
         }
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).show(WindowInsetsCompat.Type.statusBars());
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
 
         launchUrl.setOnClickListener(v -> {
@@ -141,7 +143,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
             Intent i = new Intent(this, MainActivity.class);
             i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             finish();
-            overridePendingTransition(R.anim.none, R.anim.fade_out);
+            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, R.anim.none, R.anim.fade_out);
             startActivity(i);
         });
 
@@ -157,11 +159,11 @@ public class YoutubeViewActivity extends AppCompatActivity {
                         Intent i = new Intent(YoutubeViewActivity.this, MainActivity.class);
                         i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                         finish();
-                        overridePendingTransition(R.anim.none, R.anim.fade_out);
+                        overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, R.anim.none, R.anim.fade_out);
                         startActivity(i);
                     } else {
                         finish();
-                        overridePendingTransition(R.anim.none, R.anim.fade_out);
+                        overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, R.anim.none, R.anim.fade_out);
                     }
                 }
             }
@@ -248,37 +250,27 @@ public class YoutubeViewActivity extends AppCompatActivity {
             }
         });
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            mediaWebView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
-        }
+        mediaWebView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
         // Set WebView Settings
         WebSettings webSettings = mediaWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
-        webSettings.setSaveFormData(true);
         webSettings.setAllowFileAccess(true);
         webSettings.setAllowContentAccess(true);
         webSettings.setLoadsImagesAutomatically(true);
-        webSettings.setDatabaseEnabled(true);
         webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
-        webSettings.setAllowFileAccessFromFileURLs(true);
         webSettings.setBlockNetworkLoads(false);
         webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        webSettings.setAllowUniversalAccessFromFileURLs(true);
         webSettings.setMediaPlaybackRequiresUserGesture(true);
         webSettings.setDefaultFontSize(16);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            webSettings.setAlgorithmicDarkeningAllowed(true);
-        }
+        webSettings.setAlgorithmicDarkeningAllowed(true);
         // Set WebView Configs
         mediaWebView.setVerticalScrollBarEnabled(false);
         mediaWebView.setHorizontalScrollBarEnabled(false);
         mediaWebView.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_OVERLAY);
         mediaWebView.setLongClickable(true);
         mediaWebView.setKeepScreenOn(true);
-        getWindow().setFlags(
-                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
-                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED, WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
         mediaWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         mediaWebView.setWebViewClient(new WebViewClient(){
             @Override
@@ -371,14 +363,14 @@ public class YoutubeViewActivity extends AppCompatActivity {
                                 true
                             );
                         }
-                        overridePendingTransition(R.anim.fade_in, R.anim.remove);
+                        overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, R.anim.fade_in, R.anim.remove);
                     } catch (Exception ignored) {
                         Toast.makeText(getApplicationContext(), "Can't open the link", Toast.LENGTH_LONG).show();
                     }
                 } else if (
                     // Should Load In Current WebView
                     !webViewIsLoaded // Initial URL
-                    // Youtube Settings
+                    // YouTube Settings
                     || url.startsWith("https://www.youtube.com/select_site")
                     || url.startsWith("https://m.youtube.com/select_site")
                     || url.startsWith("https://youtube.com/select_site")
@@ -417,7 +409,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
                                 Color.BLACK,
                                 false
                             );
-                            overridePendingTransition(R.anim.fade_in, R.anim.remove);
+                            overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, R.anim.fade_in, R.anim.remove);
                         } catch (Exception ignored) {
                             Toast.makeText(getApplicationContext(), "Can't open the link", Toast.LENGTH_LONG).show();
                         }
@@ -442,13 +434,35 @@ public class YoutubeViewActivity extends AppCompatActivity {
                     Intent intent = new Intent(YoutubeViewActivity.this, YoutubeViewActivity.class);
                     intent.putExtra("url", url);
                     startActivity(intent);
-                    overridePendingTransition(R.anim.fade_in, R.anim.none);
+                    overrideActivityTransition(OVERRIDE_TRANSITION_OPEN, R.anim.fade_in, R.anim.none);
                     return true;
                 } else {
                     return false;
                 }
                 // Unknown redirect
                 return !isRedirect;
+            }
+
+            @Override
+            public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+                if (view.getParent() instanceof ViewGroup) {
+                    ((ViewGroup) view.getParent()).removeView(view);
+                }
+
+                boolean isMainWebView = view == mediaWebView;
+
+                view.destroy();
+
+                if (isMainWebView) {
+                    mediaWebView = null;
+                    isFinished = true;
+                }
+
+                if (isMainWebView) {
+                    finish();
+                }
+
+                return true;
             }
         });
 
@@ -463,11 +477,12 @@ public class YoutubeViewActivity extends AppCompatActivity {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     @Override
     protected void onResume() {
         isActivityPaused = false;
         if (webViewIsLoaded) {
-            overridePendingTransition(R.anim.none, R.anim.fade_out);
+            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, R.anim.none, R.anim.fade_out);
         }
         super.onResume();
         resumeWebView();
@@ -523,7 +538,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
             }
         }
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).show(WindowInsetsCompat.Type.statusBars());
     }
     public void hideStatusBar() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -533,10 +548,7 @@ public class YoutubeViewActivity extends AppCompatActivity {
             }
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         } else {
-            getWindow().setFlags(
-                    WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                    WindowManager.LayoutParams.FLAG_FULLSCREEN
-            );
+            WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).hide(WindowInsetsCompat.Type.statusBars());
         }
     }
     public void initAnchor(WebView view) {

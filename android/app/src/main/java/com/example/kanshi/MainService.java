@@ -28,8 +28,10 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
+import android.view.ViewGroup;
 import android.webkit.ConsoleMessage;
 import android.webkit.JavascriptInterface;
+import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -88,7 +90,7 @@ public class MainService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && STOP_SERVICE_ACTION.equals(intent.getAction())) {
-            stopForeground(true);
+            stopForeground(STOP_FOREGROUND_REMOVE);
             stopSelf();
         } else if (intent != null && SET_MAIN_SERVICE.equals(intent.getAction())) {
             if (ActivityCompat.checkSelfPermission(this.getApplicationContext(), android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
@@ -127,7 +129,7 @@ public class MainService extends Service {
         MainActivity mainActivity = MainActivity.getInstanceActivity();
         if (mainActivity!=null) {
             if (mainActivity.isInApp) {
-                stopForeground(true);
+                stopForeground(STOP_FOREGROUND_REMOVE);
                 stopSelf();
                 return;
             }
@@ -137,16 +139,12 @@ public class MainService extends Service {
         WebSettings webSettings = mediaWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
-        webSettings.setSaveFormData(true);
         webSettings.setAllowFileAccess(true);
         webSettings.setAllowContentAccess(true);
         webSettings.setLoadsImagesAutomatically(true);
-        webSettings.setDatabaseEnabled(true);
         webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
-        webSettings.setAllowFileAccessFromFileURLs(true);
         webSettings.setBlockNetworkLoads(false);
         webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        webSettings.setAllowUniversalAccessFromFileURLs(true);
 
         mediaWebView.addJavascriptInterface(new JSBridge(), "JSBridge");
 
@@ -192,6 +190,27 @@ public class MainService extends Service {
             }
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                return true;
+            }
+            @Override
+            public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+                if (view.getParent() instanceof ViewGroup) {
+                    ((ViewGroup) view.getParent()).removeView(view);
+                }
+
+                boolean isMainWebView = view == mediaWebView;
+
+                view.destroy();
+
+                if (isMainWebView) {
+                    mediaWebView = null;
+                }
+
+                if (isMainWebView) {
+                    stopForeground(STOP_FOREGROUND_REMOVE);
+                    stopSelf();
+                }
+
                 return true;
             }
         });
@@ -243,7 +262,7 @@ public class MainService extends Service {
             } catch (Exception ex) {
                 Utils.handleUncaughtException(MainService.this.getApplicationContext(), ex, "MainService");
                 logger.log(Level.SEVERE, ex.getMessage(), ex);
-                stopForeground(true);
+                stopForeground(STOP_FOREGROUND_REMOVE);
                 stopSelf();
                 return;
             }
@@ -320,7 +339,7 @@ public class MainService extends Service {
             && MediaNotificationManager.ongoingImageDownloads.isEmpty()
         ) {
             updateLastBackgroundUpdateTime();
-            stopForeground(true);
+            stopForeground(STOP_FOREGROUND_REMOVE);
             stopSelf();
         }
     }
@@ -480,7 +499,7 @@ public class MainService extends Service {
 
         long delay = calendar.getTimeInMillis() - currentTime;
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            MainService.this.stopForeground(true);
+            MainService.this.stopForeground(STOP_FOREGROUND_REMOVE);
             MainService.this.stopSelf();
         }, delay);
     }
@@ -491,7 +510,7 @@ public class MainService extends Service {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (Intent.ACTION_USER_PRESENT.equals(intent.getAction())) {
-                    stopForeground(true);
+                    stopForeground(STOP_FOREGROUND_REMOVE);
                     stopSelf();
                 }
             }
