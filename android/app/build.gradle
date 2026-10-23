@@ -9,8 +9,8 @@ android {
         applicationId "com.example.kanshi"
         minSdk 24
         targetSdk 37
-        versionCode 488
-        versionName '9.5.8'
+        versionCode 489
+        versionName '9.5.9'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -41,7 +41,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.8.0'
     implementation 'androidx.recyclerview:recyclerview:1.4.0'
     implementation 'androidx.recyclerview:recyclerview-selection:1.2.0'
-    implementation 'androidx.webkit:webkit:1.17.1'
+    implementation 'androidx.webkit:webkit:1.18.0'
     implementation 'com.google.android.material:material:1.14.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.2'
     implementation 'androidx.core:core-splashscreen:1.2.0'
