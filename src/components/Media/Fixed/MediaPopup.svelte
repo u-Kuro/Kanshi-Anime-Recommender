@@ -596,7 +596,6 @@
   }
 
   function onPlayerError(event, trailerID) {
-    console.log(event);
     const errorYTPlayer = event?.target;
     const errorYTEl = errorYTPlayer?.getIframe();
     const errorPopupHeader = errorYTEl?.parentElement;
@@ -616,7 +615,6 @@
   }
 
   function onPlayerStateChange(event) {
-    console.log(event);
     const changedYTPlayer = event?.target;
     const changedYTEl = changedYTPlayer?.getIframe();
     const changedPopupHeader = changedYTEl?.parentElement;
@@ -685,18 +683,9 @@
   }
 
   async function onPlayerReady(event, trailerID) {
-    console.log(event);
     const readyYTPlayer = event?.target;
     const readyYTEl = readyYTPlayer?.getIframe();
 
-    console.log({
-      readyYTPlayer: readyYTPlayer,
-      readyYTEl: readyYTEl,
-      "readyYTPlayer?.getPlayerState?.()": readyYTPlayer?.getPlayerState?.(),
-      "getYTPlayerState('UNSTARTED')": getYTPlayerState("UNSTARTED"),
-      "readyYTEl?.tagName": readyYTEl?.tagName,
-      "window.navigator?.onLine": window.navigator?.onLine,
-    });
     if (
       readyYTPlayer?.getPlayerState?.() === getYTPlayerState("UNSTARTED") ||
       readyYTEl?.tagName !== "IFRAME" ||

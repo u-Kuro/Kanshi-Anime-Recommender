@@ -8,7 +8,7 @@ const IDBInit = () => {
         try {
             const request = indexedDB.open(
                 get(uniqueKey),
-                1
+                2
             );
             request.onsuccess = ({ target }) => {
                 db = target.result;
@@ -19,7 +19,8 @@ const IDBInit = () => {
                     const { result, transaction } = target
                     const stores = [
                         // All Media
-                        "mediaEntries", "mediaEntriesInfo", "excludedMediaIds", "mediaUpdateAt",
+                        "mediaEntries", "mediaEntriesInfo", "excludedMediaIds",
+                        "userListMediaUpdateAt", "currentMediaUpdateAt", "releasingMediaUpdateAt", "waitingMediaUpdateAt", "otherMediaUpdateAt",
                         // Media Options
                         "mediaOptions", "orderedMediaOptions",
                         // Tag Category and Descriptions
@@ -44,7 +45,9 @@ const IDBInit = () => {
                         "visited",
                     ]
                     for (const store of stores) {
-                        result.createObjectStore(store);
+                        if (!result.objectStoreNames.contains(store)) {
+                            result.createObjectStore(store);
+                        }
                     }
                     transaction.oncomplete = () => {
                         db = result;

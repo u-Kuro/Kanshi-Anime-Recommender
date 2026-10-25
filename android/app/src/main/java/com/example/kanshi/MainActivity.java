@@ -9,7 +9,6 @@ import static com.example.kanshi.Configs.DATA_EVICTION_CHANNEL;
 import static com.example.kanshi.Configs.NOTIFICATION_DATA_EVICTION;
 import static com.example.kanshi.Configs.TOKEN;
 import static com.example.kanshi.Configs.UNIQUE_KEY;
-import static com.example.kanshi.Configs.UPDATE_DATA_PENDING_INTENT;
 import static com.example.kanshi.Configs.getAssetLoader;
 import static com.example.kanshi.Configs.OWNER;
 import static com.example.kanshi.Configs.getTOKEN;
@@ -107,7 +106,7 @@ import com.example.kanshi.localHTTPServer.LocalServerListener;
 
 public class MainActivity extends AppCompatActivity {
     private final Logger logger = Logger.getLogger(MainActivity.class.getName());
-    public boolean keepAppRunningInBackground = false;
+    public boolean keepAppRunningInBackground = true;
     public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
@@ -578,7 +577,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        setBackgroundUpdates();
+        MyWorker.scheduleUpdateAlarm(getApplicationContext());
         super.onStop();
     }
 
@@ -632,7 +631,7 @@ public class MainActivity extends AppCompatActivity {
         if (mediaWebView !=null) {
             mediaWebView.post(() -> mediaWebView.evaluateJS("window?.notifyUpdatedMediaNotification?.()"));
         }
-        setBackgroundUpdates();
+        MyWorker.scheduleUpdateAlarm(getApplicationContext());
         super.onDestroy();
     }
 
@@ -906,29 +905,6 @@ public class MainActivity extends AppCompatActivity {
     }
     public void reloadWeb() {
         mediaWebView.post(()-> mediaWebView.reload());
-    }
-    public void setBackgroundUpdates() {
-        long backgroundUpdateTime = prefs.getLong("lastBackgroundUpdateTime", System.currentTimeMillis()) + TimeUnit.HOURS.toMillis(1);
-
-        Intent newIntent = new Intent(getApplicationContext(), MyReceiver.class);
-        newIntent.setAction("UPDATE_DATA_AUTO");
-
-        PendingIntent newPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        AlarmManager alarmManager = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
-        // Cancel Old
-        newPendingIntent.cancel();
-        alarmManager.cancel(newPendingIntent);
-        // Create New
-        newPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), UPDATE_DATA_PENDING_INTENT, newIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (alarmManager.canScheduleExactAlarms()) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
-            } else {
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
-            }
-        } else {
-            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, backgroundUpdateTime, newPendingIntent);
-        }
     }
     public void setReleaseNotification() {
         final long lastSentNotificationTime = prefs.getLong("lastSentNotificationTime", 0L);

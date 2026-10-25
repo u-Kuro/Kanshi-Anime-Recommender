@@ -32,6 +32,7 @@ public class MyReceiver extends BroadcastReceiver {
                 .build();
             WorkManager.getInstance(context).enqueueUniqueWork(uniqueWorkName, ExistingWorkPolicy.REPLACE, workRequest);
         } else if ("UPDATE_DATA_AUTO".equals(action)) {
+            MyWorker.scheduleUpdateAlarm(context);
             String uniqueWorkName = "UPDATE_DATA";
             Data data = new Data.Builder()
                 .putString("action", uniqueWorkName)

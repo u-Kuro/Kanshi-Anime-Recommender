@@ -25,14 +25,14 @@ public class BootReceiver extends BroadcastReceiver {
         ) {
             String uniqueWorkName = "MEDIA_NOTIFICATION";
             Data data = new Data.Builder()
-                    .putBoolean("isBooted", true)
-                    .putString("action", uniqueWorkName)
-                    .build();
+                .putBoolean("isBooted", true)
+                .putString("action", uniqueWorkName)
+                .build();
             OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(MyWorker.class)
-                    .setConstraints(Constraints.NONE)
-                    .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                    .setInputData(data)
-                    .build();
+                .setConstraints(Constraints.NONE)
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .setInputData(data)
+                .build();
             WorkManager.getInstance(context).enqueueUniqueWork(uniqueWorkName, ExistingWorkPolicy.REPLACE, workRequest);
         }
     }

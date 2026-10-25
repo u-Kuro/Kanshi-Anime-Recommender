@@ -54,7 +54,6 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.Calendar;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -338,16 +337,14 @@ public class MainService extends Service {
             && !isAddingMediaReleaseNotification
             && MediaNotificationManager.ongoingImageDownloads.isEmpty()
         ) {
-            updateLastBackgroundUpdateTime();
+            handleFinishedBackgroundUpdate();
             stopForeground(STOP_FOREGROUND_REMOVE);
             stopSelf();
         }
     }
 
-    public void updateLastBackgroundUpdateTime() {
+    public void handleFinishedBackgroundUpdate() {
         if (lastBackgroundUpdateIsFinished) {
-            final long oneHourFromNowInMillis = System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1);
-            prefsEdit.putLong("lastBackgroundUpdateTime", oneHourFromNowInMillis).commit();
             MainActivity mainActivity = MainActivity.getInstanceActivity();
             if (mainActivity != null) {
                 mainActivity.shouldRefreshList = shouldRefreshList;
