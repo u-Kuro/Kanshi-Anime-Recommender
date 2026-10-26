@@ -65,7 +65,10 @@ public class MyWorker extends Worker {
     @Override
     public Result doWork() {
         String action = getInputData().getString("action");
-        if ("UPDATE_DATA".equals(action)) {
+        if ("REARM".equals(action)) {
+            scheduleUpdateAlarm(this.getApplicationContext());
+            return Result.success();
+        } else if ("UPDATE_DATA".equals(action)) {
             updateData();
         } else {
             boolean isBooted = getInputData().getBoolean("isBooted", false);

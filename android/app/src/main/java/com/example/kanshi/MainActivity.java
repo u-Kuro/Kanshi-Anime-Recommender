@@ -5,6 +5,9 @@ import static android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMI
 import static android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM;
 import static com.example.kanshi.BuildConfig.DEBUG;
 import static com.example.kanshi.BuildConfig.VERSION_CODE;
+import static com.example.kanshi.Configs.BATTERY_OPTIMIZATION_PREFERENCE_KEY;
+import static com.example.kanshi.Configs.EXACT_ALARM_PREFERENCE_KEY;
+import static com.example.kanshi.Configs.NOTIFICATION_PREFERENCE_KEY;
 import static com.example.kanshi.Configs.DATA_EVICTION_CHANNEL;
 import static com.example.kanshi.Configs.NOTIFICATION_DATA_EVICTION;
 import static com.example.kanshi.Configs.TOKEN;
@@ -52,6 +55,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.PowerManager;
 import android.provider.DocumentsContract;
 import android.provider.Settings;
 import android.util.Log;
@@ -107,7 +111,6 @@ import com.example.kanshi.localHTTPServer.LocalServerListener;
 public class MainActivity extends AppCompatActivity {
     private final Logger logger = Logger.getLogger(MainActivity.class.getName());
     public boolean keepAppRunningInBackground = true;
-    public boolean permissionIsAsked = false;
     public SharedPreferences prefs;
     private SharedPreferences.Editor prefsEdit;
     private ValueCallback<Uri[]> mUploadMessage;
@@ -198,13 +201,14 @@ public class MainActivity extends AppCompatActivity {
                     }
             );
     private final ActivityResultLauncher<String> notificationPermission =
-            registerForActivityResult(new ActivityResultContracts.RequestPermission(),
-                    isGranted -> {
-                        prefsEdit.putBoolean("permissionIsAsked", true).apply();
-                        if (isGranted) {
-                            askForSchedulePermission();
-                        }
-                    });
+        registerForActivityResult(new ActivityResultContracts.RequestPermission(),
+            isGranted -> askNextPermission()
+        );
+
+    private final ActivityResultLauncher<Intent> exactAlarmSettings =
+        registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+            result -> askNextPermission()
+        );
 
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     @SuppressLint({"SetJavaScriptEnabled", "WrongViewCast"})
@@ -226,7 +230,6 @@ public class MainActivity extends AppCompatActivity {
         // Saved Data
         keepAppRunningInBackground = prefs.getBoolean("keepAppRunningInBackground", true);
         if (OWNER) { TOKEN = getTOKEN(prefs.getString("savedExportPath", "")); }
-        permissionIsAsked = prefs.getBoolean("permissionIsAsked", false);
         // Others
         // Show status bar
         getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
@@ -531,12 +534,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        if (
-            !permissionIsAsked
-            && ActivityCompat.checkSelfPermission(MainActivity.this, POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        ) {
-            notificationPermission.launch(POST_NOTIFICATIONS);
-        }
+        askNextPermission();
 
         WebView.setWebContentsDebuggingEnabled(DEBUG);
 
@@ -558,6 +556,46 @@ public class MainActivity extends AppCompatActivity {
             return weakActivity.get();
         } else {
             return null;
+        }
+    }
+
+
+    private void askNextPermission() {
+        // Notifications
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+            && !prefs.getBoolean(NOTIFICATION_PREFERENCE_KEY, false)
+            && ActivityCompat.checkSelfPermission(MainActivity.this, POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            prefsEdit.putBoolean(NOTIFICATION_PREFERENCE_KEY, true).apply();
+            notificationPermission.launch(POST_NOTIFICATIONS);
+            return;
+        }
+        // Exact alarms
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+            && !prefs.getBoolean(EXACT_ALARM_PREFERENCE_KEY, false)
+            && NotificationManagerCompat.from(MainActivity.this).areNotificationsEnabled()
+            && !((AlarmManager) getSystemService(Context.ALARM_SERVICE)).canScheduleExactAlarms()
+        ) {
+            prefsEdit.putBoolean(EXACT_ALARM_PREFERENCE_KEY, true).apply();
+            showDialog(
+                new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Permission for Anime Releases")
+                .setMessage("Do you like to allow permission for notifying anime release schedules at the exact time?")
+                .setPositiveButton("YES", (dialogInterface, i) -> exactAlarmSettings.launch(new Intent(
+                    ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                    Uri.fromParts("package", getPackageName(), null)
+                )))
+                .setNegativeButton("NO", (dialogInterface, i) -> askNextPermission())
+                .setOnCancelListener(dialogInterface -> askNextPermission()), // Back button
+                false
+            );
+            return;
+        }
+        // Battery optimization
+        if (!prefs.getBoolean(BATTERY_OPTIMIZATION_PREFERENCE_KEY, false)) {
+            askForBatteryOptimizationPermission();
         }
     }
 
@@ -713,13 +751,15 @@ public class MainActivity extends AppCompatActivity {
         }
         @JavascriptInterface
         public void setKeepAppRunningInBackground(boolean enable) {
-            if (enable
-                && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-                && ActivityCompat.checkSelfPermission(MainActivity.this, POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-            ) {
-                notificationPermission.launch(POST_NOTIFICATIONS);
-            }
+            boolean wasEnabled = keepAppRunningInBackground;
             changeKeepAppRunningInBackground(enable);
+            if (enable && !wasEnabled) {
+                prefsEdit
+                .putBoolean(NOTIFICATION_PREFERENCE_KEY, false)
+                .putBoolean(BATTERY_OPTIMIZATION_PREFERENCE_KEY, false)
+                .apply();
+                runOnUiThread(MainActivity.this::askNextPermission);
+            }
         }
         @JavascriptInterface
         public void getLocalServerURL() { localServer.getLocalServerURL(); }
@@ -828,7 +868,9 @@ public class MainActivity extends AppCompatActivity {
         }
         @JavascriptInterface
         public void clearCache() {
-            prefsEdit.putBoolean("permissionIsAsked", false).apply();
+            prefsEdit.putBoolean(NOTIFICATION_PREFERENCE_KEY, false).apply();
+            prefsEdit.putBoolean(EXACT_ALARM_PREFERENCE_KEY, false).apply();
+            prefsEdit.putBoolean(BATTERY_OPTIMIZATION_PREFERENCE_KEY, false).apply();
             mediaWebView.post(() -> mediaWebView.clearCache(true));
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -887,21 +929,12 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }))),false));
     }
-    public void askForSchedulePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            AlarmManager alarmManager = (AlarmManager) MainActivity.this.getApplicationContext().getSystemService(Context.ALARM_SERVICE);
-            if (!alarmManager.canScheduleExactAlarms()) {
-                showDialog(new AlertDialog.Builder(MainActivity.this)
-                    .setTitle("Permission for Anime Releases")
-                    .setMessage("Do you like to allow permission for notifying anime release schedules at the exact time?")
-                    .setPositiveButton("YES", (dialogInterface, i) -> mediaWebView.post(() -> {
-                        Intent intent = new Intent(ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.fromParts("package", getPackageName(), null));
-                        startActivity(intent);
-                    }))
-                    .setNegativeButton("NO", null)
-                ,false);
-            }
-        }
+    @SuppressLint("BatteryLife")
+    public void askForBatteryOptimizationPermission() {
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        if (pm == null || pm.isIgnoringBatteryOptimizations(getPackageName())) return;
+        prefsEdit.putBoolean(BATTERY_OPTIMIZATION_PREFERENCE_KEY, true).apply();
+        startActivity(new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + getPackageName())));
     }
     public void reloadWeb() {
         mediaWebView.post(()-> mediaWebView.reload());
@@ -954,20 +987,24 @@ public class MainActivity extends AppCompatActivity {
         if (hasPermission) {
             downloadUpdate();
         } else {
-            showDialog(new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("Permission for App Installation")
-                            .setMessage("Allow permission to update the application.")
-                            .setPositiveButton("OK", (dialogInterface, i) -> {
-                                Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.fromParts("package", getPackageName(), null));
-                                allowApplicationUpdate.launch(intent);
-                            })
-                            .setNegativeButton("CANCEL", null),
-                    true);
+            showDialog(
+                new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Permission for App Installation")
+                .setMessage("Allow permission to update the application.")
+                .setPositiveButton("OK", (dialogInterface, i) -> {
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.fromParts("package", getPackageName(), null));
+                    allowApplicationUpdate.launch(intent);
+                })
+                .setNegativeButton("CANCEL", null),
+                true
+            );
         }
     }
     public void downloadUpdate() {
         mediaWebView.post(() -> mediaWebView.clearCache(true));
-        prefsEdit.putBoolean("permissionIsAsked", false).apply();
+        prefsEdit.putBoolean(NOTIFICATION_PREFERENCE_KEY, false).apply();
+        prefsEdit.putBoolean(EXACT_ALARM_PREFERENCE_KEY, false).apply();
+        prefsEdit.putBoolean(BATTERY_OPTIMIZATION_PREFERENCE_KEY, false).apply();
         String fileUrl = "https://github.com/u-Kuro/Kanshi-Anime-Recommender/raw/main/Kanshi.apk";
         String fileName = "Kanshi.apk";
         DownloadUtils.downloadFile(MainActivity.this, fileUrl, fileName, new DownloadUtils.DownloadCallback() {
@@ -1115,4 +1152,3 @@ public class MainActivity extends AppCompatActivity {
         void onConnectionResult(boolean isConnected);
     }
 }
-

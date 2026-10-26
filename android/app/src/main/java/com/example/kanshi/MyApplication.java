@@ -6,7 +6,12 @@ import android.app.Application;
 import android.os.Build;
 
 import androidx.annotation.RequiresApi;
+import androidx.work.Data;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
 
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -31,5 +36,13 @@ public class MyApplication extends Application {
                 System.exit(10);
             }
         });
+
+        try {
+            MyWorker.scheduleUpdateAlarm(this);
+            PeriodicWorkRequest rearm = new PeriodicWorkRequest.Builder(MyWorker.class, 6, TimeUnit.HOURS)
+                .setInputData(new Data.Builder().putString("action", "REARM").build())
+                .build();
+            WorkManager.getInstance(this).enqueueUniquePeriodicWork("REARM", ExistingPeriodicWorkPolicy.KEEP, rearm);
+        } catch (Exception ignored) {}
     }
 }

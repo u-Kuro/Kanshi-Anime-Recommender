@@ -50,6 +50,9 @@ public class Configs {
         return null;
     }
     public static final String UNIQUE_KEY = "Kanshi.Media.Recommendations.AniList.W~uPtWCq=vG$TR:Zl^#t<vdS]I~N70";
+    public static final String NOTIFICATION_PREFERENCE_KEY = "notification_permission_asked";
+    public static final String EXACT_ALARM_PREFERENCE_KEY = "exact_alarm_permission_asked";
+    public static final String BATTERY_OPTIMIZATION_PREFERENCE_KEY = "battery_optimization_permission_asked";
     public static final int UPDATE_DATA_PENDING_INTENT = 994;
     public static final int NOTIFICATION_DATA_EVICTION = 993;
     public static final String DATA_EVICTION_CHANNEL = "data_eviction_channel";
