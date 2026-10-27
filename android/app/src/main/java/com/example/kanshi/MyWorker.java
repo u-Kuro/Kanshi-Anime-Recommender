@@ -597,8 +597,7 @@ public class MyWorker extends Worker {
         Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
         calendar.setTimeInMillis(currentTimeMillis);
         int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY);
-        int minute = calendar.get(Calendar.MINUTE);
-        return (hourOfDay == 1 && minute >= 30) || (hourOfDay >= 2 && hourOfDay < 8);
+        return hourOfDay >= 1 && hourOfDay < 7;
     }
 
     static long computeNextUpdateTime(long currentTimeMillis) {
@@ -610,10 +609,10 @@ public class MyWorker extends Worker {
             long nextUpdateTimeMillis = currentTimeMillis + TimeUnit.HOURS.toMillis(1);
             Calendar oneHourLater = Calendar.getInstance(tz);
             oneHourLater.setTimeInMillis(nextUpdateTimeMillis);
-            if (oneHourLater.get(Calendar.HOUR_OF_DAY) >= 8) {
+            if (oneHourLater.get(Calendar.HOUR_OF_DAY) >= 7) {
                 calendar.add(Calendar.DAY_OF_MONTH, 1);
                 calendar.set(Calendar.HOUR_OF_DAY, 1);
-                calendar.set(Calendar.MINUTE, 30);
+                calendar.set(Calendar.MINUTE, 0);
                 calendar.set(Calendar.SECOND, 0);
                 calendar.set(Calendar.MILLISECOND, 0);
                 return calendar.getTimeInMillis();
@@ -622,7 +621,7 @@ public class MyWorker extends Worker {
         }
 
         calendar.set(Calendar.HOUR_OF_DAY, 1);
-        calendar.set(Calendar.MINUTE, 30);
+        calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
         if (calendar.getTimeInMillis() <= currentTimeMillis) {

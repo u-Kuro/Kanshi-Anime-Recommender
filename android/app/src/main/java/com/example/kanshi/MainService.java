@@ -488,8 +488,8 @@ public class MainService extends Service {
         Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
         long currentTime = calendar.getTimeInMillis();
 
-        // Set to wake time 8am
-        calendar.set(Calendar.HOUR_OF_DAY, 8);
+        // Set to wake time 7am
+        calendar.set(Calendar.HOUR_OF_DAY, 7);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
@@ -514,6 +514,13 @@ public class MainService extends Service {
         };
 
         registerReceiver(unlockReceiver, new IntentFilter(Intent.ACTION_USER_PRESENT));
+    }
+
+    @Override
+    public void onTimeout(int startId, int fgsType) {
+        super.onTimeout(startId, fgsType);
+        stopForeground(STOP_FOREGROUND_REMOVE);
+        stopSelf();
     }
 
     @Override
