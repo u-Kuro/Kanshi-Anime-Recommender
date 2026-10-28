@@ -34,8 +34,8 @@ public class LocalPersistence {
     }
     public static void writeObjectToFile(Context context, Object object, String filename) {
         String tempFileName = filename + ".tmp";
-        File tempFile = new File(context.getFilesDir(), tempFileName);
-        File finalFile = new File(context.getFilesDir(), filename);
+        File tempFile = new File(context.getNoBackupFilesDir(), tempFileName);
+        File finalFile = new File(context.getNoBackupFilesDir(), filename);
 
         // Use filename-based locking to prevent concurrent operations on the same logical file
         ReentrantLock fileNameLock = getLockForFileName(filename);
@@ -57,8 +57,8 @@ public class LocalPersistence {
         }
     }
     public static Object readObjectFromFile(Context context, String filename) {
-        File mainFile = new File(context.getFilesDir(), filename);
-        File tempFile = new File(context.getFilesDir(), filename + ".tmp");
+        File mainFile = new File(context.getNoBackupFilesDir(), filename);
+        File tempFile = new File(context.getNoBackupFilesDir(), filename + ".tmp");
 
         ReentrantLock fileNameLock = getLockForFileName(filename);
         fileNameLock.lock();
