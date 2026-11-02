@@ -97,143 +97,138 @@ const hasIDBData = (recordKeys) => {
         }
     })
 }
-const getIDBData = (key) => {
-    return new Promise(async (resolve) => {
-        try {
-            if (!db) await IDBInit()
-            const get = db.transaction(key, "readonly")
-                .objectStore(key)
-                .get(key)
-            get.onsuccess = async () => {
-                let value = get.result;
-                if (value instanceof Blob) {
-                    value = await new Response(
-                        value
-                        .stream()
-                        .pipeThrough(new DecompressionStream("gzip"))
-                    ).json()
-                }
-                resolve(value);
-            };
-            get.onerror = (ex) => {
-                console.error(ex);
-                resolve();
-            };
-        } catch (ex) {
-            console.error(ex);
-            resolve();
+const compressIDBValue = async (value) => {
+    if (isJsonObject(value) || Array.isArray(value)) {
+        const json = JSON.stringify(value);
+        if (json === undefined) {
+            throw new TypeError("Value cannot be serialized as JSON");
         }
-    });
-}
-const getIDBRecords = (recordKeys) => {
-    return new Promise(async (resolve) => {
-        try {
-            if (!db) await IDBInit()
-            const transaction = db.transaction(recordKeys, "readonly")
-            resolve(Object.fromEntries(
-                await Promise.all(
-                    recordKeys.map((key) => {
-                        return new Promise((resolve) => {
-                            const get = transaction
-                                .objectStore(key)
-                                .get(key)
-                            get.onsuccess = async () => {
-                                let value = get.result;
-                                if (value instanceof Blob) {
-                                    value = await new Response(
-                                        value
-                                        .stream()
-                                        .pipeThrough(new DecompressionStream("gzip"))
-                                    ).json()
-                                }
-                                resolve([key, value]);
-                            };
-                            get.onerror = (ex) => {
-                                console.error(ex);
-                                resolve([key]);
-                            };
-                        })
-                    })
-                )
-            ))
-        } catch (ex) {
-            console.error(ex);
-            resolve();
+        value = new Blob([json]);
+    }
+
+    if (value instanceof Blob) {
+        return new Response(
+            value.stream().pipeThrough(new CompressionStream("gzip"))
+        ).blob();
+    }
+
+    return value;
+};
+
+const decompressIDBValue = async (value) => {
+    if (!(value instanceof Blob)) return value;
+
+    return new Response(
+        value.stream().pipeThrough(new DecompressionStream("gzip"))
+    ).json();
+};
+
+const getIDBRequestValue = (request) => new Promise(resolve => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = event => {
+        console.error(request.error || event);
+        resolve(undefined);
+    };
+});
+
+const getIDBData = async (key) => {
+    try {
+        if (!db) await IDBInit();
+        const request = db.transaction(key, "readonly")
+            .objectStore(key)
+            .get(key);
+        return await decompressIDBValue(await getIDBRequestValue(request));
+    } catch (error) {
+        console.error(error);
+        return undefined;
+    }
+};
+
+const getIDBRecords = async (recordKeys) => {
+    try {
+        if (!db) await IDBInit();
+        if (recordKeys.length === 0) return {};
+
+        const transaction = db.transaction(recordKeys, "readonly");
+        const storedValues = await Promise.all(recordKeys.map(key =>
+            getIDBRequestValue(transaction.objectStore(key).get(key))
+        ));
+
+        const entries = [];
+        for (let i = 0; i < recordKeys.length; i++) {
+            entries.push([
+                recordKeys[i],
+                await decompressIDBValue(storedValues[i])
+            ]);
         }
-    });
-}
-const setIDBData = (key, value, isImportant) => {
-    if (get(androidBackground) && !isImportant) return
-    return new Promise(async (resolve, reject) => {
-        if (!db) await IDBInit()
-        try {
-            if (isJsonObject(value) || value instanceof Array) {
-                value = await new Response(
-                    new Blob([JSON.stringify(value)])
-                    .stream()
-                    .pipeThrough(new CompressionStream("gzip"))
-                ).blob()
-            } else if (value instanceof Blob) {
-                value = await new Response(
-                    value
-                    .stream()
-                    .pipeThrough(new CompressionStream("gzip"))
-                ).blob()
-            }
-            const transaction = db.transaction(key, "readwrite")
-            const put = transaction
-                .objectStore(key)
-                .put(value, key);
-            put.onerror = (ex) => {
-                console.error(ex);
-                reject(ex);
-                transaction.abort();
-            };
-            transaction.oncomplete = () => resolve()
-        } catch (ex) {
-            console.error(ex);
-            reject(ex);
-        }
-    });
-}
-// const setIDBRecords = (records, isImportant) => {
-//     if (get(androidBackground) && !isImportant) return
-//     return new Promise(async (resolve, reject) => {
-//         if (!db) await IDBInit()
-//         try {
-//             for (const key in records) {
-//                 if (isJsonObject(records[key]) || records[key] instanceof Array) {
-//                     records[key] = await new Response(
-//                         new Blob([JSON.stringify(records[key])])
-//                         .stream()
-//                         .pipeThrough(new CompressionStream("gzip"))
-//                     ).blob()
-//                 } else if (records[key] instanceof Blob) {
-//                     records[key] = await new Response(
-//                         records[key]
-//                         .stream()
-//                         .pipeThrough(new CompressionStream("gzip"))
-//                     ).blob()
-//                 }
-//             }
-//             const transaction = db.transaction(Object.keys(records), "readwrite");
-//             for (const key in records) {
-//                 const put = transaction
-//                     .objectStore(key)
-//                     .put(records[key], key);
-//                 put.onerror = (ex) => {
-//                     console.error(ex);
-//                     reject(ex);
-//                     transaction.abort();
-//                 };
-//             }
-//             transaction.oncomplete = () => resolve()
-//         } catch (ex) {
-//             console.error(ex);
-//             reject(ex);
+
+        return Object.fromEntries(entries);
+    } catch (error) {
+        console.error(error);
+        return undefined;
+    }
+};
+
+const setIDBData = async (key, value, isImportant) => {
+    if (get(androidBackground) && !isImportant) return;
+
+    try {
+        if (!db) await IDBInit();
+        const storedValue = await compressIDBValue(value);
+
+        await new Promise((resolve, reject) => {
+            const transaction = db.transaction(key, "readwrite");
+            transaction.objectStore(key).put(storedValue, key);
+            transaction.oncomplete = resolve;
+            transaction.onabort = () => reject(
+                transaction.error || new Error("IndexedDB write transaction aborted")
+            );
+            transaction.onerror = () => reject(
+                transaction.error || new Error("IndexedDB write transaction failed")
+            );
+        });
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+};
+// const setIDBRecords = async (records, isImportant) => {
+//     if (get(androidBackground) && !isImportant) return;
+//
+//     try {
+//         if (!db) await IDBInit();
+//
+//         const entries = Object.entries(records);
+//         if (entries.length === 0) return;
+//
+//         const storedEntries = [];
+//         for (const [key, value] of entries) {
+//             storedEntries.push([key, await compressIDBValue(value)]);
 //         }
-//     });
-// }
+//
+//         await new Promise((resolve, reject) => {
+//             const transaction = db.transaction(
+//                 storedEntries.map(([key]) => key),
+//                 "readwrite"
+//             );
+//
+//             transaction.oncomplete = resolve;
+//             transaction.onabort = () => reject(
+//                 transaction.error || new Error("IndexedDB write transaction aborted")
+//             );
+//             transaction.onerror = () => reject(
+//                 transaction.error || new Error("IndexedDB write transaction failed")
+//             );
+//
+//             for (const [key, storedValue] of storedEntries) {
+//                 transaction.objectStore(key).put(storedValue, key);
+//             }
+//         });
+//     } catch (error) {
+//         console.error(error);
+//         throw error;
+//     }
+// };
 const getLSData = (key) => {
     try {
         let data;

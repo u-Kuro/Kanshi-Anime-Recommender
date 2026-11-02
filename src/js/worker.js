@@ -79,7 +79,7 @@ const mediaLoader = ($data = {}) => {
         mediaLoaderPromises[postId] = { resolve, reject }
 
         try {
-            mediaLoaderWorker = mediaLoaderWorker || new Worker(await progressedFetch("./web-worker/mediaLoader.js", 26815, "Checking Existing List"))
+            mediaLoaderWorker = mediaLoaderWorker || new Worker(await progressedFetch("./web-worker/mediaLoader.js", 26949, "Checking Existing List"))
         } catch (ex) {
             mediaLoaderWorker?.terminate?.()
             mediaLoaderWorker = null
@@ -408,7 +408,7 @@ const mediaManager = ($data = {}) => {
         }
 
         progress.set(0)
-        progressedFetch("./web-worker/mediaManager.js", 55620, "Updating Categories and List")
+        progressedFetch("./web-worker/mediaManager.js", 56021, "Updating Categories and List")
             .then(url => {
                 mediaManagerWorker?.terminate?.()
                 isLoadingMedia.set(true)
@@ -659,7 +659,7 @@ const processRecommendedMediaEntries = ($data = {}) => {
         }
         
         progress.set(0)
-        progressedFetch("./web-worker/processRecommendedMediaEntries.js", 41996, "Updating Recommendation List")
+        progressedFetch("./web-worker/processRecommendedMediaEntries.js", 42397, "Updating Recommendation List")
             .then(url => {
                 isProcessingList.set(true)
                 clearTimeout(processSubsequentWorkersTimeout)
@@ -1369,7 +1369,7 @@ const importUserData = ($data) => {
 const retrieveInitialData = () => {
     return new Promise((resolve, reject) => {
         progress.set(0)
-        progressedFetch("./web-worker/retrieveInitialData.js", 3633, "Checking Anime, Manga, and Novel Entries")
+        progressedFetch("./web-worker/retrieveInitialData.js", 5267, "Checking Anime, Manga, and Novel Entries")
             .then(async workerUrl => {
                 const worker = new Worker(workerUrl)
                 worker.postMessage({ initialDataBlob: await progressedFetch("./data/initial-data.gzip", 28017313, "Getting Anime, Manga, and Novel Entries", true) })
