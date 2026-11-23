@@ -1005,8 +1005,8 @@ public class MainActivity extends AppCompatActivity {
         prefsEdit.putBoolean(NOTIFICATION_PREFERENCE_KEY, false).apply();
         prefsEdit.putBoolean(EXACT_ALARM_PREFERENCE_KEY, false).apply();
         prefsEdit.putBoolean(BATTERY_OPTIMIZATION_PREFERENCE_KEY, false).apply();
-        String fileUrl = "https://github.com/u-Kuro/Kanshi-Anime-Recommender/releases/latest/download/Kanshi.apk";
-        String fileName = "Kanshi.apk";
+        String fileUrl = "https://github.com/u-Kuro/Kanshi-Anime-Recommender/releases/latest/download/Kanshi-alpha.apk";
+        String fileName = "Kanshi-alpha.apk";
         DownloadUtils.downloadFile(MainActivity.this, fileUrl, fileName, new DownloadUtils.DownloadCallback() {
             @RequiresApi(api = Build.VERSION_CODES.O)
             @Override

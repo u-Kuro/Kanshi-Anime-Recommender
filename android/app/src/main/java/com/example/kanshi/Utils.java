@@ -176,7 +176,7 @@ public class Utils {
 
     public static WebResourceResponse fetchWebVersion() {
         try {
-            HttpURLConnection connection = (HttpURLConnection) new URL("https://raw.githubusercontent.com/u-Kuro/Kanshi-Anime-Recommender/main/public/version.json").openConnection();
+            HttpURLConnection connection = (HttpURLConnection) new URL("https://raw.githubusercontent.com/u-Kuro/Kanshi-Anime-Recommender/machine-learning/public/version.json").openConnection();
             connection.setRequestMethod("GET");
             connection.setUseCaches(false);
             connection.setConnectTimeout(15000);
