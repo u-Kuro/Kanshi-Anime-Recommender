@@ -524,8 +524,8 @@
       ) {
         if (isAndroidWeb) {
           downloadLink(
-            "https://github.com/u-Kuro/Kanshi-Anime-Recommender/releases/download/v9.6.3/Kanshi-v9.6.3.apk",
-            "Kanshi-v9.6.3.apk",
+            "https://github.com/u-Kuro/Kanshi-Anime-Recommender/releases/latest/download/Kanshi.apk",
+            "Kanshi.apk",
           );
           return;
         } else if (typeof deferredPrompt?.prompt === "function") {

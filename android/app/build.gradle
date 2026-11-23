@@ -10,7 +10,7 @@ android {
         minSdk 24
         targetSdk 37
         versionCode 493
-        versionName '9.6.3'
+        versionName '2026.11.23'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
