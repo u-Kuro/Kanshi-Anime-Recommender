@@ -14,7 +14,7 @@
     <a href="https://github.com/u-Kuro/Kanshi-Anime-Recommender/releases/download/v9.6.3/Kanshi-v9.6.3.apk">
       <img src="./images/android-download-alpha.svg" alt="Download Alpha (Machine Learning)"/>
     </a>
-    <a href="https://kanshi-aa26zq9ar-ukuros-projects.vercel.app">
+    <a href="https://kanshi-alpha.vercel.app">
       <img src="./images/web-visit-alpha.svg" alt="Visit Alpha (Machine Learning)"/>
     </a>
   </div>
