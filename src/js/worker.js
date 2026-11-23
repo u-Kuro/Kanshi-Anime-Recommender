@@ -80,7 +80,7 @@ const mediaLoader = ($data = {}) => {
         mediaLoaderPromises[postId] = { resolve, reject }
 
         try {
-            mediaLoaderWorker = mediaLoaderWorker || new Worker(await progressedFetch("./web-worker/mediaLoader.js", 27857, "Checking Existing List"))
+            mediaLoaderWorker = mediaLoaderWorker || new Worker(await progressedFetch("./web-worker/mediaLoader.js", 25624, "Checking Existing List"))
         } catch (ex) {
             mediaLoaderWorker?.terminate?.()
             mediaLoaderWorker = null
