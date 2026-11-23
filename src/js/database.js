@@ -56,7 +56,7 @@ const IDBInit = () => {
                 } catch (ex) {
                     console.error(ex);
                     reject(ex);
-                    transaction.abort();
+                    target.transaction.abort();
                 }
             }
             request.onerror = (ex) => {

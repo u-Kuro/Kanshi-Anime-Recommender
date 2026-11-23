@@ -2108,24 +2108,27 @@
                         </div>
                         <div class="options">
                             {#each filterCategories || [] as filterCategoryName (filterCategoryName || {})}
-                                <div
-                                    class="option"
-                                    on:click="{(e) =>
-                                        handleFilterCategory(
-                                            e,
-                                            filterCategoryName,
-                                        )}"
-                                    on:keyup="{(e) =>
-                                        e.key === "Enter" &&
-                                        handleFilterCategory(
-                                            e,
-                                            filterCategoryName,
-                                        )}"
-                                >
-                                    <h3>
-                                        {filterCategoryName || ""}
-                                    </h3>
-                                </div>
+                                <!-- Removed Temporarily -->
+                                {#if filterCategoryName !== "Algorithm Filter"}
+                                    <div
+                                        class="option"
+                                        on:click="{(e) =>
+                                            handleFilterCategory(
+                                                e,
+                                                filterCategoryName,
+                                            )}"
+                                        on:keyup="{(e) =>
+                                            e.key === "Enter" &&
+                                            handleFilterCategory(
+                                                e,
+                                                filterCategoryName,
+                                            )}"
+                                    >
+                                        <h3>
+                                            {filterCategoryName || ""}
+                                        </h3>
+                                    </div>
+                                {/if}
                             {/each}
                         </div>
                     </div>
@@ -2212,309 +2215,281 @@
     >
         {#if filterCategories && $orderedMediaOptions}
             {#each filterCategories || [] as filterCategoryName (filterCategoryName || {})}
-                {@const filterCategoryIsSelected = filterCategoryName === selectedFilterCategoryName}
-                {#if $orderedMediaOptions && filterCategoriesSelections}
-                    {@const categoryIsAlgorithmFilter = filterCategoryName === "Algorithm Filter"}
-                    {@const filterSelections = filterCategoriesSelections[filterCategoryName] || []}
-                    {#each filterSelections || [] as filterSelectionName (filterCategoryName + filterSelectionName || {})}
-                        {@const filterSelectionKey = filterCategoryName + "_" + filterSelectionName}
-                        {@const filterSelectionIsSelected = filterCategoryIsSelected && filterSelectionName === openedFilterSelectionName}
-                        <div
-                            class="{"filter-select" +
-                                (filterCategoryIsSelected
-                                    ? ""
-                                    : " display-none")}"
-                        >
-                            <div class="filter-name">
-                                <h2>
-                                    {filterSelectionName || ""}
-                                </h2>
-                            </div>
-                            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                <!-- Removed Temporarily -->
+                {#if filterCategoryName !== "Algorithm Filter"}
+                    {@const filterCategoryIsSelected = filterCategoryName === selectedFilterCategoryName}
+                    {#if $orderedMediaOptions && filterCategoriesSelections}
+                        {@const categoryIsAlgorithmFilter = filterCategoryName === "Algorithm Filter"}
+                        {@const filterSelections = filterCategoriesSelections[filterCategoryName] || []}
+                        {#each filterSelections || [] as filterSelectionName (filterCategoryName + filterSelectionName || {})}
+                            {@const filterSelectionKey = filterCategoryName + "_" + filterSelectionName}
+                            {@const filterSelectionIsSelected = filterCategoryIsSelected && filterSelectionName === openedFilterSelectionName}
                             <div
-                                class="select"
-                                tabindex="{!$menuVisible &&
-                                !$popupVisible &&
-                                $showFilterOptions &&
-                                $windowWidth <= 425 &&
-                                filterCategoryIsSelected
-                                    ? "0"
-                                    : "-1"}"
-                                on:keyup="{(e) =>
-                                    (e.key === "Enter" ||
-                                        e.key === "ArrowDown" ||
-                                        e.key === "ArrowUp") &&
-                                    filterCategorySelect(
-                                        e,
-                                        filterSelectionName,
-                                    )}"
-                                on:click="{(e) => {
-                                    filterCategorySelect(
-                                        e,
-                                        filterSelectionName,
-                                    );
-                                }}"
+                                class="{"filter-select" +
+                                    (filterCategoryIsSelected
+                                        ? ""
+                                        : " display-none")}"
                             >
-                                <div class="value-wrap">
-                                    <label
-                                        class="disable-interaction"
-                                        for="{filterSelectionKey}"
-                                    >
-                                        {filterSelectionKey}
-                                    </label>
-                                    <input
-                                        tabindex="{!$menuVisible &&
-                                        !$popupVisible &&
-                                        $showFilterOptions
-                                            ? "0"
-                                            : "-1"}"
-                                        id="{filterSelectionKey}"
-                                        placeholder="Any"
-                                        type="search"
-                                        enterkeyhint="search"
-                                        autocomplete="off"
-                                        class="value-input"
-                                        bind:value="{filterSelectionsSearch[
-                                            filterSelectionKey
-                                        ]}"
-                                        disabled="{!$showFilterOptions ||
-                                            $windowWidth <= 425 ||
-                                            !filterCategoryIsSelected}"
-                                        on:focusin="{() =>
-                                            window.addHistory?.()}"
-                                    />
+                                <div class="filter-name">
+                                    <h2>
+                                        {filterSelectionName || ""}
+                                    </h2>
                                 </div>
-                                {#if filterSelectionIsSelected}
-                                    <svg
-                                        class="angle-up"
-                                        viewBox="0 0 512 512"
-                                        on:keyup="{(e) =>
-                                            e.key === "Enter" &&
-                                            closeFilterSelect()}"
-                                        on:click="{closeFilterSelect}"
-                                    >
-                                        <!-- angle-up -->
-                                        <path
-                                            d="M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z"
-                                        ></path>
-                                    </svg>
-                                {:else}
-                                    <svg
-                                        class="angle-down"
-                                        viewBox="0 0 512 512"
-                                    >
-                                        <!-- angle-down -->
-                                        <path
-                                            d="M201 343c13 12 33 12 46 0l160-160a32 32 0 0 0-46-46L224 275 87 137a32 32 0 0 0-46 46l160 160z"
-                                        ></path>
-                                    </svg>
-                                {/if}
-                            </div>
-                            <div
-                                class="{"options-wrap" + (filterSelectionIsSelected ? "" : " display-none hide")}"
-                                on:wheel|stopPropagation="{() => {}}"
-                                on:touchend|passive="{handleOptionsWrapVisibility}"
-                            >
-                                <div class="{"options-wrap-filter-info" + (filterSelectionIsSelected ? "" : " hide")}">
-                                    <div class="header">
-                                        <div class="filter-title">
-                                            {filterSelectionName || ""}
-                                        </div>
-                                        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                        <svg
-                                            viewBox="0 0 24 24"
-                                            class="closing-x"
+                                <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                                <div
+                                    class="select"
+                                    tabindex="{!$menuVisible &&
+                                    !$popupVisible &&
+                                    $showFilterOptions &&
+                                    $windowWidth <= 425 &&
+                                    filterCategoryIsSelected
+                                        ? "0"
+                                        : "-1"}"
+                                    on:keyup="{(e) =>
+                                        (e.key === "Enter" ||
+                                            e.key === "ArrowDown" ||
+                                            e.key === "ArrowUp") &&
+                                        filterCategorySelect(
+                                            e,
+                                            filterSelectionName,
+                                        )}"
+                                    on:click="{(e) => {
+                                        filterCategorySelect(
+                                            e,
+                                            filterSelectionName,
+                                        );
+                                    }}"
+                                >
+                                    <div class="value-wrap">
+                                        <label
+                                            class="disable-interaction"
+                                            for="{filterSelectionKey}"
+                                        >
+                                            {filterSelectionKey}
+                                        </label>
+                                        <input
                                             tabindex="{!$menuVisible &&
                                             !$popupVisible &&
-                                            $showFilterOptions &&
-                                            filterSelectionIsSelected
+                                            $showFilterOptions
                                                 ? "0"
                                                 : "-1"}"
+                                            id="{filterSelectionKey}"
+                                            placeholder="Any"
+                                            type="search"
+                                            enterkeyhint="search"
+                                            autocomplete="off"
+                                            class="value-input"
+                                            bind:value="{filterSelectionsSearch[
+                                                filterSelectionKey
+                                            ]}"
+                                            disabled="{!$showFilterOptions ||
+                                                $windowWidth <= 425 ||
+                                                !filterCategoryIsSelected}"
+                                            on:focusin="{() =>
+                                                window.addHistory?.()}"
+                                        />
+                                    </div>
+                                    {#if filterSelectionIsSelected}
+                                        <svg
+                                            class="angle-up"
+                                            viewBox="0 0 512 512"
                                             on:keyup="{(e) =>
                                                 e.key === "Enter" &&
                                                 closeFilterSelect()}"
                                             on:click="{closeFilterSelect}"
-                                            ><path
-                                                fill="#fff"
-                                                d="m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"
-                                            ></path></svg
                                         >
-                                    </div>
-                                    <label
-                                        class="disable-interaction"
-                                        for="{"Search " + filterSelectionKey}"
-                                    >
-                                        {"Search " + filterSelectionKey}
-                                    </label>
-                                    <input
-                                        tabindex="{!$menuVisible &&
-                                        !$popupVisible &&
-                                        $showFilterOptions
-                                            ? "0"
-                                            : "-1"}"
-                                        id="{"Search " + filterSelectionKey}"
-                                        placeholder="Any"
-                                        type="search"
-                                        enterkeyhint="search"
-                                        autocomplete="off"
-                                        bind:value="{filterSelectionsSearch[
-                                            filterSelectionKey
-                                        ]}"
-                                        disabled="{!$showFilterOptions ||
-                                            !filterCategoryIsSelected ||
-                                            !filterSelectionIsSelected}"
-                                        on:focusin="{() =>
-                                            window.addHistory?.()}"
-                                    />
-                                    <div
-                                        class="options"
-                                        on:wheel|stopPropagation="{() => {}}"
-                                    >
-                                        {#if filterSelectionIsSelected}
-                                            {@const isCOO = filterSelectionName === "Country Of Origin"}
-                                            {@const filterSelectionSearchWord = filterSelectionsSearch[filterSelectionKey]?.trim?.().replace(/[\uFF01-\uFF60\uFFE0-\uFFE6\u3000]/g, (ch) => {
-                                                if (ch === "\u3000") return "";
-                                                return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
-                                            }).normalize("NFD").replace(/[^a-zA-Z0-9\p{Lo}]/gu, "").toLowerCase()}
-                                            {@const selectionOptions = filterSelectionSearchWord ? 
-                                                $orderedMediaOptions?.[filterSelectionName]?.filter?.((option) => hasPartialMatch(option, filterSelectionSearchWord))
-                                                : $orderedMediaOptions?.[filterSelectionName]
-                                            }
-                                            {#if selectionOptions?.length}
-                                                {@const isReadOnly = filterCategoryName === "Media Filter" && $mediaOptionsConfig.readOnly[filterSelectionName]}
-                                                {@const filterCategoryArray =
-                                                    filterCategoryName ===
-                                                    "Media Filter"
-                                                        ? selectedCategoryMediaFilters
-                                                        : filterCategoryName ===
-                                                            "Algorithm Filter"
-                                                        ? $algorithmFilters
-                                                        : filterCategoryName ===
-                                                            "Content Caution"
-                                                            ? $mediaCautions
-                                                            : []}
-                                                {#each selectionOptions || [] as optionName, optionIdx (optionName || {})}
-                                                    {#if categoryIsAlgorithmFilter || optionName !== "All"}
-                                                        {@const status = filterCategoryArray?.find?.((filter) =>
-                                                            filter?.optionName === optionName &&
-                                                            filter?.optionCategory === filterSelectionName &&
-                                                            filter?.filterType === "selection"
-                                                        )?.status}
-                                                        {#await filterSelectionOptionsLoaded ? 1 : new Promise((resolve) => setTimeout(resolve, Math.min(optionIdx * 17, 2000000000)))}{""}{:then}
-                                                            <div
-                                                                title="{getTagFilterInfoText(
-                                                                    filterSelectionName ===
-                                                                        "Tag Category"
-                                                                        ? {
-                                                                            category:
-                                                                                optionName,
-                                                                        }
-                                                                        : filterSelectionName ===
-                                                                            "Tag"
-                                                                        ? {
-                                                                                tag: optionName,
+                                            <!-- angle-up -->
+                                            <path
+                                                d="M201 137c13-12 33-12 46 0l160 160a32 32 0 0 1-46 46L224 205 87 343a32 32 0 0 1-46-46l160-160z"
+                                            ></path>
+                                        </svg>
+                                    {:else}
+                                        <svg
+                                            class="angle-down"
+                                            viewBox="0 0 512 512"
+                                        >
+                                            <!-- angle-down -->
+                                            <path
+                                                d="M201 343c13 12 33 12 46 0l160-160a32 32 0 0 0-46-46L224 275 87 137a32 32 0 0 0-46 46l160 160z"
+                                            ></path>
+                                        </svg>
+                                    {/if}
+                                </div>
+                                <div
+                                    class="{"options-wrap" + (filterSelectionIsSelected ? "" : " display-none hide")}"
+                                    on:wheel|stopPropagation="{() => {}}"
+                                    on:touchend|passive="{handleOptionsWrapVisibility}"
+                                >
+                                    <div class="{"options-wrap-filter-info" + (filterSelectionIsSelected ? "" : " hide")}">
+                                        <div class="header">
+                                            <div class="filter-title">
+                                                {filterSelectionName || ""}
+                                            </div>
+                                            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                                            <svg
+                                                viewBox="0 0 24 24"
+                                                class="closing-x"
+                                                tabindex="{!$menuVisible &&
+                                                !$popupVisible &&
+                                                $showFilterOptions &&
+                                                filterSelectionIsSelected
+                                                    ? "0"
+                                                    : "-1"}"
+                                                on:keyup="{(e) =>
+                                                    e.key === "Enter" &&
+                                                    closeFilterSelect()}"
+                                                on:click="{closeFilterSelect}"
+                                                ><path
+                                                    fill="#fff"
+                                                    d="m19 6-1-1-6 6-6-6-1 1 6 6-6 6 1 1 6-6 6 6 1-1-6-6Z"
+                                                ></path></svg
+                                            >
+                                        </div>
+                                        <label
+                                            class="disable-interaction"
+                                            for="{"Search " + filterSelectionKey}"
+                                        >
+                                            {"Search " + filterSelectionKey}
+                                        </label>
+                                        <input
+                                            tabindex="{!$menuVisible &&
+                                            !$popupVisible &&
+                                            $showFilterOptions
+                                                ? "0"
+                                                : "-1"}"
+                                            id="{"Search " + filterSelectionKey}"
+                                            placeholder="Any"
+                                            type="search"
+                                            enterkeyhint="search"
+                                            autocomplete="off"
+                                            bind:value="{filterSelectionsSearch[
+                                                filterSelectionKey
+                                            ]}"
+                                            disabled="{!$showFilterOptions ||
+                                                !filterCategoryIsSelected ||
+                                                !filterSelectionIsSelected}"
+                                            on:focusin="{() =>
+                                                window.addHistory?.()}"
+                                        />
+                                        <div
+                                            class="options"
+                                            on:wheel|stopPropagation="{() => {}}"
+                                        >
+                                            {#if filterSelectionIsSelected}
+                                                {@const isCOO = filterSelectionName === "Country Of Origin"}
+                                                {@const filterSelectionSearchWord = filterSelectionsSearch[filterSelectionKey]?.trim?.().replace(/[\uFF01-\uFF60\uFFE0-\uFFE6\u3000]/g, (ch) => {
+                                                    if (ch === "\u3000") return "";
+                                                    return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
+                                                }).normalize("NFD").replace(/[^a-zA-Z0-9\p{Lo}]/gu, "").toLowerCase()}
+                                                {@const selectionOptions = filterSelectionSearchWord ? 
+                                                    $orderedMediaOptions?.[filterSelectionName]?.filter?.((option) => hasPartialMatch(option, filterSelectionSearchWord))
+                                                    : $orderedMediaOptions?.[filterSelectionName]
+                                                }
+                                                {#if selectionOptions?.length}
+                                                    {@const isReadOnly = filterCategoryName === "Media Filter" && $mediaOptionsConfig.readOnly[filterSelectionName]}
+                                                    {@const filterCategoryArray =
+                                                        filterCategoryName ===
+                                                        "Media Filter"
+                                                            ? selectedCategoryMediaFilters
+                                                            : filterCategoryName ===
+                                                                "Algorithm Filter"
+                                                            ? $algorithmFilters
+                                                            : filterCategoryName ===
+                                                                "Content Caution"
+                                                                ? $mediaCautions
+                                                                : []}
+                                                    {#each selectionOptions || [] as optionName, optionIdx (optionName || {})}
+                                                        {#if categoryIsAlgorithmFilter || optionName !== "All"}
+                                                            {@const status = filterCategoryArray?.find?.((filter) =>
+                                                                filter?.optionName === optionName &&
+                                                                filter?.optionCategory === filterSelectionName &&
+                                                                filter?.filterType === "selection"
+                                                            )?.status}
+                                                            {#await filterSelectionOptionsLoaded ? 1 : new Promise((resolve) => setTimeout(resolve, Math.min(optionIdx * 17, 2000000000)))}{""}{:then}
+                                                                <div
+                                                                    title="{getTagFilterInfoText(
+                                                                        filterSelectionName ===
+                                                                            "Tag Category"
+                                                                            ? {
+                                                                                category:
+                                                                                    optionName,
                                                                             }
-                                                                        : {},
-                                                                    filterSelectionName ===
-                                                                        "Tag Category"
-                                                                        ? "all tags"
-                                                                        : filterSelectionName ===
-                                                                            "Tag"
-                                                                        ? "category and description"
-                                                                        : "",
-                                                                )}"
-                                                                class="option"
-                                                                on:click="{handleFilterSelectionOptionChange(
-                                                                    optionName,
-                                                                    filterSelectionName,
-                                                                    filterCategoryName,
-                                                                    isReadOnly,
-                                                                )}"
-                                                                on:keyup="{(
-                                                                    e,
-                                                                ) =>
-                                                                    e.key ===
-                                                                        "Enter" &&
-                                                                    handleFilterSelectionOptionChange(
+                                                                            : filterSelectionName ===
+                                                                                "Tag"
+                                                                            ? {
+                                                                                    tag: optionName,
+                                                                                }
+                                                                            : {},
+                                                                        filterSelectionName ===
+                                                                            "Tag Category"
+                                                                            ? "all tags"
+                                                                            : filterSelectionName ===
+                                                                                "Tag"
+                                                                            ? "category and description"
+                                                                            : "",
+                                                                    )}"
+                                                                    class="option"
+                                                                    on:click="{handleFilterSelectionOptionChange(
                                                                         optionName,
                                                                         filterSelectionName,
                                                                         filterCategoryName,
                                                                         isReadOnly,
                                                                     )}"
-                                                            >
-                                                                <h3>
-                                                                    {#if isCOO}
-                                                                        {@const upperCaseCC = optionName?.toUpperCase?.()}
-                                                                        {@const fullCountryName = COOs[upperCaseCC]}
-                                                                        {#if fullCountryName}
-                                                                            {`${fullCountryName} (${upperCaseCC})`}
+                                                                    on:keyup="{(
+                                                                        e,
+                                                                    ) =>
+                                                                        e.key ===
+                                                                            "Enter" &&
+                                                                        handleFilterSelectionOptionChange(
+                                                                            optionName,
+                                                                            filterSelectionName,
+                                                                            filterCategoryName,
+                                                                            isReadOnly,
+                                                                        )}"
+                                                                >
+                                                                    <h3>
+                                                                        {#if isCOO}
+                                                                            {@const upperCaseCC = optionName?.toUpperCase?.()}
+                                                                            {@const fullCountryName = COOs[upperCaseCC]}
+                                                                            {#if fullCountryName}
+                                                                                {`${fullCountryName} (${upperCaseCC})`}
+                                                                            {:else}
+                                                                                {upperCaseCC || optionName || ""}
+                                                                            {/if}
                                                                         {:else}
-                                                                            {upperCaseCC || optionName || ""}
+                                                                            {optionName || ""}
                                                                         {/if}
-                                                                    {:else}
-                                                                        {optionName || ""}
-                                                                    {/if}
-                                                                </h3>
-                                                                {#if status === "included" || (status === "excluded" && !isReadOnly)}
-                                                                    <svg
-                                                                        class="item-info"
-                                                                        viewBox="0 0 512 512"
-                                                                        style:--option-color="{status ===
-                                                                        "included"
-                                                                            ? // green
-                                                                            "#5f9ea0"
-                                                                            : // red
-                                                                            "#e85d75"}"
-                                                                    >
-                                                                        <path
-                                                                            class="item-info-path"
-                                                                            d="{status ===
-                                                                                "excluded" ||
-                                                                            filterCategoryName ===
-                                                                                "Content Caution"
-                                                                                ? // circle-xmark
-                                                                                "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-81-337c-9 9-9 25 0 34l47 47-47 47c-9 9-9 24 0 34s25 9 34 0l47-47 47 47c9 9 24 9 34 0s9-25 0-34l-47-47 47-47c9-10 9-25 0-34s-25-9-34 0l-47 47-47-47c-10-9-25-9-34 0z"
-                                                                                : // circle-check
-                                                                                "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z"}"
+                                                                    </h3>
+                                                                    {#if status === "included" || (status === "excluded" && !isReadOnly)}
+                                                                        <svg
+                                                                            class="item-info"
+                                                                            viewBox="0 0 512 512"
+                                                                            style:--option-color="{status ===
+                                                                            "included"
+                                                                                ? // green
+                                                                                "#5f9ea0"
+                                                                                : // red
+                                                                                "#e85d75"}"
+                                                                        >
+                                                                            <path
+                                                                                class="item-info-path"
+                                                                                d="{status ===
+                                                                                    "excluded" ||
+                                                                                filterCategoryName ===
+                                                                                    "Content Caution"
+                                                                                    ? // circle-xmark
+                                                                                    "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-81-337c-9 9-9 25 0 34l47 47-47 47c-9 9-9 24 0 34s25 9 34 0l47-47 47 47c9 9 24 9 34 0s9-25 0-34l-47-47 47-47c9-10 9-25 0-34s-25-9-34 0l-47 47-47-47c-10-9-25-9-34 0z"
+                                                                                    : // circle-check
+                                                                                    "M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm113-303c9-9 9-25 0-34s-25-9-34 0L224 286l-47-47c-9-9-24-9-34 0s-9 25 0 34l64 64c10 9 25 9 34 0l128-128z"}"
 
-                                                                        ></path>
-                                                                    </svg>
-                                                                {/if}
-                                                                {#if typeof window.showFullScreenInfo === "function" && ((filterSelectionName === "Tag" && getTagFilterInfoText({ tag: optionName }, "category and description")) || (filterSelectionName === "Tag Category" && !jsonIsEmpty($tagInfo?.[optionName])))}
-                                                                    <svg
-                                                                        class="extra-item-info"
-                                                                        viewBox="0 0 512 512"
-                                                                        on:click|stopPropagation="{() => {
-                                                                            let htmlToShow =
-                                                                                "";
-                                                                            if (
-                                                                                filterSelectionName ===
-                                                                                "Tag"
-                                                                            ) {
-                                                                                htmlToShow =
-                                                                                    getTagInfoHTML(
-                                                                                        optionName,
-                                                                                    );
-                                                                            } else if (
-                                                                                filterSelectionName ===
-                                                                                "Tag Category"
-                                                                            ) {
-                                                                                htmlToShow =
-                                                                                    getTagCategoryInfoHTML(
-                                                                                        optionName,
-                                                                                    );
-                                                                            }
-                                                                            window.showFullScreenInfo?.(
-                                                                                htmlToShow,
-                                                                            );
-                                                                        }}"
-                                                                        on:keyup|stopPropagation="{(
-                                                                            e,
-                                                                        ) => {
-                                                                            if (
-                                                                                e.key ===
-                                                                                "Enter"
-                                                                            ) {
+                                                                            ></path>
+                                                                        </svg>
+                                                                    {/if}
+                                                                    {#if typeof window.showFullScreenInfo === "function" && ((filterSelectionName === "Tag" && getTagFilterInfoText({ tag: optionName }, "category and description")) || (filterSelectionName === "Tag Category" && !jsonIsEmpty($tagInfo?.[optionName])))}
+                                                                        <svg
+                                                                            class="extra-item-info"
+                                                                            viewBox="0 0 512 512"
+                                                                            on:click|stopPropagation="{() => {
                                                                                 let htmlToShow =
                                                                                     "";
                                                                                 if (
@@ -2537,176 +2512,207 @@
                                                                                 window.showFullScreenInfo?.(
                                                                                     htmlToShow,
                                                                                 );
-                                                                            }
-                                                                        }}"
-                                                                        ><path
-                                                                            class="item-info-path"
-                                                                            d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-40-176h24v-64h-24a24 24 0 1 1 0-48h48c13 0 24 11 24 24v88h8a24 24 0 1 1 0 48h-80a24 24 0 1 1 0-48zm40-208a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"
+                                                                            }}"
+                                                                            on:keyup|stopPropagation="{(
+                                                                                e,
+                                                                            ) => {
+                                                                                if (
+                                                                                    e.key ===
+                                                                                    "Enter"
+                                                                                ) {
+                                                                                    let htmlToShow =
+                                                                                        "";
+                                                                                    if (
+                                                                                        filterSelectionName ===
+                                                                                        "Tag"
+                                                                                    ) {
+                                                                                        htmlToShow =
+                                                                                            getTagInfoHTML(
+                                                                                                optionName,
+                                                                                            );
+                                                                                    } else if (
+                                                                                        filterSelectionName ===
+                                                                                        "Tag Category"
+                                                                                    ) {
+                                                                                        htmlToShow =
+                                                                                            getTagCategoryInfoHTML(
+                                                                                                optionName,
+                                                                                            );
+                                                                                    }
+                                                                                    window.showFullScreenInfo?.(
+                                                                                        htmlToShow,
+                                                                                    );
+                                                                                }
+                                                                            }}"
+                                                                            ><path
+                                                                                class="item-info-path"
+                                                                                d="M256 512a256 256 0 1 0 0-512 256 256 0 1 0 0 512zm-40-176h24v-64h-24a24 24 0 1 1 0-48h48c13 0 24 11 24 24v88h8a24 24 0 1 1 0 48h-80a24 24 0 1 1 0-48zm40-208a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"
 
-                                                                        ></path></svg
-                                                                    >
-                                                                {/if}
-                                                            </div>
-                                                        {/await}
-                                                    {/if}
-                                                {/each}
-                                            {:else}
-                                                <div class="option">
-                                                    <h3>No Results</h3>
-                                                </div>
+                                                                            ></path></svg
+                                                                        >
+                                                                    {/if}
+                                                                </div>
+                                                            {/await}
+                                                        {/if}
+                                                    {/each}
+                                                {:else}
+                                                    <div class="option">
+                                                        <h3>No Results</h3>
+                                                    </div>
+                                                {/if}
                                             {/if}
-                                        {/if}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    {/each}
-                {/if}
-                {@const boolFilters = $nonOrderedMediaOptions[filterCategoryName]?.bool}
-                {#each boolFilters || [] as boolFilterName (filterCategoryName + boolFilterName || {})}
-                    {#if filterCategoryIsSelected && boolFilterIsChecked[filterCategoryName + boolFilterName] != null}
-                        {@const boolFilterKey =
-                            filterCategoryName + boolFilterName}
-                        <div class="filter-bool-container">
-                            <div style:visibility="none"></div>
-                            <div
-                                class="filter-bool-wrap"
-                                on:click="{(e) =>
-                                    handleCheckboxChange(
-                                        e,
-                                        boolFilterName,
-                                        filterCategoryName,
-                                    )}"
-                                on:keyup="{(e) =>
-                                    e.key === "Enter" &&
-                                    handleCheckboxChange(
-                                        e,
-                                        boolFilterName,
-                                        filterCategoryName,
-                                    )}"
-                            >
-                                <label
-                                    class="disable-interaction"
-                                    for="{"Checkbox: " + boolFilterKey}"
-                                >
-                                    {boolFilterKey}
-                                </label>
-                                <input
-                                    tabindex="{!$menuVisible &&
-                                    !$popupVisible &&
-                                    $showFilterOptions
-                                        ? "0"
-                                        : "-1"}"
-                                    id="{"Checkbox: " + boolFilterKey}"
-                                    type="checkbox"
-                                    class="filter-bool"
-                                    on:change="{(e) => handleCheckboxChange(e, boolFilterName, filterCategoryName)}"
-                                    bind:checked="{boolFilterIsChecked[
-                                        boolFilterKey
-                                    ]}"
-                                    disabled="{!$showFilterOptions ||
-                                        $initData}"
-                                />
-                                <div class="filter-bool-label">
-                                    {boolFilterName || ""}
-                                </div>
-                            </div>
-                        </div>
+                        {/each}
                     {/if}
-                {/each}
-                {@const numberFilters = $nonOrderedMediaOptions[filterCategoryName]?.number}
-                {#each numberFilters || [] as { name, defaultValue, maxValue, minValue } (filterCategoryName + name || {})}
-                    {#if filterCategoryIsSelected}
-                        {@const numberFilterKey = filterCategoryName + name}
-                        {@const filterCategoryArray =
-                            filterCategoryName === "Media Filter"
-                                ? selectedCategoryMediaFilters
-                                : filterCategoryName === "Algorithm Filter"
-                                  ? $algorithmFilters
-                                  : filterCategoryName === "Content Caution"
-                                    ? $mediaCautions
-                                    : []}
-                        <div
-                            class="filter-input-number"
-                            style:display="{filterCategoryIsSelected
-                                ? ""
-                                : "none"}"
-                        >
-                            <div class="filter-input-number-name">
-                                <h2>{name || ""}</h2>
-                            </div>
-                            <div class="value-input-number-wrap">
-                                <label
-                                    class="disable-interaction"
-                                    for="{"Number Filter: " + numberFilterKey}"
+                    {@const boolFilters = $nonOrderedMediaOptions[filterCategoryName]?.bool}
+                    {#each boolFilters || [] as boolFilterName (filterCategoryName + boolFilterName || {})}
+                        {#if filterCategoryIsSelected && boolFilterIsChecked[filterCategoryName + boolFilterName] != null}
+                            {@const boolFilterKey =
+                                filterCategoryName + boolFilterName}
+                            <div class="filter-bool-container">
+                                <div style:visibility="none"></div>
+                                <div
+                                    class="filter-bool-wrap"
+                                    on:click="{(e) =>
+                                        handleCheckboxChange(
+                                            e,
+                                            boolFilterName,
+                                            filterCategoryName,
+                                        )}"
+                                    on:keyup="{(e) =>
+                                        e.key === "Enter" &&
+                                        handleCheckboxChange(
+                                            e,
+                                            boolFilterName,
+                                            filterCategoryName,
+                                        )}"
                                 >
-                                    {"Number Filter: " + numberFilterKey}
-                                </label>
-                                {#key $selectedCategory + $showFilterOptions + (filterCategoryArray instanceof Array ? 1 : 0)}
+                                    <label
+                                        class="disable-interaction"
+                                        for="{"Checkbox: " + boolFilterKey}"
+                                    >
+                                        {boolFilterKey}
+                                    </label>
                                     <input
-                                        use:setDefaultInputNumberValue="{filterCategoryArray?.find?.(
-                                            (filter) =>
-                                                filter?.optionName === name &&
-                                                filter?.filterType === "number",
-                                        )?.optionValue}"
                                         tabindex="{!$menuVisible &&
                                         !$popupVisible &&
                                         $showFilterOptions
                                             ? "0"
                                             : "-1"}"
-                                        id="{"Number Filter: " +
-                                            numberFilterKey}"
-                                        class="value-input-number"
-                                        type="text"
-                                        placeholder="{name === "Scoring System"
-                                            ? "Default: User Scoring"
-                                            : (name === "Average Score" || name === "Min Average Score") && typeof meanAverageScore === "number" && meanAverageScore > 0
-                                            ? "Average: " + formatNumber(meanAverageScore)
-                                            : name === "Popularity" && (
-                                                (typeof meanAnimePopularity === "number" && meanAnimePopularity > 0) ||
-                                                (typeof meanMangaPopularity === "number" && meanMangaPopularity > 0) ||
-                                                (typeof meanNovelPopularity === "number" && meanNovelPopularity > 0)
-                                            )
-                                            ? [meanAnimePopularity, meanMangaPopularity, meanNovelPopularity].map((e) => typeof e === "number" && e > 0 ? formatNumber(e, 0) : "N/A").join(" | ")
-                                            : name === "Min Anime Popularity" && typeof meanAnimePopularity === "number" && meanAnimePopularity > 0
-                                            ? "Average: " + formatNumber(meanAnimePopularity, meanAnimePopularity >= 1000 ? 1 : 0)
-                                            : name === "Min Manga Popularity" && typeof meanMangaPopularity === "number" && meanMangaPopularity > 0
-                                            ? "Average: " + formatNumber(meanMangaPopularity, meanMangaPopularity >= 1000 ? 1 : 0)
-                                            : name === "Min Novel Popularity" && typeof meanNovelPopularity === "number" && meanNovelPopularity > 0
-                                            ? "Average: " + formatNumber(meanNovelPopularity, meanNovelPopularity >= 1000 ? 1 : 0)
-                                            : defaultValue != null
-                                            ? "Default: " + defaultValue
-                                            : conditionalInputNumberList.includes(name)
-                                            ? ">123 or 123"
-                                            : "123"}"
-                                        on:input="{(e) => {
-                                            let newValue = e.target.value;
-                                            let oldValue = numberFiltersValues[numberFilterKey]
-                                                ?? filterCategoryArray?.find?.((filter) =>
-                                                    filter?.optionName === name &&
-                                                    filter?.filterType === "number",
-                                                )?.optionValue ?? "";
-                                            numberFiltersValues[numberFilterKey] = newValue;
-                                            handleInputNumber(
-                                                e,
-                                                name,
-                                                oldValue,
-                                                newValue,
-                                                maxValue,
-                                                minValue,
-                                                filterCategoryName,
-                                            );
-                                        }}"
+                                        id="{"Checkbox: " + boolFilterKey}"
+                                        type="checkbox"
+                                        class="filter-bool"
+                                        on:change="{(e) => handleCheckboxChange(e, boolFilterName, filterCategoryName)}"
+                                        bind:checked="{boolFilterIsChecked[
+                                            boolFilterKey
+                                        ]}"
                                         disabled="{!$showFilterOptions ||
                                             $initData}"
-                                        on:focusin="{() =>
-                                            window.addHistory?.()}"
                                     />
-                                {/key}
+                                    <div class="filter-bool-label">
+                                        {boolFilterName || ""}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    {/if}
-                {/each}
+                        {/if}
+                    {/each}
+                    {@const numberFilters = $nonOrderedMediaOptions[filterCategoryName]?.number}
+                    {#each numberFilters || [] as { name, defaultValue, maxValue, minValue } (filterCategoryName + name || {})}
+                        {#if filterCategoryIsSelected}
+                            {@const numberFilterKey = filterCategoryName + name}
+                            {@const filterCategoryArray =
+                                filterCategoryName === "Media Filter"
+                                    ? selectedCategoryMediaFilters
+                                    : filterCategoryName === "Algorithm Filter"
+                                    ? $algorithmFilters
+                                    : filterCategoryName === "Content Caution"
+                                        ? $mediaCautions
+                                        : []}
+                            <div
+                                class="filter-input-number"
+                                style:display="{filterCategoryIsSelected
+                                    ? ""
+                                    : "none"}"
+                            >
+                                <div class="filter-input-number-name">
+                                    <h2>{name || ""}</h2>
+                                </div>
+                                <div class="value-input-number-wrap">
+                                    <label
+                                        class="disable-interaction"
+                                        for="{"Number Filter: " + numberFilterKey}"
+                                    >
+                                        {"Number Filter: " + numberFilterKey}
+                                    </label>
+                                    {#key $selectedCategory + $showFilterOptions + (filterCategoryArray instanceof Array ? 1 : 0)}
+                                        <input
+                                            use:setDefaultInputNumberValue="{filterCategoryArray?.find?.(
+                                                (filter) =>
+                                                    filter?.optionName === name &&
+                                                    filter?.filterType === "number",
+                                            )?.optionValue}"
+                                            tabindex="{!$menuVisible &&
+                                            !$popupVisible &&
+                                            $showFilterOptions
+                                                ? "0"
+                                                : "-1"}"
+                                            id="{"Number Filter: " +
+                                                numberFilterKey}"
+                                            class="value-input-number"
+                                            type="text"
+                                            placeholder="{name === "Scoring System"
+                                                ? "Default: User Scoring"
+                                                : (name === "Average Score" || name === "Min Average Score") && typeof meanAverageScore === "number" && meanAverageScore > 0
+                                                ? "Average: " + formatNumber(meanAverageScore)
+                                                : name === "Popularity" && (
+                                                    (typeof meanAnimePopularity === "number" && meanAnimePopularity > 0) ||
+                                                    (typeof meanMangaPopularity === "number" && meanMangaPopularity > 0) ||
+                                                    (typeof meanNovelPopularity === "number" && meanNovelPopularity > 0)
+                                                )
+                                                ? [meanAnimePopularity, meanMangaPopularity, meanNovelPopularity].map((e) => typeof e === "number" && e > 0 ? formatNumber(e, 0) : "N/A").join(" | ")
+                                                : name === "Min Anime Popularity" && typeof meanAnimePopularity === "number" && meanAnimePopularity > 0
+                                                ? "Average: " + formatNumber(meanAnimePopularity, meanAnimePopularity >= 1000 ? 1 : 0)
+                                                : name === "Min Manga Popularity" && typeof meanMangaPopularity === "number" && meanMangaPopularity > 0
+                                                ? "Average: " + formatNumber(meanMangaPopularity, meanMangaPopularity >= 1000 ? 1 : 0)
+                                                : name === "Min Novel Popularity" && typeof meanNovelPopularity === "number" && meanNovelPopularity > 0
+                                                ? "Average: " + formatNumber(meanNovelPopularity, meanNovelPopularity >= 1000 ? 1 : 0)
+                                                : defaultValue != null
+                                                ? "Default: " + defaultValue
+                                                : conditionalInputNumberList.includes(name)
+                                                ? ">123 or 123"
+                                                : "123"}"
+                                            on:input="{(e) => {
+                                                let newValue = e.target.value;
+                                                let oldValue = numberFiltersValues[numberFilterKey]
+                                                    ?? filterCategoryArray?.find?.((filter) =>
+                                                        filter?.optionName === name &&
+                                                        filter?.filterType === "number",
+                                                    )?.optionValue ?? "";
+                                                numberFiltersValues[numberFilterKey] = newValue;
+                                                handleInputNumber(
+                                                    e,
+                                                    name,
+                                                    oldValue,
+                                                    newValue,
+                                                    maxValue,
+                                                    minValue,
+                                                    filterCategoryName,
+                                                );
+                                            }}"
+                                            disabled="{!$showFilterOptions ||
+                                                $initData}"
+                                            on:focusin="{() =>
+                                                window.addHistory?.()}"
+                                        />
+                                    {/key}
+                                </div>
+                            </div>
+                        {/if}
+                    {/each}
+                {/if}
             {/each}
         {/if}
         {#if !filterCategories || !$orderedMediaOptions}

@@ -9,8 +9,8 @@ android {
         applicationId "com.example.kanshi"
         minSdk 24
         targetSdk 37
-        versionCode 492
-        versionName '9.6.2'
+        versionCode 493
+        versionName '9.6.3'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -45,7 +45,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.14.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.2'
     implementation 'androidx.core:core-splashscreen:1.2.0'
-    implementation 'com.google.guava:guava:33.7.2-android'
+    implementation 'com.google.guava:guava:33.8.0-android'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.3.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.7.0'
