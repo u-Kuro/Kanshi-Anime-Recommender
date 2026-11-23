@@ -11,7 +11,7 @@
   </div>
   <br/>
   <div align="center">
-    <a href="https://github.com/u-Kuro/Kanshi-Anime-Recommender/releases/download/v9.6.3/Kanshi-v9.6.3.apk">
+    <a href="https://github.com/u-Kuro/Kanshi-Anime-Recommender/releases/latest/download/Kanshi-alpha.apk">
       <img src="./images/android-download-alpha.svg" alt="Download Alpha (Machine Learning)"/>
     </a>
     <a href="https://kanshi-alpha.vercel.app">
