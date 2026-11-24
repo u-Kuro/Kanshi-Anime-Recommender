@@ -662,7 +662,7 @@ const processRecommendedMediaEntries = ($data = {}) => {
         // }
         
         progress.set(0)
-        progressedFetch("./web-worker/processRecommendedMediaEntries.js", 5813864, "Updating Recommendation List")
+        progressedFetch("./web-worker/processRecommendedMediaEntries.js", 5813944, "Updating Recommendation List")
             .then(url => {
                 isProcessingList.set(true)
                 clearTimeout(processSubsequentWorkersTimeout)
