@@ -409,7 +409,7 @@ const mediaManager = ($data = {}) => {
         }
 
         progress.set(0)
-        progressedFetch("./web-worker/mediaManager.js", 56028, "Updating Categories and List")
+        progressedFetch("./web-worker/mediaManager.js", 55196, "Updating Categories and List")
             .then(url => {
                 mediaManagerWorker?.terminate?.()
                 isLoadingMedia.set(true)
