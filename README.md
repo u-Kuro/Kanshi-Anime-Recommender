@@ -1,21 +1,22 @@
 <div align="center">
   <img src="./images/logo.png" height="128" alt="Logo"/>
   <h1 align="center">Animanga Recommendation System</h1>
-  <div align="center">
-    <a href="https://github.com/u-Kuro/Kanshi-Anime-Recommender/releases/latest/download/Kanshi.apk">
-      <img src="./images/android-download.svg" alt="Download"/>
-    </a>
-    <a href="https://kanshi.vercel.app">
-      <img src="./images/web-visit.svg" alt="Website"/>
-    </a>
-  </div>
-  <br/>
+
   <div align="center">
     <a href="https://github.com/u-Kuro/Kanshi-Anime-Recommender/releases/latest/download/Kanshi-alpha.apk">
       <img src="./images/android-download-alpha.svg" alt="Download Alpha (Machine Learning)"/>
     </a>
     <a href="https://kanshi-alpha.vercel.app">
       <img src="./images/web-visit-alpha.svg" alt="Visit Alpha (Machine Learning)"/>
+    </a>
+  </div>
+  <br/>
+  <div align="center">
+    <a href="https://github.com/u-Kuro/Kanshi-Anime-Recommender/releases/latest/download/Kanshi.apk">
+      <img src="./images/android-download.svg" alt="Download"/>
+    </a>
+    <a href="https://kanshi.vercel.app">
+      <img src="./images/web-visit.svg" alt="Website"/>
     </a>
   </div>
   <hr/>
